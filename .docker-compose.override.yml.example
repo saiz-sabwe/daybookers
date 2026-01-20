@@ -1,0 +1,14 @@
+# Fichier d'exemple pour personnaliser docker-compose
+# Copiez ce fichier en .docker-compose.override.yml pour l'utiliser
+# Les valeurs dans ce fichier surchargeront celles de docker-compose.yml
+
+version: '3.8'
+
+services:
+  app:
+    environment:
+      # Personnalisez vos variables d'environnement ici
+      # BETTER_AUTH_SECRET: your-custom-secret
+      # BETTER_AUTH_URL: http://localhost:3000
+      pass
+

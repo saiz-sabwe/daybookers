@@ -1,0 +1,86 @@
+services:
+  # Service PostgreSQL
+  postgres:
+    image: postgres:16-alpine
+    container_name: daybooker-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: daybooker
+      POSTGRES_PASSWORD: daybooker_password
+      POSTGRES_DB: daybooker_db
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U daybooker"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - daybooker-network
+
+  # Service Next.js Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: daybooker-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # Database
+      DATABASE_URL: postgresql://daybooker:daybooker_password@postgres:5432/daybooker_db?schema=public
+      
+      # Better Auth (à configurer selon vos besoins)
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-dev-secret-key-change-in-production}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+      
+      # Node environment
+      NODE_ENV: development
+      NEXT_TELEMETRY_DISABLED: 1
+      
+      # Variables additionnelles (ajoutez les vôtres si nécessaire)
+      # NODE_OPTIONS: --inspect (pour le debugging Node.js)
+    volumes:
+      # Monter le code source pour le hot reload
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - daybooker-network
+    command: sh -c "pnpm prisma generate && pnpm prisma migrate deploy || pnpm prisma migrate dev --name init && pnpm run dev"
+
+  # Service Caddy (Reverse Proxy)
+  caddy:
+    image: caddy:2
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: always
+    networks:
+      - daybooker-network
+
+volumes:
+  postgres_data:
+    driver: local
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local
+
+networks:
+  daybooker-network:
+    driver: bridge
+

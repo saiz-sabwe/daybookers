@@ -1,0 +1,823 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Enums partagés entre tous les domaines
+
+enum UserRole {
+  ROLE_USER
+  ROLE_SUBSCRIBER
+  ROLE_HOTEL_GROUP_MANAGER
+  ROLE_HOTEL_MANAGER
+  ROLE_HOTEL_RECEPTIONIST
+  ROLE_ADMIN
+  ROLE_SUPER_ADMIN
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum HotelStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum NotificationType {
+  BOOKING_CONFIRMED
+  BOOKING_CANCELLED
+  PAYMENT_RECEIVED
+  REVIEW_POSTED
+  PROMOTION_AVAILABLE
+  SYSTEM_ALERT
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  SMS
+}
+
+enum PromotionType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  FREE_NIGHT
+}
+
+enum PromotionScope {
+  GLOBAL
+  HOTEL
+  ROOM_TYPE
+}
+
+enum PricingRuleType {
+  WEEKEND
+  SEASON
+  HOLIDAY
+  LAST_MINUTE
+  ADVANCE_BOOKING
+  CUSTOM
+}
+
+enum ActivityType {
+  USER_LOGIN
+  USER_REGISTER
+  BOOKING_CREATED
+  BOOKING_CANCELLED
+  BOOKING_MODIFIED
+  PAYMENT_PROCESSED
+  REVIEW_CREATED
+  HOTEL_CREATED
+  HOTEL_UPDATED
+  SETTINGS_UPDATED
+}
+
+model User {
+  id            String     @id @default(cuid())
+  name          String
+  email         String
+  emailVerified Boolean    @default(false)
+  image         String?
+  roles         UserRole[] @default([ROLE_USER])
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  // ============================================
+  // Relations Better-Auth
+  // ============================================
+  sessions Session[]
+  accounts Account[]
+
+  // ============================================
+  // Relations Métier - Gestion Hôtels
+  // ============================================
+  hotelGroupManagers HotelGroupManager[]
+  hotelManagers      HotelManager[]
+  hotelReceptionists HotelReceptionist[]
+
+  // ============================================
+  // Relations Métier - Réservations & Avis
+  // ============================================
+  bookings  Booking[]
+  reviews   Review[]
+  favorites Favorite[]
+
+  // ============================================
+  // Relations Métier - Promotions & Notifications
+  // ============================================
+  promotionUsages PromotionUsage[]
+  notifications   Notification[]
+
+  // ============================================
+  // Relations Métier - Paramètres & Logs
+  // ============================================
+  partnerSettings PartnerSettings?
+  activityLogs    ActivityLog[]
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// ============================================
+// cities.prisma
+// ============================================
+
+// Gestion des villes pour la recherche
+
+model City {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  country     String
+  countryCode String // ISO 3166-1 alpha-2 (2 caractères)
+  image       String?
+  latitude    Float?
+  longitude   Float?
+  hotelCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  hotels Hotel[]
+
+  @@index([slug])
+  @@index([country])
+  @@index([countryCode])
+  @@index([latitude, longitude])
+}
+
+// ============================================
+// hotels.prisma
+// ============================================
+
+// Modèles hôtels et équipements
+
+// Groupe d'hôtels (chaîne hôtelière)
+model HotelGroup {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?  @db.Text
+  logo        String? // URL du logo
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  hotels        Hotel[]
+  groupManagers HotelGroupManager[]
+
+  @@index([slug])
+}
+
+model Hotel {
+  id          String      @id @default(cuid())
+  name        String
+  slug        String      @unique
+  description String?     @db.Text
+  address     String
+  cityId      String
+  groupId     String? // Groupe d'hôtels (optionnel)
+  latitude    Float?
+  longitude   Float?
+  phone       String?
+  email       String?
+  website     String?
+  stars       Int         @default(0)
+  status      HotelStatus @default(DRAFT)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  city                 City                 @relation(fields: [cityId], references: [id])
+  group                HotelGroup?          @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  roomTypes            RoomType[]
+  amenities            HotelAmenity[]
+  bookings             Booking[]
+  reviews              Review[]
+  favorites            Favorite[]
+  promotions           Promotion[]
+  pricingRules         PricingRule[]
+  cancellationPolicies CancellationPolicy[]
+  images               String[] // URLs des images
+
+  // Relations avec les managers et réceptionnistes
+  managers      HotelManager[]
+  receptionists HotelReceptionist[]
+
+  @@index([cityId])
+  @@index([groupId])
+  @@index([status])
+  @@index([slug])
+}
+
+model Amenity {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  icon      String?
+  category  String? // "hotel", "room", "service"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  hotels    HotelAmenity[]
+  roomTypes RoomAmenity[]
+}
+
+model HotelAmenity {
+  id        String   @id @default(cuid())
+  hotelId   String
+  amenityId String
+  createdAt DateTime @default(now())
+
+  hotel   Hotel   @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  amenity Amenity @relation(fields: [amenityId], references: [id], onDelete: Cascade)
+
+  @@unique([hotelId, amenityId])
+  @@index([hotelId])
+}
+
+// Table de liaison : Manager de groupe d'hôtels
+model HotelGroupManager {
+  id        String   @id @default(cuid())
+  userId    String
+  groupId   String
+  createdAt DateTime @default(now())
+
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group HotelGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, groupId])
+  @@index([userId])
+  @@index([groupId])
+}
+
+// Table de liaison : Manager d'hôtel
+model HotelManager {
+  id        String   @id @default(cuid())
+  userId    String
+  hotelId   String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hotel Hotel @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, hotelId])
+  @@index([userId])
+  @@index([hotelId])
+}
+
+// Table de liaison : Réceptionniste affecté à un ou plusieurs hôtels
+model HotelReceptionist {
+  id        String   @id @default(cuid())
+  userId    String
+  hotelId   String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hotel Hotel @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, hotelId])
+  @@index([userId])
+  @@index([hotelId])
+}
+
+// ============================================
+// rooms.prisma
+// ============================================
+
+// Modèles chambres et types de chambres
+
+model RoomType {
+  id          String   @id @default(cuid())
+  hotelId     String
+  name        String
+  description String?  @db.Text
+  maxGuests   Int      @default(2)
+  basePrice   Float
+  currency    String   @default("USD")
+  images      String[] // URLs des images
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  hotel                Hotel                @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  amenities            RoomAmenity[]
+  bookings             Booking[]
+  availabilities       Availability[]
+  promotions           Promotion[]
+  pricingRules         PricingRule[]
+  cancellationPolicies CancellationPolicy[]
+  roomOptions          RoomOption[]
+
+  @@index([hotelId])
+}
+
+model RoomAmenity {
+  id         String   @id @default(cuid())
+  roomTypeId String
+  amenityId  String
+  createdAt  DateTime @default(now())
+
+  roomType RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  amenity  Amenity  @relation(fields: [amenityId], references: [id], onDelete: Cascade)
+
+  @@unique([roomTypeId, amenityId])
+  @@index([roomTypeId])
+}
+
+// ============================================
+// bookings.prisma
+// ============================================
+
+// Modèles réservations et disponibilités
+
+model Booking {
+  id         String        @id @default(cuid())
+  userId     String
+  hotelId    String
+  roomTypeId String // OBLIGATOIRE
+  date       DateTime      @db.Date
+  timeSlotId String
+  guestCount Int           @default(1)
+  status     BookingStatus @default(PENDING)
+
+  // Prix et promotions
+  originalPrice  Float
+  discountAmount Float  @default(0)
+  finalPrice     Float
+  currency       String @default("USD")
+
+  // Informations client
+  guestName       String
+  guestEmail      String
+  guestPhone      String?
+  specialRequests String? @db.Text
+
+  // Relations optionnelles
+  promotionId          String?
+  cancellationPolicyId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user               User                  @relation(fields: [userId], references: [id])
+  hotel              Hotel                 @relation(fields: [hotelId], references: [id])
+  roomType           RoomType              @relation(fields: [roomTypeId], references: [id])
+  timeSlot           TimeSlot              @relation(fields: [timeSlotId], references: [id])
+  promotion          Promotion?            @relation(fields: [promotionId], references: [id])
+  cancellationPolicy CancellationPolicy?   @relation(fields: [cancellationPolicyId], references: [id])
+  payment            Payment?
+  review             Review?
+  promotionUsage     PromotionUsage?
+  bookingOptions     BookingOption[]
+  modifications      BookingModification[]
+
+  @@index([userId])
+  @@index([hotelId])
+  @@index([roomTypeId])
+  @@index([date])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model TimeSlot {
+  id          String   @id @default(cuid())
+  name        String // "Matin", "Après-midi", "Journée"
+  startTime   String // Format "HH:mm"
+  endTime     String // Format "HH:mm"
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  bookings       Booking[]
+  availabilities Availability[]
+
+  @@index([name])
+}
+
+model Availability {
+  id         String   @id @default(cuid())
+  roomTypeId String // OBLIGATOIRE - disponibilité par chambre
+  timeSlotId String
+  date       DateTime @db.Date
+  available  Boolean  @default(true)
+  price      Float? // Prix spécifique pour cette date (override basePrice)
+  maxGuests  Int?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  roomType RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  timeSlot TimeSlot @relation(fields: [timeSlotId], references: [id])
+
+  @@unique([roomTypeId, timeSlotId, date])
+  @@index([roomTypeId])
+  @@index([date])
+  @@index([available])
+}
+
+// ============================================
+// payments.prisma
+// ============================================
+
+// Modèles paiements (sans Stripe - gestion basique)
+
+model Payment {
+  id            String        @id @default(cuid())
+  bookingId     String        @unique
+  amount        Float
+  currency      String        @default("USD")
+  status        PaymentStatus @default(PENDING)
+  method        String? // "card", "cash", "bank_transfer"
+  transactionId String?       @unique
+  paidAt        DateTime?
+  refundedAt    DateTime?
+  refundAmount  Float?        @default(0)
+  metadata      Json? // Données supplémentaires
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@index([status])
+  @@index([transactionId])
+  @@index([createdAt])
+}
+
+// ============================================
+// reviews.prisma
+// ============================================
+
+// Modèles avis et évaluations
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  hotelId   String
+  bookingId String   @unique // Un avis par réservation
+  rating    Int // 1-5
+  title     String?
+  comment   String?  @db.Text
+  response  String?  @db.Text // Réponse du partenaire
+  responseAt DateTime? // Date de la réponse
+  verified  Boolean  @default(false) // Vérifié = réservation confirmée
+  helpful   Int      @default(0) // Nombre de "utile"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id])
+  hotel   Hotel   @relation(fields: [hotelId], references: [id])
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@index([userId])
+  @@index([hotelId])
+  @@index([rating])
+  @@index([createdAt])
+}
+
+// ============================================
+// favorites.prisma
+// ============================================
+
+// Modèle favoris utilisateurs
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  hotelId   String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hotel Hotel @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, hotelId])
+  @@index([userId])
+  @@index([hotelId])
+}
+
+// ============================================
+// promotions.prisma
+// ============================================
+
+// Modèles promotions et codes promo
+
+model Promotion {
+  id             String         @id @default(cuid())
+  code           String         @unique
+  name           String
+  description    String?        @db.Text
+  type           PromotionType
+  value          Float // Pourcentage ou montant fixe
+  scope          PromotionScope @default(GLOBAL)
+  maxUses        Int? // Nombre total d'utilisations
+  maxUsesPerUser Int?           @default(1)
+  minAmount      Float? // Montant minimum de commande
+  validFrom      DateTime
+  validUntil     DateTime
+  active         Boolean        @default(true)
+
+  // Relations optionnelles
+  hotelId    String?
+  roomTypeId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  hotel    Hotel?           @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  roomType RoomType?        @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+  usages   PromotionUsage[]
+
+  @@index([code])
+  @@index([validFrom, validUntil])
+  @@index([active])
+  @@index([hotelId])
+  @@index([roomTypeId])
+}
+
+model PromotionUsage {
+  id             String   @id @default(cuid())
+  promotionId    String
+  userId         String
+  bookingId      String   @unique
+  discountAmount Float
+  usedAt         DateTime @default(now())
+
+  promotion Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id])
+  booking   Booking   @relation(fields: [bookingId], references: [id])
+
+  @@unique([promotionId, bookingId])
+  @@index([promotionId])
+  @@index([userId])
+  @@index([bookingId])
+}
+
+// ============================================
+// pricing-rules.prisma
+// ============================================
+
+// Modèles règles de prix dynamique
+
+model PricingRule {
+  id             String          @id @default(cuid())
+  hotelId        String?
+  roomTypeId     String?
+  name           String
+  type           PricingRuleType
+  description    String?         @db.Text
+  multiplier     Float? // Multiplicateur (ex: 1.2 = +20%)
+  fixedAmount    Float? // Montant fixe à ajouter
+  percentage     Float? // Pourcentage à ajouter
+  dayOfWeek      Int[] // [0-6] 0=Dimanche, 6=Samedi
+  startDate      DateTime?       @db.Date
+  endDate        DateTime?       @db.Date
+  minDaysAdvance Int? // Jours minimum à l'avance
+  maxDaysAdvance Int? // Jours maximum à l'avance
+  priority       Int             @default(0) // Plus élevé = appliqué en premier
+  active         Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  hotel    Hotel?    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  roomType RoomType? @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+
+  @@index([hotelId, active])
+  @@index([roomTypeId, active])
+  @@index([type])
+  @@index([priority])
+}
+
+// ============================================
+// notifications.prisma
+// ============================================
+
+// Modèles notifications
+
+model Notification {
+  id        String              @id @default(cuid())
+  userId    String
+  type      NotificationType
+  channel   NotificationChannel @default(IN_APP)
+  title     String
+  message   String              @db.Text
+  link      String?
+  read      Boolean             @default(false)
+  readAt    DateTime?
+  sentAt    DateTime?
+  metadata  Json? // Données supplémentaires
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
+  @@index([type])
+}
+
+// ============================================
+// cancellation-policies.prisma
+// ============================================
+
+// Modèles politiques d'annulation
+
+model CancellationPolicy {
+  id                    String    @id @default(cuid())
+  hotelId               String?
+  roomTypeId            String?
+  name                  String
+  description           String?   @db.Text
+  freeCancellationUntil DateTime? // Date/heure limite pour annulation gratuite
+  cancellationFee       Float? // Frais d'annulation
+  noRefundAfter         DateTime? // Pas de remboursement après cette date
+  active                Boolean   @default(true)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  hotel    Hotel?    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  roomType RoomType? @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+
+  @@index([hotelId])
+  @@index([roomTypeId])
+  @@index([active])
+}
+
+// ============================================
+// room-options.prisma
+// ============================================
+
+// Modèles options de chambre
+
+model RoomOption {
+  id          String   @id @default(cuid())
+  roomTypeId  String
+  name        String
+  description String?  @db.Text
+  price       Float
+  currency    String   @default("USD")
+  required    Boolean  @default(false) // Option obligatoire ou optionnelle
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  roomType RoomType        @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  bookings BookingOption[]
+
+  @@index([roomTypeId])
+}
+
+model BookingOption {
+  id        String   @id @default(cuid())
+  bookingId String
+  optionId  String
+  quantity  Int      @default(1)
+  price     Float // Prix au moment de la réservation
+  createdAt DateTime @default(now())
+
+  booking Booking    @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  option  RoomOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+  @@unique([bookingId, optionId])
+  @@index([bookingId])
+  @@index([optionId])
+}
+
+// ============================================
+// partner-settings.prisma
+// ============================================
+
+// Modèles paramètres partenaires
+
+model PartnerSettings {
+  id                 String   @id @default(cuid())
+  partnerId          String   @unique // User avec role PARTNER
+  commissionRate     Float? // Taux de commission (ex: 0.15 = 15%)
+  payoutMethod       String? // "bank_transfer", "mobile_money", etc.
+  payoutSchedule     String? // "weekly", "monthly", "on_demand"
+  autoConfirm        Boolean  @default(false) // Confirmation automatique des réservations
+  emailNotifications Boolean  @default(true)
+  smsNotifications   Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  partner User @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@index([partnerId])
+}
+
+// ============================================
+// activity-logs.prisma
+// ============================================
+
+// Modèles logs d'activité pour audit
+
+model ActivityLog {
+  id          String       @id @default(cuid())
+  userId      String?
+  type        ActivityType
+  entityType  String // "Booking", "Hotel", "User", etc.
+  entityId    String // ID de l'entité concernée
+  description String       @db.Text
+  metadata    Json? // Données supplémentaires
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime     @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([type])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+// ============================================
+// booking-modifications.prisma
+// ============================================
+
+// Modèles historique des modifications de réservation
+
+model BookingModification {
+  id         String   @id @default(cuid())
+  bookingId  String
+  modifiedBy String // User ID qui a fait la modification
+  changeType String // "status", "date", "price", "guest_count", etc.
+  oldValue   Json? // Ancienne valeur
+  newValue   Json? // Nouvelle valeur
+  reason     String?  @db.Text
+  createdAt  DateTime @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@index([createdAt])
+}
