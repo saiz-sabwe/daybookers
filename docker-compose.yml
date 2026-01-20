@@ -65,7 +65,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./caddyfile:/etc/caddy/Caddyfile
+      - ./Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
       - caddy_config:/config
     restart: always
