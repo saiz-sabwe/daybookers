@@ -11,6 +11,8 @@ export const auth = betterAuth({
     trustedOrigins: [
         "http://127.0.0.1:3000",
         "http://localhost:3000",
+        "https://daybooker.online",
+        "https://www.daybooker.online",
     ],
     emailAndPassword: {
         enabled: true,
