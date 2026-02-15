@@ -68,6 +68,7 @@ export function SearchForm() {
                     </div>
                     <Input
                         placeholder="Où allez-vous ?"
+                        value=""
                         disabled
                         className="pl-10 h-12 border-gray-200 text-base text-gray-900"
                     />
