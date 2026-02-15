@@ -3,35 +3,65 @@
 import db from "@/lib/db";
 import { Hotel } from "@/types";
 import { getHotels } from "@/app/actions/hotels/get";
+import { getUserById } from "@/app/actions/users/get";
 
 export async function getPartnerHotels(userId: string): Promise<Hotel[]> {
   try {
-    // Récupérer les IDs d'hôtels gérés directement par l'utilisateur (HotelManager)
-    const hotelManagers = await db.hotelManager.findMany({
-      where: { userId },
-      select: { hotelId: true },
-    });
+    const user = await getUserById(userId);
+    if (!user) {
+      return [];
+    }
 
-    // Récupérer les IDs d'hôtels gérés via les groupes d'hôtels (HotelGroupManager)
-    const hotelGroupManagers = await db.hotelGroupManager.findMany({
-      where: { userId },
-      select: { groupId: true },
-    });
+    const isReceptionist = user.roles.includes("ROLE_HOTEL_RECEPTIONIST");
+    const isManager = user.roles.includes("ROLE_HOTEL_MANAGER");
+    const isGroupManager = user.roles.includes("ROLE_HOTEL_GROUP_MANAGER");
 
-    const groupIds = hotelGroupManagers.map((hgm) => hgm.groupId);
-    const hotelsFromGroups = await db.hotel.findMany({
-      where: {
-        groupId: {
-          in: groupIds,
-        },
-      },
-      select: { id: true },
-    });
+    let allHotelIds: string[] = [];
 
-    // Combiner les IDs d'hôtels
-    const directHotelIds = hotelManagers.map((hm) => hm.hotelId);
-    const groupHotelIds = hotelsFromGroups.map((h) => h.id);
-    const allHotelIds = [...new Set([...directHotelIds, ...groupHotelIds])];
+    // Récupérer les hôtels selon le rôle
+    if (isReceptionist) {
+      // Récupérer les hôtels où l'utilisateur est réceptionniste
+      const receptionistAssignments = await db.hotelReceptionist.findMany({
+        where: { userId: userId },
+        select: { hotelId: true },
+      });
+      allHotelIds = receptionistAssignments.map((a) => a.hotelId);
+    }
+
+    if (isManager) {
+      // Récupérer les IDs d'hôtels gérés directement par l'utilisateur (HotelManager)
+      const hotelManagers = await db.hotelManager.findMany({
+        where: { userId },
+        select: { hotelId: true },
+      });
+      const managerHotelIds = hotelManagers.map((hm) => hm.hotelId);
+      allHotelIds = [...allHotelIds, ...managerHotelIds];
+    }
+
+    if (isGroupManager) {
+      // Récupérer les IDs d'hôtels gérés via les groupes d'hôtels (HotelGroupManager)
+      const hotelGroupManagers = await db.hotelGroupManager.findMany({
+        where: { userId },
+        select: { groupId: true },
+      });
+
+      const groupIds = hotelGroupManagers.map((hgm) => hgm.groupId);
+      if (groupIds.length > 0) {
+        const hotelsFromGroups = await db.hotel.findMany({
+          where: {
+            groupId: {
+              in: groupIds,
+            },
+          },
+          select: { id: true },
+        });
+        const groupHotelIds = hotelsFromGroups.map((h) => h.id);
+        allHotelIds = [...allHotelIds, ...groupHotelIds];
+      }
+    }
+
+    // Supprimer les doublons
+    allHotelIds = [...new Set(allHotelIds)];
 
     if (allHotelIds.length === 0) {
       return [];

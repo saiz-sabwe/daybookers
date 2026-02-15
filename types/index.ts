@@ -34,6 +34,7 @@ export interface Booking {
   date: string | Date;
   timeSlot: {
     id: string;
+    label?: string;
     startTime: string;
     endTime: string;
   };
@@ -43,7 +44,7 @@ export interface Booking {
   };
   totalPrice: number;
   currency: string;
-  status: "confirmed" | "pending" | "cancelled" | "completed";
+  status: "CONFIRMED" | "PENDING" | "CANCELLED" | "COMPLETED" | "REFUNDED";
   createdAt: string | Date;
   updatedAt: string | Date;
 }

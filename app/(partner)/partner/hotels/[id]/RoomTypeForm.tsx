@@ -12,9 +12,11 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -33,6 +35,8 @@ const roomTypeSchema = z.object({
   maxGuests: z.number().min(1, "Le nombre de personnes doit être au moins 1").max(10, "Le nombre de personnes ne peut pas dépasser 10"),
   basePrice: z.number().min(0, "Le prix doit être positif"),
   currency: z.string().default("USD"),
+  roomCount: z.number().min(1, "Le nombre de chambres doit être au moins 1").default(1),
+  timeSlotIds: z.array(z.string()).min(1, "Sélectionnez au moins un créneau horaire"),
 });
 
 type RoomTypeFormValues = z.infer<typeof roomTypeSchema>;
@@ -56,6 +60,7 @@ export function RoomTypeForm({
 }: RoomTypeFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [timeSlots, setTimeSlots] = useState<any[]>([]);
   const isEditing = !!roomType;
 
   const form = useForm<RoomTypeFormValues>({
@@ -66,8 +71,26 @@ export function RoomTypeForm({
       maxGuests: 2,
       basePrice: 0,
       currency: "USD",
+      roomCount: 1,
+      timeSlotIds: [],
     },
   });
+
+  // Charger les time slots disponibles
+  useEffect(() => {
+    const fetchTimeSlots = async () => {
+      try {
+        const response = await fetch("/api/timeslots");
+        if (response.ok) {
+          const data = await response.json();
+          setTimeSlots(data);
+        }
+      } catch (error) {
+        console.error("Erreur lors de la récupération des créneaux:", error);
+      }
+    };
+    fetchTimeSlots();
+  }, []);
 
   // Mettre à jour les valeurs du formulaire quand roomType change
   useEffect(() => {
@@ -78,6 +101,8 @@ export function RoomTypeForm({
         maxGuests: roomType.maxGuests || 2,
         basePrice: roomType.basePrice || 0,
         currency: roomType.currency || "USD",
+        roomCount: roomType.roomCount || 1,
+        timeSlotIds: roomType.timeSlots?.map((ts: any) => ts.id) || [],
       });
     } else {
       form.reset({
@@ -86,6 +111,8 @@ export function RoomTypeForm({
         maxGuests: 2,
         basePrice: 0,
         currency: "USD",
+        roomCount: 1,
+        timeSlotIds: [],
       });
     }
   }, [roomType, form]);
@@ -95,7 +122,10 @@ export function RoomTypeForm({
     try {
       let result;
       if (isEditing) {
-        result = await updateRoomType(userId, roomType.id, data);
+        result = await updateRoomType(userId, {
+          id: roomType.id,
+          ...data,
+        });
       } else {
         result = await createRoomType(userId, {
           hotelId,
@@ -228,6 +258,66 @@ export function RoomTypeForm({
                       onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="roomCount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nombre de chambres disponibles</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min={1}
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Combien de chambres de ce type sont disponibles dans l'hôtel
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="timeSlotIds"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Créneaux horaires disponibles</FormLabel>
+                  <FormDescription>
+                    Sélectionnez les créneaux horaires proposés pour ce type de chambre
+                  </FormDescription>
+                  <div className="space-y-2 mt-2">
+                    {timeSlots.map((slot) => (
+                      <div key={slot.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={slot.id}
+                          checked={field.value?.includes(slot.id)}
+                          onCheckedChange={(checked) => {
+                            const currentValue = field.value || [];
+                            if (checked) {
+                              field.onChange([...currentValue, slot.id]);
+                            } else {
+                              field.onChange(currentValue.filter((id: string) => id !== slot.id));
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor={slot.id}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        >
+                          {slot.name} ({slot.startTime} - {slot.endTime})
+                        </label>
+                      </div>
+                    ))}
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}

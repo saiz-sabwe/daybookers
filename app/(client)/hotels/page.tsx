@@ -1,6 +1,7 @@
 import { FilterSidebar } from "@/components/client/search/FilterSidebar";
 import { HotelList } from "@/components/client/search/HotelList";
 import { SearchForm } from "@/components/client/SearchForm";
+import { SearchEditSheet } from "@/components/client/search/SearchEditSheet";
 import { FilterProvider } from "@/contexts/FilterContext";
 import { getHotels } from "@/app/actions/hotels/get";
 import { getTimeSlots } from "@/app/actions/time-slots/get";
@@ -20,7 +21,11 @@ export default async function SearchResultsPage({
 }) {
     const params = await searchParams;
     const [hotels, timeSlots] = await Promise.all([
-        getHotels(),
+        getHotels({
+            location: params.location,
+            date: params.date,
+            timeSlotId: params.timeSlot,
+        }),
         getTimeSlots(),
     ]);
     
@@ -53,12 +58,13 @@ export default async function SearchResultsPage({
                                 <div className="text-gray-600">{formattedDate}</div>
                                 <div className="h-4 w-px bg-gray-300"></div>
                                 <div className="text-gray-600">{timeSlotLabel}</div>
-                                <a 
-                                    href="/" 
-                                    className="ml-auto text-client-primary-600 font-medium hover:underline"
-                                >
-                                    Modifier la recherche
-                                </a>
+                                <div className="ml-auto">
+                                    <SearchEditSheet 
+                                        initialDate={selectedDate}
+                                        initialTimeSlotId={selectedTimeSlotId}
+                                        initialLocation={selectedLocation}
+                                    />
+                                </div>
                             </div>
                         </div>
                         <div className="md:hidden">

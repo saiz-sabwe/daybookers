@@ -24,7 +24,7 @@ import { updateProfile } from "@/app/actions/users/update-profile";
 const profileSchema = z.object({
   name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
   email: z.string().email("Email invalide"),
-  phone: z.string().optional(),
+  phone: z.string().min(10, "Le numéro de téléphone doit contenir au moins 10 chiffres").regex(/^[\d\s\+\-\(\)]+$/, "Le numéro de téléphone n'est pas valide"),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -63,7 +63,7 @@ export function ProfileForm() {
       const result = await updateProfile(
         {
           name: data.name,
-          phone: data.phone || undefined,
+          phone: data.phone,
           image: undefined, // TODO: Ajouter upload d'image si nécessaire
         },
         session.user.id
@@ -148,12 +148,12 @@ export function ProfileForm() {
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Téléphone (optionnel)</FormLabel>
+                  <FormLabel>Téléphone *</FormLabel>
                   <FormControl>
-                    <Input type="tel" placeholder="+243 900 000 000" {...field} />
+                    <Input type="tel" placeholder="+243 900 000 000" {...field} required />
                   </FormControl>
                   <FormDescription>
-                    Pour vous contacter concernant vos réservations
+                    Requis pour vous contacter concernant vos réservations
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

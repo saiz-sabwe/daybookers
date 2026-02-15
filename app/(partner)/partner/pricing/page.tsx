@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { authClient } from "@/lib/better-auth-client";
 import { HotelRoomTypeSelector } from "@/components/partner/availability/HotelRoomTypeSelector";
 import { PricingRulesList } from "@/components/partner/pricing/PricingRulesList";
+import { PricingHelp } from "@/components/partner/pricing/PricingHelp";
 
 export default function PartnerPricingPage() {
   const { data: session } = authClient.useSession();
@@ -33,6 +34,9 @@ export default function PartnerPricingPage() {
       </div>
 
       <div className="space-y-6">
+        {/* Guide d'aide */}
+        <PricingHelp />
+
         <Card>
           <CardContent className="pt-6">
             <HotelRoomTypeSelector

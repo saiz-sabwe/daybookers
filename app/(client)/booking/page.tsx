@@ -169,17 +169,15 @@ export default function BookingPage() {
   const handleTimeSlotSelect = (slot: TimeSlot) => {
     setSelectedTimeSlot(slot);
     updateTimeSlot(slot);
-    if (currentStep === 1) {
-      setCurrentStep(2);
-    }
+    // Ne pas passer automatiquement à l'étape suivante
+    // L'utilisateur doit cliquer sur "Continuer"
   };
 
   const handleGuestCountChange = (count: { adults: number; children: number }) => {
     setGuestCount(count);
     updateGuestCount(count);
-    if (currentStep === 2) {
-      setCurrentStep(3);
-    }
+    // Ne pas passer automatiquement à l'étape suivante
+    // L'utilisateur doit cliquer sur "Continuer"
   };
 
   const handleNext = () => {

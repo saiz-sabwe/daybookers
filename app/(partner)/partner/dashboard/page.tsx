@@ -65,14 +65,14 @@ export default function PartnerDashboard() {
         : 0;
 
   // Chiffre d'affaires (réservations confirmées uniquement)
-  const confirmedBookings = bookings.filter((b) => b.status === "confirmed");
+  const confirmedBookings = bookings.filter((b) => b.status === "CONFIRMED");
   const totalRevenue = confirmedBookings.reduce((sum, booking) => sum + booking.finalPrice, 0);
 
   // Chiffre d'affaires d'hier (pour la comparaison)
   const yesterdayConfirmedBookings = bookings.filter((booking) => {
     const bookingDate = new Date(booking.date);
     bookingDate.setHours(0, 0, 0, 0);
-    return bookingDate.getTime() === yesterday.getTime() && booking.status === "confirmed";
+    return bookingDate.getTime() === yesterday.getTime() && booking.status === "CONFIRMED";
   });
   const yesterdayRevenue = yesterdayConfirmedBookings.reduce(
     (sum, booking) => sum + booking.finalPrice,
@@ -243,20 +243,20 @@ export default function PartnerDashboard() {
                       </p>
                       <span
                         className={`text-xs px-2 py-0.5 rounded-full ${
-                          booking.status === "confirmed"
+                          booking.status === "CONFIRMED"
                             ? "bg-green-100 text-green-700"
-                            : booking.status === "pending"
+                            : booking.status === "PENDING"
                               ? "bg-yellow-100 text-yellow-700"
-                              : booking.status === "cancelled"
+                              : booking.status === "CANCELLED"
                                 ? "bg-red-100 text-red-700"
                                 : "bg-blue-100 text-blue-700"
                         }`}
                       >
-                        {booking.status === "confirmed"
+                        {booking.status === "CONFIRMED"
                           ? "Confirmé"
-                          : booking.status === "pending"
+                          : booking.status === "PENDING"
                             ? "En attente"
-                            : booking.status === "cancelled"
+                            : booking.status === "CANCELLED"
                               ? "Annulé"
                               : "Terminé"}
                       </span>

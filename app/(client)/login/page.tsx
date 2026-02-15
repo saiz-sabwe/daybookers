@@ -155,11 +155,13 @@ export default function LoginPage() {
                   )}
                 />
 
+                {/* TODO: Fonctionnalité "Mot de passe oublié" à implémenter
                 <div className="text-sm">
-                  <a href="#" className="font-medium text-client-primary-600 hover:text-client-primary-500">
+                  <Link href="/forgot-password" className="font-medium text-client-primary-600 hover:text-client-primary-500">
                     Mot de passe oublié ?
-                  </a>
+                  </Link>
                 </div>
+                */}
               </div>
 
               <Button

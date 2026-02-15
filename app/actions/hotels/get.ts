@@ -3,12 +3,50 @@
 import db from "@/lib/db";
 import { Hotel } from "@/types";
 
-export async function getHotels(): Promise<Hotel[]> {
+export interface HotelSearchParams {
+  location?: string;
+  searchTerm?: string;
+  date?: string;
+  timeSlotId?: string;
+}
+
+export async function getHotels(params?: HotelSearchParams): Promise<Hotel[]> {
   try {
+    // Construction dynamique des filtres
+    const whereClause: any = {
+      status: "ACTIVE",
+    };
+
+    // Filtrage par localisation (nom de ville)
+    if (params?.location) {
+      whereClause.city = {
+        name: {
+          contains: params.location,
+          mode: "insensitive",
+        },
+      };
+    }
+
+    // Filtrage par terme de recherche (nom d'hôtel ou adresse)
+    if (params?.searchTerm) {
+      whereClause.OR = [
+        {
+          name: {
+            contains: params.searchTerm,
+            mode: "insensitive",
+          },
+        },
+        {
+          address: {
+            contains: params.searchTerm,
+            mode: "insensitive",
+          },
+        },
+      ];
+    }
+
     const hotels = await db.hotel.findMany({
-      where: {
-        status: "ACTIVE",
-      },
+      where: whereClause,
       include: {
         city: true,
         amenities: {

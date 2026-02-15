@@ -1,76 +1,80 @@
 "use server";
 
 import db from "@/lib/db";
-import { getPartnerHotels } from "@/app/actions/partner/hotels/get";
+import { getUserById } from "@/app/actions/users/get";
 
 export interface CreateRoomTypeData {
   hotelId: string;
   name: string;
   description?: string;
-  maxGuests: number;
   basePrice: number;
-  currency?: string;
+  currency: string;
+  maxGuests: number;
   images?: string[];
+  amenities?: string[];
+  roomCount?: number;
+  timeSlotIds: string[];
+  roomOptions?: Array<{
+    name: string;
+    price: number;
+    description?: string;
+  }>;
 }
 
-export async function createRoomType(
-  userId: string,
-  data: CreateRoomTypeData
-): Promise<{ success: boolean; error?: string; roomType?: any }> {
+export async function createRoomType(userId: string, data: CreateRoomTypeData) {
   try {
-    // Vérifier que l'utilisateur gère cet hôtel
-    const partnerHotels = await getPartnerHotels(userId);
-    const hasAccess = partnerHotels.some((hotel) => hotel.id === data.hotelId);
-
-    if (!hasAccess) {
-      return {
-        success: false,
-        error: "Vous n'avez pas accès à cet hôtel",
-      };
+    // Vérifier que l'utilisateur est manager de l'hôtel
+    const user = await getUserById(userId);
+    if (!user) {
+      throw new Error("User not found");
     }
 
-    // Validation des données
-    if (!data.name || data.name.trim().length === 0) {
-      return {
-        success: false,
-        error: "Le nom du type de chambre est requis",
-      };
-    }
+    const isManager = await db.hotelManager.findFirst({
+      where: {
+        userId: userId,
+        hotelId: data.hotelId,
+      },
+    });
 
-    if (data.maxGuests < 1 || data.maxGuests > 10) {
-      return {
-        success: false,
-        error: "Le nombre de personnes doit être entre 1 et 10",
-      };
-    }
+    const isGroupManager = user.roles.includes("ROLE_HOTEL_GROUP_MANAGER");
 
-    if (data.basePrice < 0) {
-      return {
-        success: false,
-        error: "Le prix de base doit être positif",
-      };
+    if (!isManager && !isGroupManager) {
+      throw new Error("Vous n'avez pas la permission de créer des types de chambres pour cet hôtel");
     }
 
     // Créer le type de chambre
     const roomType = await db.roomType.create({
       data: {
         hotelId: data.hotelId,
-        name: data.name.trim(),
-        description: data.description?.trim() || null,
-        maxGuests: data.maxGuests,
+        name: data.name,
+        description: data.description,
         basePrice: data.basePrice,
-        currency: data.currency || "USD",
+        currency: data.currency,
+        maxGuests: data.maxGuests,
         images: data.images || [],
+        amenities: data.amenities || [],
+        roomCount: data.roomCount || 1,
+        timeSlots: {
+          connect: data.timeSlotIds.map((id) => ({ id })),
+        },
       },
     });
 
+    // Créer les options de chambre si présentes
+    if (data.roomOptions && data.roomOptions.length > 0) {
+      await db.roomOption.createMany({
+        data: data.roomOptions.map((option) => ({
+          roomTypeId: roomType.id,
+          name: option.name,
+          price: option.price,
+          description: option.description,
+        })),
+      });
+    }
+
     return { success: true, roomType };
-  } catch (error) {
-    console.error("Erreur lors de la création du type de chambre:", error);
-    return {
-      success: false,
-      error: "Une erreur est survenue lors de la création du type de chambre",
-    };
+  } catch (error: any) {
+    console.error("Error creating room type:", error);
+    return { success: false, error: error.message };
   }
 }
-

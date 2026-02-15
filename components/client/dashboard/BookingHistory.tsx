@@ -17,7 +17,7 @@ import { getBookings } from "@/app/actions/bookings/get";
 import { getHotels } from "@/app/actions/hotels/get";
 import { cancelBooking } from "@/app/actions/bookings/update";
 import { Booking, Hotel } from "@/types";
-import { CalendarX, AlertTriangle } from "lucide-react";
+import { CalendarX, AlertTriangle, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { authClient } from "@/lib/better-auth-client";
 
@@ -44,16 +44,20 @@ export function BookingHistory({ bookings: initialBookings, hotels: initialHotel
     return { booking, hotel };
   }).filter((item) => item.hotel !== undefined);
 
+  const pendingBookings = allBookings.filter(
+    (item) => item.booking.status === "PENDING"
+  );
+
   const activeBookings = allBookings.filter(
-    (item) => item.booking.status === "confirmed" || item.booking.status === "pending"
+    (item) => item.booking.status === "CONFIRMED"
   );
 
   const pastBookings = allBookings.filter(
-    (item) => item.booking.status === "completed"
+    (item) => item.booking.status === "COMPLETED"
   );
 
   const cancelled = allBookings.filter(
-    (item) => item.booking.status === "cancelled"
+    (item) => item.booking.status === "CANCELLED"
   );
 
   const handleCancelClick = (bookingId: string) => {
@@ -113,12 +117,32 @@ export function BookingHistory({ bookings: initialBookings, hotels: initialHotel
         <p className="text-gray-600">Gérez toutes vos réservations en un seul endroit</p>
       </div>
 
-      <Tabs defaultValue="active" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+      <Tabs defaultValue="pending" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="pending">En attente ({pendingBookings.length})</TabsTrigger>
           <TabsTrigger value="active">Actives ({activeBookings.length})</TabsTrigger>
           <TabsTrigger value="past">Passées ({pastBookings.length})</TabsTrigger>
           <TabsTrigger value="cancelled">Annulées ({cancelled.length})</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="pending" className="space-y-4 mt-6">
+          {pendingBookings.length > 0 ? (
+            pendingBookings.map(({ booking, hotel }) => (
+              <BookingCard
+                key={booking.id}
+                booking={booking}
+                hotel={hotel!}
+                onCancel={handleCancelClick}
+              />
+            ))
+          ) : (
+            <EmptyState
+              icon={Clock}
+              title="Aucune réservation en attente"
+              description="Vous n'avez pas de réservation en attente de paiement."
+            />
+          )}
+        </TabsContent>
 
         <TabsContent value="active" className="space-y-4 mt-6">
           {activeBookings.length > 0 ? (
@@ -134,7 +158,7 @@ export function BookingHistory({ bookings: initialBookings, hotels: initialHotel
             <EmptyState
               icon={CalendarX}
               title="Aucune réservation active"
-              description="Vous n'avez pas de réservation active pour le moment."
+              description="Vous n'avez pas de réservation confirmée pour le moment."
             />
           )}
         </TabsContent>

@@ -22,14 +22,6 @@ export async function getBookings(userId?: string): Promise<Booking[]> {
     });
 
     return bookings.map((booking) => {
-      // Mapper le statut Prisma vers le format attendu
-      const statusMap: Record<string, "confirmed" | "pending" | "cancelled" | "completed"> = {
-        CONFIRMED: "confirmed",
-        PENDING: "pending",
-        CANCELLED: "cancelled",
-        COMPLETED: "completed",
-      };
-
       return {
         id: booking.id,
         hotelId: booking.hotelId,
@@ -37,6 +29,7 @@ export async function getBookings(userId?: string): Promise<Booking[]> {
         date: booking.date,
         timeSlot: {
           id: booking.timeSlot.id,
+          label: booking.timeSlot.name,
           startTime: booking.timeSlot.startTime,
           endTime: booking.timeSlot.endTime,
         },
@@ -46,7 +39,7 @@ export async function getBookings(userId?: string): Promise<Booking[]> {
         },
         totalPrice: booking.finalPrice,
         currency: booking.currency,
-        status: statusMap[booking.status] || "pending",
+        status: booking.status as Booking["status"], // Garder le statut en majuscules
         createdAt: booking.createdAt,
         updatedAt: booking.updatedAt,
       } satisfies Booking;
@@ -78,13 +71,6 @@ export async function getBookingById(id: string): Promise<Booking | null> {
       return null;
     }
 
-    const statusMap: Record<string, "confirmed" | "pending" | "cancelled" | "completed"> = {
-      CONFIRMED: "confirmed",
-      PENDING: "pending",
-      CANCELLED: "cancelled",
-      COMPLETED: "completed",
-    };
-
     return {
       id: booking.id,
       hotelId: booking.hotelId,
@@ -92,6 +78,7 @@ export async function getBookingById(id: string): Promise<Booking | null> {
       date: booking.date,
       timeSlot: {
         id: booking.timeSlot.id,
+        label: booking.timeSlot.name,
         startTime: booking.timeSlot.startTime,
         endTime: booking.timeSlot.endTime,
       },
@@ -101,7 +88,7 @@ export async function getBookingById(id: string): Promise<Booking | null> {
       },
       totalPrice: booking.finalPrice,
       currency: booking.currency,
-      status: statusMap[booking.status] || "pending",
+      status: booking.status as Booking["status"], // Garder le statut en majuscules
       createdAt: booking.createdAt,
       updatedAt: booking.updatedAt,
     } satisfies Booking;
@@ -131,13 +118,6 @@ export async function getBookingsByHotelId(hotelId: string): Promise<Booking[]> 
       },
     });
 
-    const statusMap: Record<string, "confirmed" | "pending" | "cancelled" | "completed"> = {
-      CONFIRMED: "confirmed",
-      PENDING: "pending",
-      CANCELLED: "cancelled",
-      COMPLETED: "completed",
-    };
-
     return bookings.map((booking) => ({
       id: booking.id,
       hotelId: booking.hotelId,
@@ -145,6 +125,7 @@ export async function getBookingsByHotelId(hotelId: string): Promise<Booking[]> 
       date: booking.date,
       timeSlot: {
         id: booking.timeSlot.id,
+        label: booking.timeSlot.name,
         startTime: booking.timeSlot.startTime,
         endTime: booking.timeSlot.endTime,
       },
@@ -154,7 +135,7 @@ export async function getBookingsByHotelId(hotelId: string): Promise<Booking[]> 
       },
       totalPrice: booking.finalPrice,
       currency: booking.currency,
-      status: statusMap[booking.status] || "pending",
+      status: booking.status as Booking["status"], // Garder le statut en majuscules
       createdAt: booking.createdAt,
       updatedAt: booking.updatedAt,
     })) satisfies Booking[];

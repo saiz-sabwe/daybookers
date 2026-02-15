@@ -60,8 +60,15 @@ export async function createBooking(
 
     // TODO: Vérifier la disponibilité
 
-    // Calculer le prix (pour l'instant, on utilise le prix de base)
-    const originalPrice = roomType.basePrice;
+    // Calculer le prix en fonction du créneau horaire
+    // Pour la "Location classique" (24h), on applique un multiplicateur
+    let priceMultiplier = 1;
+    if (timeSlot.name === "Location classique" || timeSlot.id === "timeslot_classic") {
+      // Pour une location de 24h, on applique un tarif équivalent à 2 créneaux
+      priceMultiplier = 2;
+    }
+    
+    const originalPrice = roomType.basePrice * priceMultiplier;
     const discountAmount = 0; // TODO: Appliquer les promotions si promotionCode est fourni
     const finalPrice = originalPrice - discountAmount;
     const currency = roomType.currency;

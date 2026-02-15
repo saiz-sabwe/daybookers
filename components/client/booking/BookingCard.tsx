@@ -24,14 +24,15 @@ interface BookingCardProps {
 export function BookingCard({ booking, hotel, showActions = true, onCancel, onReviewSuccess }: BookingCardProps) {
   const { data: session } = authClient.useSession();
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
-  const statusConfig = {
-    confirmed: { label: "Confirmée", color: "bg-green-100 text-green-800", icon: CheckCircle },
-    pending: { label: "En attente", color: "bg-yellow-100 text-yellow-800", icon: ClockIcon },
-    cancelled: { label: "Annulée", color: "bg-red-100 text-red-800", icon: XCircle },
-    completed: { label: "Terminée", color: "bg-gray-100 text-gray-800", icon: CheckCircle },
+  const statusConfig: Record<string, { label: string; color: string; icon: typeof CheckCircle }> = {
+    CONFIRMED: { label: "Confirmée", color: "bg-green-100 text-green-800", icon: CheckCircle },
+    PENDING: { label: "En attente", color: "bg-yellow-100 text-yellow-800", icon: ClockIcon },
+    CANCELLED: { label: "Annulée", color: "bg-red-100 text-red-800", icon: XCircle },
+    COMPLETED: { label: "Terminée", color: "bg-gray-100 text-gray-800", icon: CheckCircle },
+    REFUNDED: { label: "Remboursée", color: "bg-purple-100 text-purple-800", icon: XCircle },
   };
 
-  const status = statusConfig[booking.status];
+  const status = statusConfig[booking.status] || statusConfig.PENDING;
   const StatusIcon = status.icon;
 
   return (
@@ -142,7 +143,7 @@ export function BookingCard({ booking, hotel, showActions = true, onCancel, onRe
                     Détails de la réservation
                   </Link>
                 </Button>
-                {(booking.status === "confirmed" || booking.status === "pending") && (
+                {(booking.status === "CONFIRMED" || booking.status === "PENDING") && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -152,7 +153,7 @@ export function BookingCard({ booking, hotel, showActions = true, onCancel, onRe
                     Annuler
                   </Button>
                 )}
-                {booking.status === "completed" && (
+                {booking.status === "COMPLETED" && (
                   <Button
                     variant="outline"
                     size="sm"

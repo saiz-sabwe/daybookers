@@ -21,15 +21,22 @@ export function ConfirmationCard({ booking, hotel }: ConfirmationCardProps) {
     timeSlot: booking.timeSlot.id,
   });
 
+  // Déterminer le message en fonction du statut
+  const isConfirmed = booking.status === "CONFIRMED" || booking.status === "COMPLETED";
+  const headerTitle = isConfirmed ? "Réservation confirmée !" : "Réservation enregistrée !";
+  const headerDescription = isConfirmed 
+    ? "Votre réservation a été confirmée avec succès" 
+    : "Votre réservation a été enregistrée. Procédez au paiement pour confirmer.";
+
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-green-500 to-green-600 p-6 text-white">
+      <div className={`p-6 text-white ${isConfirmed ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gradient-to-r from-blue-500 to-blue-600'}`}>
         <div className="flex items-center gap-3">
           <CheckCircle className="w-8 h-8" />
           <div>
-            <h2 className="text-2xl font-bold">Réservation confirmée !</h2>
-            <p className="text-green-100 mt-1">Votre réservation a été enregistrée avec succès</p>
+            <h2 className="text-2xl font-bold">{headerTitle}</h2>
+            <p className={`mt-1 ${isConfirmed ? 'text-green-100' : 'text-blue-100'}`}>{headerDescription}</p>
           </div>
         </div>
       </div>
@@ -103,13 +110,13 @@ export function ConfirmationCard({ booking, hotel }: ConfirmationCardProps) {
         {/* Price Summary */}
         <div className="border-t border-gray-200 pt-4 mb-6">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-gray-600">Total payé</span>
+            <span className="text-gray-600">{isConfirmed ? "Total payé" : "Total à payer"}</span>
             <span className="font-bold text-xl text-client-primary-600">
               {booking.currency === "USD" ? "$" : booking.currency} {booking.totalPrice}
             </span>
           </div>
           <p className="text-xs text-gray-500 text-right">
-            {booking.paymentStatus === "paid" ? "Payé" : "À payer à l'hôtel"}
+            {isConfirmed ? "Payé" : "À payer à l'hôtel"}
           </p>
         </div>
 

@@ -62,10 +62,16 @@ export function RoomList({ roomTypes, hotelId }: RoomListProps) {
                                 {room.timeSlots.map((slot) => {
                                     const price = room.basePrice;
                                     const originalPrice = Math.round(price * 1.5);
+                                    const isClassicRental = slot.startTime === slot.endTime && slot.startTime === "12:00";
+                                    const timeDisplay = isClassicRental 
+                                        ? `${slot.startTime} - ${slot.endTime} (24h)` 
+                                        : `${slot.startTime} - ${slot.endTime}`;
+                                    
                                     return (
                                         <div key={slot.id} className="border border-gray-200 rounded-lg p-3 hover:border-client-primary-500 hover:bg-client-primary-50 cursor-pointer transition-all group">
-                                            <div className="flex justify-between items-center mb-1">
-                                                <span className="font-bold text-gray-900">{slot.startTime} - {slot.endTime}</span>
+                                            <div className="flex flex-col mb-2">
+                                                <span className="font-bold text-gray-900 text-sm">{slot.name || slot.label}</span>
+                                                <span className="text-xs text-gray-600">{timeDisplay}</span>
                                             </div>
                                             <div className="flex justify-between items-end">
                                                 <div className="flex flex-col">

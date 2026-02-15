@@ -57,11 +57,14 @@ export function HotelList({ hotels, timeSlots, selectedDate, selectedTimeSlotId 
         return sorted;
     }, [priceRange, selectedStars, selectedAmenities, sortBy]);
 
+    // Déterminer le nom de la localisation depuis les hôtels
+    const locationName = filteredHotels.length > 0 ? filteredHotels[0].city : "Kinshasa";
+
     return (
         <div className="flex-1">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold text-gray-900">
-                    {filteredHotels.length} hôtel{filteredHotels.length > 1 ? "s" : ""} disponible{filteredHotels.length > 1 ? "s" : ""} à Kinshasa
+                    {filteredHotels.length} hôtel{filteredHotels.length > 1 ? "s" : ""} disponible{filteredHotels.length > 1 ? "s" : ""} {locationName ? `à ${locationName}` : ""}
                 </h1>
                 <div className="flex items-center gap-2">
                     <span className="text-sm text-gray-500">Trier par:</span>

@@ -40,14 +40,18 @@ export function Header() {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-6">
-          <Link href="#" className="text-sm font-medium text-gray-600 hover:text-black flex items-center gap-2">
+          {/* TODO: Lien Contact à implémenter
+          <Link href="/contact" className="text-sm font-medium text-gray-600 hover:text-black flex items-center gap-2">
             <Phone className="w-4 h-4" />
             <span className="hidden lg:inline">Contact</span>
           </Link>
-          <Link href="#" className="text-sm font-medium text-gray-600 hover:text-black flex items-center gap-2">
+          */}
+          {/* TODO: Sélecteur de langue à implémenter
+          <button className="text-sm font-medium text-gray-600 hover:text-black flex items-center gap-2">
             <Globe className="w-4 h-4" />
             <span className="hidden lg:inline">FR</span>
-          </Link>
+          </button>
+          */}
           <div className="h-6 w-px bg-gray-200 mx-2" />
           
           {isPending ? (

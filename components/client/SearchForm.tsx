@@ -20,11 +20,19 @@ export function SearchForm() {
     const [timeSlotId, setTimeSlotId] = useState<string>("");
     const [location, setLocation] = useState<string>("");
     const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
+    const [mounted, setMounted] = useState(false);
+
+    // S'assurer que le composant est monté côté client pour éviter les erreurs d'hydratation
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     // Charger les timeSlots depuis la base de données
     useEffect(() => {
-        getTimeSlots().then(setTimeSlots);
-    }, []);
+        if (mounted) {
+            getTimeSlots().then(setTimeSlots);
+        }
+    }, [mounted]);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -48,6 +56,66 @@ export function SearchForm() {
         const queryString = params.toString();
         router.push(`/hotels${queryString ? `?${queryString}` : ""}`);
     };
+
+    // Rendre un placeholder pendant le montage pour éviter les erreurs d'hydratation
+    if (!mounted) {
+        return (
+            <form className="bg-white p-4 rounded-xl shadow-lg max-w-4xl mx-auto flex flex-col md:flex-row gap-4 items-center">
+                {/* Location Input */}
+                <div className="flex-1 w-full relative">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10">
+                        <MapPin className="w-5 h-5" />
+                    </div>
+                    <Input
+                        placeholder="Où allez-vous ?"
+                        disabled
+                        className="pl-10 h-12 border-gray-200 text-base text-gray-900"
+                    />
+                </div>
+
+                <div className="h-8 w-px bg-gray-200 hidden md:block" />
+
+                {/* Date Picker Placeholder */}
+                <div className="w-full md:w-auto">
+                    <Button
+                        variant={"outline"}
+                        disabled
+                        className="w-full md:w-[240px] h-12 justify-start text-left font-normal border-gray-200 text-gray-500"
+                    >
+                        <CalendarIcon className="mr-2 h-4 w-4 text-gray-400" />
+                        <span>Date</span>
+                    </Button>
+                </div>
+
+                <div className="h-8 w-px bg-gray-200 hidden md:block" />
+
+                {/* Time Slot Placeholder */}
+                <div className="w-full md:w-[200px] relative">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10 pointer-events-none">
+                        <Clock className="w-4 h-4 text-gray-400" />
+                    </div>
+                    <Button
+                        variant={"outline"}
+                        disabled
+                        className="w-full h-12 pl-10 pr-8 border-gray-200 bg-white text-gray-500"
+                    >
+                        Créneau horaire
+                    </Button>
+                </div>
+
+                {/* Search Button */}
+                <Button 
+                    type="submit"
+                    disabled
+                    className="w-full md:w-auto h-12 px-8 bg-client-primary-500 text-white font-bold text-lg rounded-lg shadow-md"
+                >
+                    <Search className="w-5 h-5 md:hidden mr-2" />
+                    <span className="hidden md:inline">Rechercher</span>
+                    <span className="md:hidden">Rechercher</span>
+                </Button>
+            </form>
+        );
+    }
 
     return (
         <form onSubmit={handleSearch} className="bg-white p-4 rounded-xl shadow-lg max-w-4xl mx-auto flex flex-col md:flex-row gap-4 items-center">

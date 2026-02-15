@@ -1,93 +1,80 @@
 "use server";
 
 import db from "@/lib/db";
-import { getPartnerHotels } from "@/app/actions/partner/hotels/get";
+import { getUserById } from "@/app/actions/users/get";
 
 export interface UpdateRoomTypeData {
+  id: string;
   name?: string;
   description?: string;
-  maxGuests?: number;
   basePrice?: number;
   currency?: string;
+  maxGuests?: number;
   images?: string[];
+  amenities?: string[];
+  roomCount?: number;
+  timeSlotIds?: string[];
 }
 
-export async function updateRoomType(
-  userId: string,
-  roomTypeId: string,
-  data: UpdateRoomTypeData
-): Promise<{ success: boolean; error?: string; roomType?: any }> {
+export async function updateRoomType(userId: string, data: UpdateRoomTypeData) {
   try {
-    // Récupérer le roomType pour vérifier l'accès
-    const roomType = await db.roomType.findUnique({
-      where: { id: roomTypeId },
-      select: { hotelId: true },
+    // Récupérer le type de chambre existant
+    const existingRoomType = await db.roomType.findUnique({
+      where: { id: data.id },
+      include: { hotel: true },
     });
 
-    if (!roomType) {
-      return {
-        success: false,
-        error: "Type de chambre introuvable",
-      };
+    if (!existingRoomType) {
+      throw new Error("Type de chambre non trouvé");
     }
 
-    // Vérifier que l'utilisateur gère cet hôtel
-    const partnerHotels = await getPartnerHotels(userId);
-    const hasAccess = partnerHotels.some((hotel) => hotel.id === roomType.hotelId);
-
-    if (!hasAccess) {
-      return {
-        success: false,
-        error: "Vous n'avez pas accès à ce type de chambre",
-      };
+    // Vérifier que l'utilisateur est manager de l'hôtel
+    const user = await getUserById(userId);
+    if (!user) {
+      throw new Error("User not found");
     }
 
-    // Validation des données
-    if (data.name !== undefined && data.name.trim().length === 0) {
-      return {
-        success: false,
-        error: "Le nom du type de chambre ne peut pas être vide",
-      };
-    }
+    const isManager = await db.hotelManager.findFirst({
+      where: {
+        userId: userId,
+        hotelId: existingRoomType.hotelId,
+      },
+    });
 
-    if (data.maxGuests !== undefined && (data.maxGuests < 1 || data.maxGuests > 10)) {
-      return {
-        success: false,
-        error: "Le nombre de personnes doit être entre 1 et 10",
-      };
-    }
+    const isGroupManager = user.roles.includes("ROLE_HOTEL_GROUP_MANAGER");
 
-    if (data.basePrice !== undefined && data.basePrice < 0) {
-      return {
-        success: false,
-        error: "Le prix de base doit être positif",
-      };
+    if (!isManager && !isGroupManager) {
+      throw new Error("Vous n'avez pas la permission de modifier ce type de chambre");
     }
 
     // Préparer les données de mise à jour
-    const updateData: any = {};
-    if (data.name !== undefined) updateData.name = data.name.trim();
-    if (data.description !== undefined) {
-      updateData.description = data.description.trim() || null;
+    const updateData: any = {
+      name: data.name,
+      description: data.description,
+      basePrice: data.basePrice,
+      currency: data.currency,
+      maxGuests: data.maxGuests,
+      images: data.images,
+      amenities: data.amenities,
+      roomCount: data.roomCount,
+    };
+
+    // Mettre à jour les time slots si fournis
+    if (data.timeSlotIds) {
+      updateData.timeSlots = {
+        set: data.timeSlotIds.map((id) => ({ id })),
+      };
     }
-    if (data.maxGuests !== undefined) updateData.maxGuests = data.maxGuests;
-    if (data.basePrice !== undefined) updateData.basePrice = data.basePrice;
-    if (data.currency !== undefined) updateData.currency = data.currency;
-    if (data.images !== undefined) updateData.images = data.images;
 
     // Mettre à jour le type de chambre
-    const updatedRoomType = await db.roomType.update({
-      where: { id: roomTypeId },
+    const roomType = await db.roomType.update({
+      where: { id: data.id },
       data: updateData,
     });
 
-    return { success: true, roomType: updatedRoomType };
-  } catch (error) {
-    console.error("Erreur lors de la mise à jour du type de chambre:", error);
-    return {
-      success: false,
-      error: "Une erreur est survenue lors de la mise à jour du type de chambre",
-    };
+    return { success: true, roomType };
+  } catch (error: any) {
+    console.error("Error updating room type:", error);
+    return { success: false, error: error.message };
   }
 }
-

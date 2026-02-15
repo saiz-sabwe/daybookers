@@ -171,20 +171,20 @@ export default function PartnerBookingsPage() {
                         </p>
                         <Badge
                           variant={
-                            booking.status === "confirmed"
+                            booking.status === "CONFIRMED"
                               ? "default"
-                              : booking.status === "pending"
+                              : booking.status === "PENDING"
                                 ? "secondary"
-                                : booking.status === "cancelled"
+                                : booking.status === "CANCELLED"
                                   ? "destructive"
                                   : "outline"
                           }
                         >
-                          {booking.status === "confirmed"
+                          {booking.status === "CONFIRMED"
                             ? "Confirmé"
-                            : booking.status === "pending"
+                            : booking.status === "PENDING"
                               ? "En attente"
-                              : booking.status === "cancelled"
+                              : booking.status === "CANCELLED"
                                 ? "Annulé"
                                 : "Terminé"}
                         </Badge>
@@ -206,7 +206,7 @@ export default function PartnerBookingsPage() {
                         </p>
                       </div>
                       <div className="flex gap-2">
-                        {booking.status === "pending" && (
+                        {booking.status === "PENDING" && (
                           <Button
                             size="sm"
                             variant="outline"
@@ -218,7 +218,7 @@ export default function PartnerBookingsPage() {
                             Confirmer
                           </Button>
                         )}
-                        {(booking.status === "pending" || booking.status === "confirmed") && (
+                        {(booking.status === "PENDING" || booking.status === "CONFIRMED") && (
                           <Button
                             size="sm"
                             variant="outline"

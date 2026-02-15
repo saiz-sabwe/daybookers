@@ -17,6 +17,25 @@ export async function updateProfile(
     // TODO: Vérifier que l'utilisateur est authentifié et peut modifier ce profil
     // Pour l'instant, on accepte tous les utilisateurs
 
+    // Validation du téléphone si fourni
+    if (data.phone !== undefined) {
+      if (!data.phone || data.phone.length < 10) {
+        return {
+          success: false,
+          error: "Le numéro de téléphone doit contenir au moins 10 chiffres",
+        };
+      }
+      
+      // Vérifier format de base (chiffres, espaces, +, -, parenthèses)
+      const phoneRegex = /^[\d\s\+\-\(\)]+$/;
+      if (!phoneRegex.test(data.phone)) {
+        return {
+          success: false,
+          error: "Le format du numéro de téléphone n'est pas valide",
+        };
+      }
+    }
+
     await db.user.update({
       where: { id: userId },
       data: {

@@ -28,6 +28,11 @@ export function TimeSlotSelector({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {slots.map((slot) => {
           const isSelected = selectedSlotId === slot.id;
+          const isClassicRental = slot.startTime === slot.endTime && slot.startTime === "12:00";
+          const timeDisplay = isClassicRental 
+            ? `${slot.startTime} - ${slot.endTime} (24h)` 
+            : `${slot.startTime} - ${slot.endTime}`;
+          
           return (
             <Button
               key={slot.id}
@@ -50,7 +55,7 @@ export function TimeSlotSelector({
                   isSelected ? "text-white/90" : "text-gray-500"
                 )}
               >
-                {slot.startTime} - {slot.endTime}
+                {timeDisplay}
               </span>
             </Button>
           );

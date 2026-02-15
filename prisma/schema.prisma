@@ -103,6 +103,7 @@ model User {
   email         String
   emailVerified Boolean    @default(false)
   image         String?
+  phone         String?    // Sera rendu obligatoire via migration progressive
   roles         UserRole[] @default([ROLE_USER])
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
@@ -123,9 +124,10 @@ model User {
   // ============================================
   // Relations Métier - Réservations & Avis
   // ============================================
-  bookings  Booking[]
-  reviews   Review[]
-  favorites Favorite[]
+  bookings   Booking[]
+  reviews    Review[]
+  favorites  Favorite[]
+  complaints Complaint[]
 
   // ============================================
   // Relations Métier - Promotions & Notifications
@@ -269,6 +271,7 @@ model Hotel {
   pricingRules         PricingRule[]
   cancellationPolicies CancellationPolicy[]
   images               String[] // URLs des images
+  complaints           Complaint[]
 
   // Relations avec les managers et réceptionnistes
   managers      HotelManager[]
@@ -439,6 +442,7 @@ model Booking {
   promotionUsage     PromotionUsage?
   bookingOptions     BookingOption[]
   modifications      BookingModification[]
+  complaints         Complaint[]
 
   @@index([userId])
   @@index([hotelId])
@@ -819,5 +823,54 @@ model BookingModification {
   booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
   @@index([bookingId])
+  @@index([createdAt])
+}
+
+// ============================================
+// complaints.prisma
+// ============================================
+
+// Modèles gestion des plaintes
+
+enum ComplaintStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum ComplaintPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model Complaint {
+  id          String            @id @default(cuid())
+  hotelId     String
+  bookingId   String?
+  userId      String // Réceptionniste qui a enregistré la plainte
+  guestName   String
+  guestEmail  String?
+  guestPhone  String?
+  title       String
+  description String            @db.Text
+  status      ComplaintStatus   @default(OPEN)
+  priority    ComplaintPriority @default(MEDIUM)
+  resolution  String?           @db.Text
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  resolvedAt  DateTime?
+
+  hotel   Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  booking Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  user    User     @relation(fields: [userId], references: [id])
+
+  @@index([hotelId])
+  @@index([bookingId])
+  @@index([userId])
+  @@index([status])
+  @@index([priority])
   @@index([createdAt])
 }

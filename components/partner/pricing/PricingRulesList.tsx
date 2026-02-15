@@ -12,6 +12,39 @@ import { useToast } from "@/hooks/use-toast";
 import { PricingRuleForm } from "./PricingRuleForm";
 import type { PricingRuleData } from "@/app/actions/partner/pricing-rules/get";
 
+const ruleTypeLabels: Record<string, { label: string; color: string; description: string }> = {
+  WEEKEND: { 
+    label: "Week-end", 
+    color: "bg-blue-100 text-blue-800", 
+    description: "Supplément appliqué les week-ends (vendredi, samedi, dimanche)" 
+  },
+  SEASON: { 
+    label: "Saison", 
+    color: "bg-purple-100 text-purple-800", 
+    description: "Tarification selon la haute/basse saison" 
+  },
+  HOLIDAY: { 
+    label: "Jour férié", 
+    color: "bg-red-100 text-red-800", 
+    description: "Prix spécial pour les jours fériés et événements" 
+  },
+  LAST_MINUTE: { 
+    label: "Dernière minute", 
+    color: "bg-green-100 text-green-800", 
+    description: "Réduction pour les réservations à courte échéance" 
+  },
+  ADVANCE_BOOKING: { 
+    label: "Réservation anticipée", 
+    color: "bg-orange-100 text-orange-800", 
+    description: "Réduction pour les réservations longtemps à l'avance" 
+  },
+  CUSTOM: { 
+    label: "Personnalisée", 
+    color: "bg-gray-100 text-gray-800", 
+    description: "Règle personnalisée avec vos propres paramètres" 
+  },
+};
+
 interface PricingRulesListProps {
   hotelId: string | null;
   roomTypeId: string | null;
@@ -146,35 +179,46 @@ export function PricingRulesList({
           </Card>
         ) : (
           <div className="space-y-3">
-            {rules.map((rule) => (
-              <Card key={rule.id}>
+            {rules.map((rule) => {
+              const typeInfo = ruleTypeLabels[rule.type] || ruleTypeLabels.CUSTOM;
+              return (
+              <Card key={rule.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="pt-6">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-semibold">{rule.name}</h3>
-                        <Badge variant={rule.active ? "default" : "secondary"}>
-                          {rule.type}
+                        <h3 className="font-semibold text-lg">{rule.name}</h3>
+                        <Badge className={typeInfo.color}>
+                          {typeInfo.label}
                         </Badge>
                         {!rule.active && (
-                          <Badge variant="outline">Inactive</Badge>
+                          <Badge variant="outline" className="bg-gray-100">Inactive</Badge>
                         )}
                       </div>
+                      <p className="text-xs text-gray-500 mb-2 italic">{typeInfo.description}</p>
                       {rule.description && (
-                        <p className="text-sm text-gray-600 mb-2">{rule.description}</p>
+                        <p className="text-sm text-gray-600 mb-3">{rule.description}</p>
                       )}
-                      <div className="flex flex-wrap gap-4 text-sm text-gray-500">
+                      <div className="flex flex-wrap gap-4 text-sm">
                         {rule.multiplier && (
-                          <span>Multiplicateur: {rule.multiplier}x</span>
+                          <span className="text-blue-700 font-medium">
+                            ✕ Multiplicateur: {rule.multiplier}x
+                          </span>
                         )}
                         {rule.fixedAmount && (
-                          <span>Montant fixe: +{rule.fixedAmount} USD</span>
+                          <span className="text-green-700 font-medium">
+                            + Montant fixe: {rule.fixedAmount} USD
+                          </span>
                         )}
                         {rule.percentage && (
-                          <span>Pourcentage: +{rule.percentage}%</span>
+                          <span className="text-purple-700 font-medium">
+                            % Pourcentage: {rule.percentage > 0 ? '+' : ''}{rule.percentage}%
+                          </span>
                         )}
                         {rule.priority !== 0 && (
-                          <span>Priorité: {rule.priority}</span>
+                          <span className="text-gray-600">
+                            Priorité: {rule.priority}
+                          </span>
                         )}
                       </div>
                     </div>
@@ -208,7 +252,8 @@ export function PricingRulesList({
                   </div>
                 </CardContent>
               </Card>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

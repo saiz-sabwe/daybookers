@@ -32,7 +32,7 @@ export function HotelCard({
     return (
         <div className="group bg-white rounded-xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 border border-gray-100 flex flex-col h-full">
             {/* Image Container */}
-            <div className="relative h-48 overflow-hidden">
+            <Link href={`/hotels/${id}`} className="relative h-48 overflow-hidden block">
                 <img
                     src={image}
                     alt={name}
@@ -46,13 +46,15 @@ export function HotelCard({
                 <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded text-xs font-bold text-gray-800 flex items-center gap-1">
                     {stars} <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
                 </div>
-            </div>
+            </Link>
 
             {/* Content */}
             <div className="p-4 flex flex-col flex-1">
                 <div className="flex justify-between items-start mb-2">
                     <div>
-                        <h3 className="font-bold text-lg text-gray-900 leading-tight group-hover:text-client-primary-600 transition-colors">{name}</h3>
+                        <Link href={`/hotels/${id}`}>
+                            <h3 className="font-bold text-lg text-gray-900 leading-tight group-hover:text-client-primary-600 transition-colors cursor-pointer">{name}</h3>
+                        </Link>
                         <p className="text-sm text-gray-500">{city}</p>
                     </div>
                     <div className="flex flex-col items-end">
@@ -77,7 +79,7 @@ export function HotelCard({
                     )}
                 </div>
 
-                <div className="mt-auto pt-4 border-t border-gray-100 flex justify-between items-end">
+                <div className="mt-auto pt-4 border-t border-gray-100">
                     <div className="flex flex-col">
                         <span className="text-xs text-gray-500">À partir de</span>
                         <div className="flex items-baseline gap-2">
@@ -85,13 +87,9 @@ export function HotelCard({
                             {originalPrice && (
                                 <span className="text-sm text-gray-400 line-through">${originalPrice}</span>
                             )}
+                            <span className="text-xs text-gray-500">/ créneau</span>
                         </div>
                     </div>
-                    <Button asChild className="bg-client-primary-500 hover:bg-client-primary-600 text-white">
-                        <Link href={`/hotels/${id}`}>
-                            Réserver
-                        </Link>
-                    </Button>
                 </div>
             </div>
         </div>
