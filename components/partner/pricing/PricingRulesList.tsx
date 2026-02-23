@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
+import { Plus, Edit, Trash2, ToggleLeft, ToggleRight, Loader2 } from "lucide-react";
 import { getPricingRules } from "@/app/actions/partner/pricing-rules/get";
 import { deletePricingRule } from "@/app/actions/partner/pricing-rules/delete";
 import { updatePricingRule } from "@/app/actions/partner/pricing-rules/update";
@@ -61,6 +61,8 @@ export function PricingRulesList({
   const [isLoading, setIsLoading] = useState(false);
   const [editingRule, setEditingRule] = useState<PricingRuleData | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [deletingRuleId, setDeletingRuleId] = useState<string | null>(null);
+  const [togglingRuleId, setTogglingRuleId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchRules = async () => {
@@ -83,43 +85,53 @@ export function PricingRulesList({
       return;
     }
 
-    const result = await deletePricingRule(userId, ruleId);
-    if (result.success) {
-      toast({
-        title: "Règle supprimée",
-        description: "La règle a été supprimée avec succès",
-        variant: "default",
-      });
-      setRules((prev) => prev.filter((r) => r.id !== ruleId));
-    } else {
-      toast({
-        title: "Erreur",
-        description: result.error || "Impossible de supprimer la règle",
-        variant: "destructive",
-      });
+    setDeletingRuleId(ruleId);
+    try {
+      const result = await deletePricingRule(userId, ruleId);
+      if (result.success) {
+        toast({
+          title: "Règle supprimée",
+          description: "La règle a été supprimée avec succès",
+          variant: "default",
+        });
+        setRules((prev) => prev.filter((r) => r.id !== ruleId));
+      } else {
+        toast({
+          title: "Erreur",
+          description: result.error || "Impossible de supprimer la règle",
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setDeletingRuleId(null);
     }
   };
 
   const handleToggleActive = async (rule: PricingRuleData) => {
-    const result = await updatePricingRule(userId, rule.id, {
-      active: !rule.active,
-    });
+    setTogglingRuleId(rule.id);
+    try {
+      const result = await updatePricingRule(userId, rule.id, {
+        active: !rule.active,
+      });
 
-    if (result.success) {
-      setRules((prev) =>
-        prev.map((r) => (r.id === rule.id ? { ...r, active: !r.active } : r))
-      );
-      toast({
-        title: rule.active ? "Règle désactivée" : "Règle activée",
-        description: `La règle "${rule.name}" a été ${rule.active ? "désactivée" : "activée"}`,
-        variant: "default",
-      });
-    } else {
-      toast({
-        title: "Erreur",
-        description: result.error || "Impossible de mettre à jour la règle",
-        variant: "destructive",
-      });
+      if (result.success) {
+        setRules((prev) =>
+          prev.map((r) => (r.id === rule.id ? { ...r, active: !r.active } : r))
+        );
+        toast({
+          title: rule.active ? "Règle désactivée" : "Règle activée",
+          description: `La règle "${rule.name}" a été ${rule.active ? "désactivée" : "activée"}`,
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "Erreur",
+          description: result.error || "Impossible de mettre à jour la règle",
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setTogglingRuleId(null);
     }
   };
 
@@ -227,8 +239,12 @@ export function PricingRulesList({
                         size="sm"
                         variant="ghost"
                         onClick={() => handleToggleActive(rule)}
+                        disabled={togglingRuleId === rule.id}
+                        title={rule.active ? "Désactiver" : "Activer"}
                       >
-                        {rule.active ? (
+                        {togglingRuleId === rule.id ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : rule.active ? (
                           <ToggleRight className="w-5 h-5" />
                         ) : (
                           <ToggleLeft className="w-5 h-5" />
@@ -238,6 +254,7 @@ export function PricingRulesList({
                         size="sm"
                         variant="ghost"
                         onClick={() => setEditingRule(rule)}
+                        disabled={deletingRuleId === rule.id || togglingRuleId === rule.id}
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
@@ -245,8 +262,14 @@ export function PricingRulesList({
                         size="sm"
                         variant="ghost"
                         onClick={() => handleDelete(rule.id)}
+                        disabled={deletingRuleId === rule.id}
+                        title="Supprimer"
                       >
-                        <Trash2 className="w-4 h-4 text-red-500" />
+                        {deletingRuleId === rule.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin text-red-500" />
+                        ) : (
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        )}
                       </Button>
                     </div>
                   </div>

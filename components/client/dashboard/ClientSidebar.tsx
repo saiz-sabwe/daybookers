@@ -88,7 +88,7 @@ export function ClientSidebar({ isOpen = true, onClose }: ClientSidebarProps) {
       
       <aside
         className={cn(
-          "fixed left-0 top-16 z-50 h-[calc(100vh-4rem)] w-64 border-r border-gray-200 bg-white transition-transform duration-300",
+          "fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] w-64 border-r border-gray-200 bg-white transition-transform duration-300",
           // Sur mobile: masqué par défaut, visible si isOpen
           "transform -translate-x-full lg:translate-x-0",
           isOpen && "translate-x-0"

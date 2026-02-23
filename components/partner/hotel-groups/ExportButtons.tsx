@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { exportGroupDataAsCSV } from "@/app/actions/partner/hotel-groups/export-data";
 
@@ -14,8 +15,10 @@ interface ExportButtonsProps {
 
 export function ExportButtons({ userId, groupId, startDate, endDate }: ExportButtonsProps) {
   const { toast } = useToast();
+  const [isExporting, setIsExporting] = useState(false);
 
   const handleExportCSV = async () => {
+    setIsExporting(true);
     try {
       const result = await exportGroupDataAsCSV(userId, groupId, startDate, endDate);
 
@@ -49,14 +52,25 @@ export function ExportButtons({ userId, groupId, startDate, endDate }: ExportBut
         description: "Une erreur est survenue lors de l'export",
         variant: "destructive",
       });
+    } finally {
+      setIsExporting(false);
     }
   };
 
   return (
     <div className="flex gap-2">
-      <Button onClick={handleExportCSV} variant="outline">
-        <Download className="w-4 h-4 mr-2" />
-        Exporter CSV
+      <Button onClick={handleExportCSV} variant="outline" disabled={isExporting}>
+        {isExporting ? (
+          <>
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            Export en cours...
+          </>
+        ) : (
+          <>
+            <Download className="w-4 h-4 mr-2" />
+            Exporter CSV
+          </>
+        )}
       </Button>
     </div>
   );

@@ -1,9 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Bell, Settings, LogOut, Home, User } from "lucide-react";
+import { Bell, Settings, LogOut, Home, User, Loader2 } from "lucide-react";
 import { authClient } from "@/lib/better-auth-client";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -16,19 +17,25 @@ export function ClientNavbar() {
   const activeTab = searchParams.get("tab") || "bookings";
   const { data: session } = authClient.useSession();
   const user = session?.user;
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const handleSignOut = async () => {
-    await authClient.signOut({
-      fetchOptions: {
-        onSuccess: () => {
-          router.push("/");
+    setIsSigningOut(true);
+    try {
+      await authClient.signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            router.push("/");
+          },
         },
-      },
-    });
+      });
+    } finally {
+      setIsSigningOut(false);
+    }
   };
 
   return (
-    <nav className="bg-white border-b border-gray-200 shadow-sm">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo & User Profile */}
@@ -67,9 +74,22 @@ export function ClientNavbar() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-red-600">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Déconnexion
+                <DropdownMenuItem
+                  onClick={handleSignOut}
+                  disabled={isSigningOut}
+                  className="cursor-pointer text-red-600"
+                >
+                  {isSigningOut ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Déconnexion...
+                    </>
+                  ) : (
+                    <>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Déconnexion
+                    </>
+                  )}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

@@ -8,27 +8,30 @@ interface ToastOptions {
   title?: string;
   description?: string;
   variant?: ToastVariant;
+  /** Durée d'affichage en ms (ex: 1500 = 1,5 s). Par défaut celle du Toaster. */
+  duration?: number;
 }
 
 export function useToast() {
-  const toast = ({ title, description, variant = "default" }: ToastOptions) => {
+  const toast = ({ title, description, variant = "default", duration }: ToastOptions) => {
     const message = title && description ? `${title}: ${description}` : title || description || "";
+    const options = duration !== undefined ? { duration } : undefined;
 
     switch (variant) {
       case "success":
-        sonnerToast.success(message);
+        sonnerToast.success(message, options);
         break;
       case "destructive":
-        sonnerToast.error(message);
+        sonnerToast.error(message, options);
         break;
       case "warning":
-        sonnerToast.warning(message);
+        sonnerToast.warning(message, options);
         break;
       case "info":
-        sonnerToast.info(message);
+        sonnerToast.info(message, options);
         break;
       default:
-        sonnerToast(message);
+        sonnerToast(message, options);
     }
   };
 

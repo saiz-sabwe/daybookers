@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/better-auth-client";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -32,8 +32,18 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+
+  // URL de retour après connexion (ex: page de réservation)
+  const callbackUrl = searchParams.get("callbackUrl");
+  const safeRedirectUrl =
+    callbackUrl &&
+    callbackUrl.startsWith("/") &&
+    !callbackUrl.startsWith("//")
+      ? callbackUrl
+      : "/dashboard";
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -48,26 +58,40 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await authClient.signIn.email({
+      const result = await authClient.signIn.email({
         email: data.email,
         password: data.password,
         rememberMe: data.remember ?? true,
       });
 
+      // Better Auth retourne { data, error } sans lancer d'exception en cas d'échec
+      if (result?.error) {
+        const errorMessage =
+          result.error.message ||
+          "Email ou mot de passe incorrect. Vérifiez vos identifiants.";
+        toast({
+          title: "Connexion échouée",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        return;
+      }
+
       toast({
         title: "Connexion réussie",
         description: "Vous êtes maintenant connecté",
         variant: "success",
+        duration: 1500,
       });
-      
-      // Utiliser window.location pour forcer un rechargement complet de la page
-      // Cela garantit que la session sera disponible lors du chargement du dashboard
-      window.location.href = "/dashboard";
+
+      // Rediriger vers la page d'origine (ex: réservation) ou le dashboard
+      window.location.href = safeRedirectUrl;
     } catch (error) {
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : "Une erreur est survenue. Veuillez réessayer.";
-      
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Une erreur est survenue. Veuillez réessayer.";
+
       toast({
         title: "Erreur de connexion",
         description: errorMessage,

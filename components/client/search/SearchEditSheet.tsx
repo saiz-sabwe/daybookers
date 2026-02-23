@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { format } from "date-fns";
+import { format, startOfDay } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Calendar as CalendarIcon, MapPin, Clock, Search, Edit } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -21,10 +21,16 @@ interface SearchEditSheetProps {
   initialLocation?: string | null;
 }
 
+const today = () => startOfDay(new Date());
+
 export function SearchEditSheet({ initialDate, initialTimeSlotId, initialLocation }: SearchEditSheetProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [date, setDate] = useState<Date | undefined>(initialDate ? new Date(initialDate) : new Date());
+  const [date, setDate] = useState<Date | undefined>(() => {
+    if (!initialDate) return today();
+    const d = new Date(initialDate);
+    return startOfDay(d) < today() ? today() : d;
+  });
   const [timeSlotId, setTimeSlotId] = useState<string>(initialTimeSlotId || "");
   const [location, setLocation] = useState<string>(initialLocation || "");
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
@@ -106,6 +112,7 @@ export function SearchEditSheet({ initialDate, initialTimeSlotId, initialLocatio
                   selected={date}
                   onSelect={setDate}
                   initialFocus
+                  disabled={(date) => startOfDay(date) < startOfDay(new Date())}
                 />
               </PopoverContent>
             </Popover>

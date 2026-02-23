@@ -1,9 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Bell, Settings, LogOut, Home } from "lucide-react";
+import { Bell, Settings, LogOut, Home, Loader2 } from "lucide-react";
 import { authClient } from "@/lib/better-auth-client";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -11,15 +12,21 @@ import { cn } from "@/lib/utils";
 export function PartnerNavbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const handleSignOut = async () => {
-    await authClient.signOut({
-      fetchOptions: {
-        onSuccess: () => {
-          router.push("/");
+    setIsSigningOut(true);
+    try {
+      await authClient.signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            router.push("/");
+          },
         },
-      },
-    });
+      });
+    } finally {
+      setIsSigningOut(false);
+    }
   };
 
   return (
@@ -128,8 +135,12 @@ export function PartnerNavbar() {
                 <Settings className="w-5 h-5" />
               </Link>
             </Button>
-            <Button variant="ghost" size="icon" onClick={handleSignOut}>
-              <LogOut className="w-5 h-5" />
+            <Button variant="ghost" size="icon" onClick={handleSignOut} disabled={isSigningOut}>
+              {isSigningOut ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <LogOut className="w-5 h-5" />
+              )}
             </Button>
           </div>
         </div>

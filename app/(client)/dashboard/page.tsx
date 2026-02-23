@@ -19,7 +19,7 @@ export default function DashboardPage() {
       <ClientSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
       {/* Main content */}
-      <main className="flex-1 md:ml-64 pt-16">
+      <main className="flex-1 md:ml-64">
         {/* Bouton hamburger pour mobile */}
         <div className="md:hidden fixed top-16 left-0 right-0 z-30 bg-white border-b border-gray-200 px-4 py-3">
           <Button

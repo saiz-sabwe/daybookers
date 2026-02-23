@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, Trash2, Users, DollarSign } from "lucide-react";
+import { Plus, Edit, Trash2, Users, DollarSign, Loader2 } from "lucide-react";
 import { RoomTypeForm } from "./RoomTypeForm";
 import { getRoomTypesByHotel } from "@/app/actions/partner/room-types/get";
 import { deleteRoomType } from "@/app/actions/partner/room-types/delete";
@@ -30,6 +30,7 @@ export function RoomTypesList({ hotelId, userId, initialRoomTypes }: RoomTypesLi
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingRoomType, setEditingRoomType] = useState<any | null>(null);
   const [deletingRoomType, setDeletingRoomType] = useState<any | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -70,15 +71,17 @@ export function RoomTypesList({ hotelId, userId, initialRoomTypes }: RoomTypesLi
   const handleConfirmDelete = async () => {
     if (!deletingRoomType) return;
 
+    setIsDeleting(true);
     try {
       const result = await deleteRoomType(userId, deletingRoomType.id);
-      
+
       if (result.success) {
         toast({
           title: "Type de chambre supprimé",
           description: "Le type de chambre a été supprimé avec succès",
           variant: "default",
         });
+        setDeletingRoomType(null);
         refreshRoomTypes();
       } else {
         toast({
@@ -94,6 +97,7 @@ export function RoomTypesList({ hotelId, userId, initialRoomTypes }: RoomTypesLi
         variant: "destructive",
       });
     } finally {
+      setIsDeleting(false);
       setDeletingRoomType(null);
     }
   };
@@ -220,12 +224,20 @@ export function RoomTypesList({ hotelId, userId, initialRoomTypes }: RoomTypesLi
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>Annuler</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmDelete}
+              disabled={isDeleting}
               className="bg-red-600 hover:bg-red-700"
             >
-              Supprimer
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Suppression...
+                </>
+              ) : (
+                "Supprimer"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

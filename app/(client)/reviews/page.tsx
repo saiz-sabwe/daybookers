@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -19,8 +19,8 @@ import { RatingInput } from "@/components/shared/forms/RatingInput";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, CheckCircle } from "lucide-react";
 import { authClient } from "@/lib/better-auth-client";
-import { useState, useEffect } from "react";
 import { getHotels } from "@/app/actions/hotels/get";
+import { ReviewFormSkeleton } from "@/components/shared/skeletons/ReviewFormSkeleton";
 import { Hotel } from "@/types";
 import { createReview } from "@/app/actions/reviews/create";
 import {
@@ -45,9 +45,12 @@ export default function ReviewsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [hotels, setHotels] = useState<Hotel[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    getHotels().then(setHotels);
+    getHotels()
+      .then(setHotels)
+      .finally(() => setIsLoading(false));
   }, []);
 
   const form = useForm<ReviewFormValues>({
@@ -117,6 +120,16 @@ export default function ReviewsPage() {
       setIsSubmitting(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-100 py-12">
+        <div className="container mx-auto px-4 max-w-3xl">
+          <ReviewFormSkeleton />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 py-12">

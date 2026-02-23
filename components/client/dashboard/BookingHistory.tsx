@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { BookingCard } from "@/components/client/booking/BookingCard";
 import { EmptyState } from "@/components/shared/utils/EmptyState";
+import { BookingHistorySkeleton } from "@/components/shared/skeletons/BookingCardSkeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
@@ -29,13 +30,19 @@ export function BookingHistory({ bookings: initialBookings, hotels: initialHotel
   const [bookings, setBookings] = useState<Booking[]>(initialBookings || []);
   const [hotels, setHotels] = useState<Hotel[]>(initialHotels || []);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isLoading, setIsLoading] = useState(!initialBookings);
 
   useEffect(() => {
-    if (!initialBookings) {
-      Promise.all([getBookings(session?.user?.id), getHotels()]).then(([bookingsData, hotelsData]) => {
-        setBookings(bookingsData);
-        setHotels(hotelsData);
-      });
+    if (!initialBookings && session?.user?.id) {
+      setIsLoading(true);
+      Promise.all([getBookings(session.user.id), getHotels()])
+        .then(([bookingsData, hotelsData]) => {
+          setBookings(bookingsData);
+          setHotels(hotelsData);
+        })
+        .finally(() => setIsLoading(false));
+    } else if (initialBookings) {
+      setIsLoading(false);
     }
   }, [session?.user?.id, initialBookings]);
 
@@ -109,6 +116,18 @@ export function BookingHistory({ bookings: initialBookings, hotels: initialHotel
     setCancelDialogOpen(false);
     setBookingToCancel(null);
   };
+
+  if (isLoading) {
+    return (
+      <div>
+        <div className="mb-6">
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">Mes réservations</h2>
+          <p className="text-gray-600">Chargement...</p>
+        </div>
+        <BookingHistorySkeleton />
+      </div>
+    );
+  }
 
   return (
     <div>

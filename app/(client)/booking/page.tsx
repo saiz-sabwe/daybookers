@@ -28,6 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { authClient } from "@/lib/better-auth-client";
 import { createBooking } from "@/app/actions/bookings/create";
+import { BookingPageSkeleton } from "@/components/shared/skeletons/BookingPageSkeleton";
 
 const guestInfoSchema = z.object({
   firstName: z.string().min(2, "Le prénom doit contenir au moins 2 caractères"),
@@ -59,9 +60,11 @@ export default function BookingPage() {
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [roomTypes, setRoomTypes] = useState<any[]>([]);
   const [selectedRoomTypeId, setSelectedRoomTypeId] = useState<string | null>(roomTypeIdFromUrl);
+  const [isHotelLoading, setIsHotelLoading] = useState(!!hotelId);
 
   useEffect(() => {
     if (hotelId) {
+      setIsHotelLoading(true);
       Promise.all([
         getHotelById(hotelId),
         getTimeSlots(),
@@ -105,7 +108,9 @@ export default function BookingPage() {
         } else if (!selectedRoomTypeId && roomTypesData.length > 0) {
           setSelectedRoomTypeId(roomTypesData[0].id);
         }
-      });
+      }).finally(() => setIsHotelLoading(false));
+    } else {
+      setIsHotelLoading(false);
     }
   }, [hotelId, roomTypeIdFromUrl, timeSlotIdFromUrl]);
 
@@ -131,12 +136,19 @@ export default function BookingPage() {
     },
   });
 
-  // Vérifier la session et rediriger si non connecté
+  // Construire l'URL de retour pour y rediriger après connexion
+  const buildCallbackUrl = () => {
+    const query = searchParams.toString();
+    return `/booking${query ? `?${query}` : ""}`;
+  };
+
+  // Vérifier la session et rediriger si non connecté (en conservant l'URL de réservation)
   useEffect(() => {
     if (!isSessionPending && !session?.user?.id) {
-      router.push("/login");
+      const callbackUrl = encodeURIComponent(buildCallbackUrl());
+      router.push(`/login?callbackUrl=${callbackUrl}`);
     }
-  }, [session, isSessionPending, router]);
+  }, [session, isSessionPending, router, searchParams]);
 
   // Afficher un loader pendant la vérification de la session
   if (isSessionPending) {
@@ -150,6 +162,10 @@ export default function BookingPage() {
   // Rediriger si non connecté (sécurité supplémentaire)
   if (!session?.user?.id) {
     return null;
+  }
+
+  if (isHotelLoading) {
+    return <BookingPageSkeleton />;
   }
 
   if (!hotel) {
@@ -212,7 +228,8 @@ export default function BookingPage() {
           description: "Vous devez être connecté pour réserver",
           variant: "destructive",
         });
-        router.push("/login");
+        const callbackUrl = encodeURIComponent(buildCallbackUrl());
+        router.push(`/login?callbackUrl=${callbackUrl}`);
         return;
       }
 

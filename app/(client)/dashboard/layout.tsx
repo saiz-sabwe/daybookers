@@ -12,7 +12,7 @@ export default function DashboardLayout({
     <ProtectedRoute requiredRole="client">
       <div className="theme-client min-h-screen bg-gray-50">
         <ClientNavbar />
-        {children}
+        <div className="pt-16">{children}</div>
       </div>
     </ProtectedRoute>
   );

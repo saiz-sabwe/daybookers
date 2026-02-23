@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { format } from "date-fns";
+import { format, startOfDay } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Calendar as CalendarIcon, MapPin, Clock, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -161,6 +161,7 @@ export function SearchForm() {
                             onSelect={setDate}
                             initialFocus
                             className="bg-white"
+                            disabled={(date) => startOfDay(date) < startOfDay(new Date())}
                         />
                     </PopoverContent>
                 </Popover>

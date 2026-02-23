@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Heart, Star, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { FavoritesListSkeleton } from "@/components/shared/skeletons/FavoriteCardSkeleton";
 import { EmptyState } from "@/components/shared/utils/EmptyState";
 import { Hotel } from "@/types";
 import { HeartOff } from "lucide-react";
@@ -17,12 +18,20 @@ export function FavoritesList({ favoriteHotels: initialFavoriteHotels }: { favor
   const { data: session } = authClient.useSession();
   const { toast } = useToast();
   const [favoriteHotels, setFavoriteHotels] = useState<Hotel[]>(initialFavoriteHotels || []);
+  const [isLoading, setIsLoading] = useState(!initialFavoriteHotels);
 
   useEffect(() => {
     if (!initialFavoriteHotels && session?.user?.id) {
-      getFavorites(session.user.id).then((hotels) => {
-        setFavoriteHotels(hotels);
-      });
+      setIsLoading(true);
+      getFavorites(session.user.id)
+        .then((hotels) => {
+          setFavoriteHotels(hotels);
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    } else if (initialFavoriteHotels) {
+      setIsLoading(false);
     }
   }, [session?.user?.id, initialFavoriteHotels]);
 
@@ -47,31 +56,26 @@ export function FavoritesList({ favoriteHotels: initialFavoriteHotels }: { favor
     }
   };
 
-  if (favoriteHotels.length === 0) {
-    return (
-      <div>
-        <div className="mb-6">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Mes favoris</h2>
-          <p className="text-gray-600">Vos hôtels favoris apparaîtront ici</p>
-        </div>
+  return (
+    <div>
+      <div className="mb-6">
+        <h2 className="text-3xl font-bold text-gray-900 mb-2">Mes favoris</h2>
+        <p className="text-gray-600">
+          {isLoading ? "Chargement..." : favoriteHotels.length === 0 ? "Vos hôtels favoris apparaîtront ici" : `Vos hôtels favoris (${favoriteHotels.length})`}
+        </p>
+      </div>
+
+      {isLoading ? (
+        <FavoritesListSkeleton />
+      ) : favoriteHotels.length === 0 ? (
         <EmptyState
           icon={Heart}
           title="Aucun favori"
           description="Commencez à ajouter des hôtels à vos favoris pour les retrouver facilement."
           actionLabel="Explorer les hôtels"
-          onAction={() => window.location.href = "/hotels"}
+          onAction={() => (window.location.href = "/hotels")}
         />
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <div className="mb-6">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">Mes favoris</h2>
-        <p className="text-gray-600">Vos hôtels favoris ({favoriteHotels.length})</p>
-      </div>
-
+      ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {favoriteHotels.map((hotel) => (
           <div
@@ -133,6 +137,7 @@ export function FavoritesList({ favoriteHotels: initialFavoriteHotels }: { favor
           </div>
         ))}
       </div>
+      )}
     </div>
   );
 }
