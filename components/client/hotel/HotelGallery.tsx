@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 interface HotelGalleryProps {
@@ -14,10 +15,13 @@ export function HotelGallery({ images }: HotelGalleryProps) {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 h-[400px] md:h-[500px]">
             {/* Main Image */}
             <div className="md:col-span-3 h-full relative group cursor-pointer overflow-hidden rounded-xl">
-                <img
+                <Image
                     src={images[selectedImage]}
                     alt="Hotel Main View"
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    sizes="(max-width: 768px) 100vw, 75vw"
+                    priority
                 />
             </div>
 
@@ -32,10 +36,12 @@ export function HotelGallery({ images }: HotelGalleryProps) {
                         )}
                         onClick={() => setSelectedImage(index)}
                     >
-                        <img
+                        <Image
                             src={image}
                             alt={`Thumbnail ${index + 1}`}
-                            className="w-full h-full object-cover hover:opacity-80 transition-opacity"
+                            fill
+                            className="object-cover hover:opacity-80 transition-opacity"
+                            sizes="25vw"
                         />
                     </div>
                 ))}

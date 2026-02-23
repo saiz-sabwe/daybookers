@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Star, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -33,10 +34,12 @@ export function HotelCard({
         <div className="group bg-white rounded-xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 border border-gray-100 flex flex-col h-full">
             {/* Image Container */}
             <Link href={`/hotels/${id}`} className="relative h-48 overflow-hidden block">
-                <img
+                <Image
                     src={image}
                     alt={name}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 />
                 {discount > 0 && (
                     <div className="absolute top-3 left-3 bg-client-primary-500 text-white text-xs font-bold px-2 py-1 rounded">
