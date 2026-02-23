@@ -172,10 +172,10 @@ export function BookingHistory({ bookings: initialBookings, hotels: initialHotel
         <p className="text-gray-600">Gérez toutes vos réservations en un seul endroit</p>
       </div>
 
-      <Tabs defaultValue="pending" className="w-full">
+      <Tabs defaultValue="active" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="pending">En attente ({pendingBookings.length})</TabsTrigger>
           <TabsTrigger value="active">Actives ({activeBookings.length})</TabsTrigger>
+          <TabsTrigger value="pending">En attente ({pendingBookings.length})</TabsTrigger>
           <TabsTrigger value="past">Passées ({pastBookings.length})</TabsTrigger>
           <TabsTrigger value="cancelled">Annulées ({cancelled.length})</TabsTrigger>
         </TabsList>
