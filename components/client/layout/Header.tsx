@@ -1,8 +1,21 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Menu, User, Globe, Phone, LogOut, LayoutDashboard, Heart } from "lucide-react";
+import {
+  BookOpen,
+  BriefcaseBusiness,
+  Info,
+  Loader2,
+  LogOut,
+  LayoutDashboard,
+  Heart,
+  Menu,
+  Newspaper,
+  Phone,
+  User,
+} from "lucide-react";
 import { authClient } from "@/lib/better-auth-client";
 import {
   DropdownMenu,
@@ -13,19 +26,31 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+const publicLinks = [
+  { href: "/a-propos", label: "A propos" },
+  { href: "/blog", label: "Blog" },
+  { href: "/contact", label: "Contact", icon: Phone },
+];
+
 export function Header() {
   const { data: session, isPending } = authClient.useSession();
   const user = session?.user;
   const isAuthenticated = !!user;
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const handleSignOut = async () => {
-    await authClient.signOut({
-      fetchOptions: {
-        onSuccess: () => {
-          window.location.href = "/";
+    setIsSigningOut(true);
+    try {
+      await authClient.signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            window.location.href = "/";
+          },
         },
-      },
-    });
+      });
+    } finally {
+      setIsSigningOut(false);
+    }
   };
 
   return (
@@ -40,18 +65,20 @@ export function Header() {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-6">
-          {/* TODO: Lien Contact à implémenter
-          <Link href="/contact" className="text-sm font-medium text-gray-600 hover:text-black flex items-center gap-2">
-            <Phone className="w-4 h-4" />
-            <span className="hidden lg:inline">Contact</span>
-          </Link>
-          */}
-          {/* TODO: Sélecteur de langue à implémenter
-          <button className="text-sm font-medium text-gray-600 hover:text-black flex items-center gap-2">
-            <Globe className="w-4 h-4" />
-            <span className="hidden lg:inline">FR</span>
-          </button>
-          */}
+          {publicLinks.map((link) => {
+            const Icon = link.icon;
+
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-sm font-medium text-gray-600 hover:text-black flex items-center gap-2"
+              >
+                {Icon ? <Icon className="w-4 h-4" /> : null}
+                <span>{link.label}</span>
+              </Link>
+            );
+          })}
           <div className="h-6 w-px bg-gray-200 mx-2" />
           
           {isPending ? (
@@ -98,9 +125,22 @@ export function Header() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut} className="text-red-600 cursor-pointer">
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Déconnexion
+                <DropdownMenuItem
+                  onClick={handleSignOut}
+                  disabled={isSigningOut}
+                  className="text-red-600 cursor-pointer"
+                >
+                  {isSigningOut ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Déconnexion...
+                    </>
+                  ) : (
+                    <>
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Déconnexion
+                    </>
+                  )}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -155,9 +195,22 @@ export function Header() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut} className="text-red-600 cursor-pointer">
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Déconnexion
+                <DropdownMenuItem
+                  onClick={handleSignOut}
+                  disabled={isSigningOut}
+                  className="text-red-600 cursor-pointer"
+                >
+                  {isSigningOut ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Déconnexion...
+                    </>
+                  ) : (
+                    <>
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Déconnexion
+                    </>
+                  )}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -166,9 +219,53 @@ export function Header() {
               <User className="w-5 h-5" />
             </Link>
           )}
-          <Button variant="ghost" size="icon">
-            <Menu className="w-6 h-6" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="w-6 h-6" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Decouvrir DayBooker</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/a-propos" className="flex items-center gap-2 cursor-pointer">
+                  <Info className="h-4 w-4" />
+                  A propos
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/presse" className="flex items-center gap-2 cursor-pointer">
+                  <Newspaper className="h-4 w-4" />
+                  Presse
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/carrieres" className="flex items-center gap-2 cursor-pointer">
+                  <BriefcaseBusiness className="h-4 w-4" />
+                  Carrieres
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/blog" className="flex items-center gap-2 cursor-pointer">
+                  <BookOpen className="h-4 w-4" />
+                  Blog
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/contact" className="flex items-center gap-2 cursor-pointer">
+                  <Phone className="h-4 w-4" />
+                  Contact
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/hotels" className="flex items-center gap-2 cursor-pointer">
+                  Reserver
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>
