@@ -20,6 +20,7 @@ import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { signup } from "@/app/actions/auth/signup";
 import { useToast } from "@/hooks/use-toast";
+import { useGlobalLoading } from "@/components/shared/GlobalLoadingProvider";
 
 const registerSchema = z.object({
   name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
@@ -40,6 +41,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { runWithLoading, startLoading } = useGlobalLoading();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<RegisterFormValues>({
@@ -58,12 +60,14 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      const result = await signup({
-        name: data.name,
-        email: data.email,
-        password: data.password,
-        phone: data.phone,
-      });
+      const result = await runWithLoading(() =>
+        signup({
+          name: data.name,
+          email: data.email,
+          password: data.password,
+          phone: data.phone,
+        }),
+      );
 
       if (!result.success) {
         toast({
@@ -80,6 +84,7 @@ export default function RegisterPage() {
         variant: "success",
       });
 
+      startLoading();
       router.push("/login");
     } catch (error) {
       const errorMessage =
@@ -98,9 +103,9 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+    <div className="bg-gray-100 px-4 py-6 sm:py-8">
+      <div className="mx-auto w-full max-w-md">
+        <h2 className="text-center text-2xl font-extrabold text-gray-900 sm:text-3xl">
           Créer un compte
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
@@ -111,8 +116,8 @@ export default function RegisterPage() {
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow-lg sm:rounded-lg sm:px-10 border border-gray-200">
+      <div className="mx-auto mt-5 w-full max-w-md">
+        <div className="rounded-lg border border-gray-200 bg-white px-4 py-6 shadow-lg sm:px-8">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField

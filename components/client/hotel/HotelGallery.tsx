@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { resolveHotelImage } from "@/lib/images/hotel-image";
 
 interface HotelGalleryProps {
     images: string[];
@@ -16,7 +17,7 @@ export function HotelGallery({ images }: HotelGalleryProps) {
             {/* Main Image */}
             <div className="md:col-span-3 h-full relative group cursor-pointer overflow-hidden rounded-xl">
                 <Image
-                    src={images[selectedImage]}
+                    src={resolveHotelImage(images[selectedImage])}
                     alt="Hotel Main View"
                     fill
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -37,7 +38,7 @@ export function HotelGallery({ images }: HotelGalleryProps) {
                         onClick={() => setSelectedImage(index)}
                     >
                         <Image
-                            src={image}
+                            src={resolveHotelImage(image)}
                             alt={`Thumbnail ${index + 1}`}
                             fill
                             className="object-cover hover:opacity-80 transition-opacity"

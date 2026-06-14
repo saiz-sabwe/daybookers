@@ -32,14 +32,14 @@ const hotelSchema = z.object({
   description: z.string().optional(),
   address: z.string().min(1, "L'adresse est obligatoire"),
   city: z.string().min(1, "La ville est obligatoire"),
-  country: z.string().default("République Démocratique du Congo"),
+  country: z.string().min(1),
   zipCode: z.string().optional(),
   latitude: z.number().optional(),
   longitude: z.number().optional(),
   phone: z.string().optional(),
   email: z.string().email("Email invalide").optional().or(z.literal("")),
   website: z.string().optional(),
-  stars: z.number().min(1).max(5).default(3),
+  stars: z.number().min(1).max(5),
   groupId: z.string().optional(),
 });
 

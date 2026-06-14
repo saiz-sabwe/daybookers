@@ -1,6 +1,12 @@
 "use server";
 
 import { getApiBaseUrl } from "@/lib/api/config";
+import { setServerApiToken } from "@/lib/api/server-auth";
+import {
+  ApiUserProfile,
+  mapApiUserProfile,
+  StoredUserProfile,
+} from "@/lib/api/user-profile";
 
 export interface SigninInput {
   email: string;
@@ -10,6 +16,7 @@ export interface SigninInput {
 export interface SigninResult {
   success: boolean;
   token?: string;
+  profile?: StoredUserProfile;
   error?: string;
 }
 
@@ -44,6 +51,19 @@ function parseSigninError(payload: unknown): string {
   return messages.length > 0 ? messages.join(" ") : "Email ou mot de passe incorrect.";
 }
 
+function parseSigninProfile(payload: unknown): StoredUserProfile | null {
+  if (!payload || typeof payload !== "object") {
+    return null;
+  }
+
+  const profile = (payload as { profile?: unknown }).profile;
+  if (!profile || typeof profile !== "object") {
+    return null;
+  }
+
+  return mapApiUserProfile(profile as ApiUserProfile);
+}
+
 export async function signin(input: SigninInput): Promise<SigninResult> {
   try {
     const response = await fetch(`${getApiBaseUrl()}/api/accounts/auth/signin/`, {
@@ -73,16 +93,21 @@ export async function signin(input: SigninInput): Promise<SigninResult> {
         ? (payload as { token: string }).token
         : null;
 
-    if (!token) {
+    const profile = parseSigninProfile(payload);
+
+    if (!token || !profile) {
       return {
         success: false,
-        error: "Réponse de connexion invalide (token manquant).",
+        error: "Réponse de connexion invalide (token ou profil manquant).",
       };
     }
+
+    await setServerApiToken(token);
 
     return {
       success: true,
       token,
+      profile,
     };
   } catch (error) {
     console.error("Erreur signin Django:", error);

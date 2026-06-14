@@ -1,7 +1,7 @@
 "use server";
 
-import db from "@/lib/db";
-import { getRoomTypeById } from "@/app/actions/rooms/get";
+import { djangoFetch } from "@/lib/api/django-client";
+import { getServerApiToken } from "@/lib/api/server-auth";
 
 interface CreateBookingData {
   hotelId: string;
@@ -22,99 +22,55 @@ interface CreateBookingData {
   promotionCode?: string;
 }
 
+interface DjangoBookingRecord {
+  uuid: string;
+}
+
 export async function createBooking(
   data: CreateBookingData,
-  userId: string
 ): Promise<{ success: boolean; bookingId?: string; error?: string }> {
   try {
-    // Récupérer le type de chambre pour obtenir le prix
-    const roomType = await getRoomTypeById(data.roomTypeId);
-    if (!roomType) {
+    const token = await getServerApiToken();
+    if (!token) {
       return {
         success: false,
-        error: "Type de chambre introuvable",
+        error: "Vous devez être connecté pour réserver",
       };
     }
 
-    // Vérifier que le créneau horaire existe
-    const timeSlot = await db.timeSlot.findUnique({
-      where: { id: data.timeSlotId },
-    });
-    if (!timeSlot) {
-      return {
-        success: false,
-        error: "Créneau horaire introuvable",
-      };
-    }
-
-    // Vérifier que l'hôtel existe
-    const hotel = await db.hotel.findUnique({
-      where: { id: data.hotelId },
-    });
-    if (!hotel) {
-      return {
-        success: false,
-        error: "Hôtel introuvable",
-      };
-    }
-
-    // TODO: Vérifier la disponibilité
-
-    // Calculer le prix en fonction du créneau horaire
-    // Pour la "Location classique" (24h), on applique un multiplicateur
-    let priceMultiplier = 1;
-    if (timeSlot.name === "Location classique" || timeSlot.id === "timeslot_classic") {
-      // Pour une location de 24h, on applique un tarif équivalent à 2 créneaux
-      priceMultiplier = 2;
-    }
-    
-    const originalPrice = roomType.basePrice * priceMultiplier;
-    const discountAmount = 0; // TODO: Appliquer les promotions si promotionCode est fourni
-    const finalPrice = originalPrice - discountAmount;
-    const currency = roomType.currency;
-
-    // Convertir la date string en Date
-    const bookingDate = new Date(data.date);
-
-    // Créer le nom complet du client
     const guestName = `${data.guestInfo.firstName} ${data.guestInfo.lastName}`;
+    const guestCount = data.guestCount.adults + data.guestCount.children;
 
-    // Calculer le nombre total de clients (adults + children)
-    const totalGuestCount = data.guestCount.adults + data.guestCount.children;
-
-    // Créer la réservation dans la base de données
-    const booking = await db.booking.create({
-      data: {
-        userId,
-        hotelId: data.hotelId,
-        roomTypeId: data.roomTypeId,
-        date: bookingDate,
-        timeSlotId: data.timeSlotId,
-        guestCount: totalGuestCount,
-        status: "PENDING",
-        originalPrice,
-        discountAmount,
-        finalPrice,
-        currency,
-        guestName,
-        guestEmail: data.guestInfo.email,
-        guestPhone: data.guestInfo.phone || null,
-        specialRequests: data.specialRequests || null,
-        promotionId: null, // TODO: Gérer les promotions
-        cancellationPolicyId: null, // TODO: Gérer les politiques d'annulation
+    const booking = await djangoFetch<DjangoBookingRecord>(
+      "/api/hotels/bookings/",
+      token,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          hotel: data.hotelId,
+          room_type: data.roomTypeId,
+          time_slot: data.timeSlotId,
+          date: data.date,
+          guest_count: guestCount,
+          guest_name: guestName,
+          guest_email: data.guestInfo.email,
+          guest_phone: data.guestInfo.phone || null,
+          special_requests: data.specialRequests || null,
+        }),
       },
-    });
+    );
 
     return {
       success: true,
-      bookingId: booking.id,
+      bookingId: booking.uuid,
     };
   } catch (error) {
     console.error("Erreur lors de la création de la réservation:", error);
+    const message =
+      error instanceof Error ? error.message : "Une erreur est survenue lors de la création de la réservation";
     return {
       success: false,
-      error: "Une erreur est survenue lors de la création de la réservation",
+      error: message,
     };
   }
 }
-

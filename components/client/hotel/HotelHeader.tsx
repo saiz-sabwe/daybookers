@@ -8,6 +8,7 @@ import { Hotel } from "@/types";
 import { PartnerBadge } from "./PartnerBadge";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { resolveHotelImage } from "@/lib/images/hotel-image";
 
 interface HotelHeaderProps {
   hotel: Hotel;
@@ -40,7 +41,7 @@ export function HotelHeader({
       {hotel.images && hotel.images.length > 0 && (
         <div className="relative w-full h-[400px] md:h-[500px] rounded-lg overflow-hidden bg-gray-100">
           <Image
-            src={hotel.images[imageIndex]}
+            src={resolveHotelImage(hotel.images[imageIndex])}
             alt={hotel.name}
             fill
             className="object-cover"

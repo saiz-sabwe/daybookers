@@ -1,17 +1,18 @@
 "use server";
 
-import db from "@/lib/db";
+import { pendingDjango } from "@/lib/api/pending-django";
 
-export async function getPartnerSettings(userId: string) {
-  try {
-    const settings = await db.partnerSettings.findUnique({
-      where: { partnerId: userId },
-    });
-
-    return settings || null;
-  } catch (error) {
-    console.error("Erreur lors de la récupération des paramètres:", error);
-    return null;
-  }
+export interface PartnerSettings {
+  commissionRate: number | null;
+  payoutMethod: string | null;
+  payoutSchedule: string | null;
+  autoConfirm: boolean;
+  emailNotifications: boolean;
+  smsNotifications: boolean;
 }
 
+export async function getPartnerSettings(
+  _userId: string,
+): Promise<PartnerSettings | null> {
+  return pendingDjango(null, "partner.settings.get");
+}

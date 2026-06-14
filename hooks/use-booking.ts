@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { TimeSlot } from "@/types";
 
 interface BookingState {
@@ -22,19 +22,22 @@ export function useBooking() {
     },
   });
 
-  const updateDate = (date: Date) => {
+  const updateDate = useCallback((date: Date) => {
     setBookingState((prev) => ({ ...prev, date }));
-  };
+  }, []);
 
-  const updateTimeSlot = (timeSlot: TimeSlot) => {
+  const updateTimeSlot = useCallback((timeSlot: TimeSlot) => {
     setBookingState((prev) => ({ ...prev, timeSlot }));
-  };
+  }, []);
 
-  const updateGuestCount = (guestCount: { adults: number; children: number }) => {
-    setBookingState((prev) => ({ ...prev, guestCount }));
-  };
+  const updateGuestCount = useCallback(
+    (guestCount: { adults: number; children: number }) => {
+      setBookingState((prev) => ({ ...prev, guestCount }));
+    },
+    [],
+  );
 
-  const resetBooking = () => {
+  const resetBooking = useCallback(() => {
     setBookingState({
       date: null,
       timeSlot: null,
@@ -43,7 +46,7 @@ export function useBooking() {
         children: 0,
       },
     });
-  };
+  }, []);
 
   return {
     bookingState,

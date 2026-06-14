@@ -41,7 +41,6 @@ interface ReviewDialogProps {
   onOpenChange: (open: boolean) => void;
   bookingId: string;
   hotelId: string;
-  userId: string;
   onSuccess?: () => void;
 }
 
@@ -50,7 +49,6 @@ export function ReviewDialog({
   onOpenChange,
   bookingId,
   hotelId,
-  userId,
   onSuccess,
 }: ReviewDialogProps) {
   const { toast } = useToast();
@@ -68,16 +66,13 @@ export function ReviewDialog({
   const onSubmit = async (data: ReviewFormValues) => {
     setIsSubmitting(true);
     try {
-      const result = await createReview(
-        {
-          hotelId,
-          bookingId,
-          rating: data.rating,
-          title: data.title || undefined,
-          comment: data.comment,
-        },
-        userId
-      );
+      const result = await createReview({
+        hotelId,
+        bookingId,
+        rating: data.rating,
+        title: data.title || undefined,
+        comment: data.comment,
+      });
 
       if (result.success) {
         toast({

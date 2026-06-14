@@ -1,71 +1,36 @@
 "use server";
 
-import db from "@/lib/db";
+import { djangoFetch, DjangoApiError } from "@/lib/api/django-client";
+import { getServerApiToken } from "@/lib/api/server-auth";
 import { revalidatePath } from "next/cache";
 
 export async function processPayment(
   bookingId: string,
-  paymentMethod: string
+  _paymentMethod: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    // Vérifier que la réservation existe et est en attente
-    const booking = await db.booking.findUnique({
-      where: { id: bookingId },
-      include: {
-        payment: true,
-      },
+    const token = await getServerApiToken();
+    if (!token) {
+      return { success: false, error: "Vous devez être connecté" };
+    }
+
+    await djangoFetch(`/api/hotels/bookings/${bookingId}/`, token, {
+      method: "PATCH",
+      body: JSON.stringify({ status: "CONFIRMED" }),
     });
 
-    if (!booking) {
-      return { success: false, error: "Réservation non trouvée" };
-    }
-
-    if (booking.status !== "PENDING") {
-      return { success: false, error: "Cette réservation n'est plus en attente de paiement" };
-    }
-
-    // Mettre à jour le statut de la réservation
-    await db.booking.update({
-      where: { id: bookingId },
-      data: {
-        status: "CONFIRMED",
-      },
-    });
-
-    // Mettre à jour le paiement s'il existe
-    if (booking.payment) {
-      await db.payment.update({
-        where: { id: booking.payment.id },
-        data: {
-          amount: booking.finalPrice,
-          status: "COMPLETED",
-          method: paymentMethod,
-          paidAt: new Date(),
-        },
-      });
-    } else {
-      // Créer un paiement si inexistant
-      await db.payment.create({
-        data: {
-          bookingId: bookingId,
-          amount: booking.finalPrice,
-          currency: booking.currency,
-          status: "COMPLETED",
-          method: paymentMethod,
-          paidAt: new Date(),
-          transactionId: `TXN-${Date.now()}-${Math.random().toString(36).substring(7)}`,
-        },
-      });
-    }
-
-    // Revalider les chemins concernés
     revalidatePath(`/booking/confirm/${bookingId}`);
     revalidatePath("/dashboard");
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
+    if (error instanceof DjangoApiError) {
+      return { success: false, error: error.message };
+    }
     console.error("Error processing payment:", error);
-    return { success: false, error: error.message || "Erreur lors du traitement du paiement" };
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Erreur lors du traitement du paiement",
+    };
   }
 }
-

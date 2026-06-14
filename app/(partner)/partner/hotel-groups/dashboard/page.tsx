@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { BreadcrumbPartner } from "@/components/partner/layout/BreadcrumbPartner";
-import { authClient } from "@/lib/better-auth-client";
+import { useClientAuth } from "@/hooks/use-client-auth";
 import { getHotelGroupsByManager } from "@/app/actions/partner/hotel-groups/get";
 import { getGroupStatistics, GroupStatistics } from "@/app/actions/partner/hotel-groups/get-statistics";
 import { StatisticsCards } from "@/components/partner/hotel-groups/StatisticsCards";
@@ -19,34 +19,37 @@ import {
 import { BarChart3 } from "lucide-react";
 
 export default function GroupDashboardPage() {
-  const { data: session } = authClient.useSession();
+  const { isAuthenticated, isAuthPending } = useClientAuth();
   const [groups, setGroups] = useState<Array<{ id: string; name: string }>>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<string>("all");
   const [statistics, setStatistics] = useState<GroupStatistics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (session?.user?.id) {
-      // Charger les groupes
-      getHotelGroupsByManager(session.user.id).then((data) => {
-        setGroups(data);
-      });
+    if (isAuthPending || !isAuthenticated) {
+      return;
     }
-  }, [session?.user?.id]);
+
+    getHotelGroupsByManager("").then((data) => {
+      setGroups(data);
+    });
+  }, [isAuthenticated, isAuthPending]);
 
   useEffect(() => {
-    if (session?.user?.id) {
-      loadStatistics();
+    if (isAuthPending || !isAuthenticated) {
+      return;
     }
-  }, [session?.user?.id, selectedGroupId]);
+
+    loadStatistics();
+  }, [isAuthenticated, isAuthPending, selectedGroupId]);
 
   const loadStatistics = async () => {
-    if (!session?.user?.id) return;
+    if (!isAuthenticated) return;
 
     setIsLoading(true);
     try {
       const groupId = selectedGroupId === "all" ? undefined : selectedGroupId;
-      const data = await getGroupStatistics(session.user.id, groupId);
+      const data = await getGroupStatistics("", groupId);
       setStatistics(data);
     } catch (error) {
       console.error("Error loading statistics:", error);
@@ -55,7 +58,7 @@ export default function GroupDashboardPage() {
     }
   };
 
-  if (!session?.user?.id) {
+  if (isAuthPending || !isAuthenticated) {
     return null;
   }
 
@@ -78,7 +81,7 @@ export default function GroupDashboardPage() {
           </div>
           {statistics && (
             <ExportButtons
-              userId={session.user.id}
+              userId=""
               groupId={selectedGroupId === "all" ? undefined : selectedGroupId}
             />
           )}
@@ -152,4 +155,3 @@ export default function GroupDashboardPage() {
     </div>
   );
 }
-

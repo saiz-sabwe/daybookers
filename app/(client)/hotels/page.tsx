@@ -5,6 +5,7 @@ import { SearchEditSheet } from "@/components/client/search/SearchEditSheet";
 import { FilterProvider } from "@/contexts/FilterContext";
 import { getHotels } from "@/app/actions/hotels/get";
 import { getTimeSlots } from "@/app/actions/time-slots/get";
+import { formatLocationLabel, isUuid } from "@/lib/locations/format-location";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -33,6 +34,11 @@ export default async function SearchResultsPage({
     const selectedDate = params.date || null;
     const selectedTimeSlotId = params.timeSlot || null;
     const selectedLocation = params.location || null;
+    const locationLabel = formatLocationLabel(selectedLocation, hotels);
+    const searchLocation =
+      selectedLocation && !isUuid(selectedLocation)
+        ? selectedLocation
+        : hotels[0]?.city ?? "Kinshasa";
     
     // Formater la date pour l'affichage
     const formattedDate = selectedDate 
@@ -52,7 +58,7 @@ export default async function SearchResultsPage({
                         <div className="hidden md:block">
                             <div className="flex items-center gap-4 text-sm">
                                 <div className="font-bold text-lg">
-                                    {selectedLocation || "Kinshasa, RDC"}
+                                    {locationLabel}
                                 </div>
                                 <div className="h-4 w-px bg-gray-300"></div>
                                 <div className="text-gray-600">{formattedDate}</div>
@@ -62,7 +68,7 @@ export default async function SearchResultsPage({
                                     <SearchEditSheet 
                                         initialDate={selectedDate}
                                         initialTimeSlotId={selectedTimeSlotId}
-                                        initialLocation={selectedLocation}
+                                        initialLocation={searchLocation}
                                     />
                                 </div>
                             </div>

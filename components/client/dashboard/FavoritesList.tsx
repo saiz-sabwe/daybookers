@@ -1,35 +1,28 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { Heart, Star, MapPin } from "lucide-react";
+import { DashboardPageHeader } from "@/components/client/dashboard/DashboardPageHeader";
+import { HotelCard } from "@/components/client/HotelCard";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/shared/utils/EmptyState";
 import { Hotel } from "@/types";
-import { HeartOff } from "lucide-react";
+import { Heart, HeartOff } from "lucide-react";
 import { getFavorites } from "@/app/actions/favorites/get";
 import { deleteFavorite } from "@/app/actions/favorites/delete";
-import { authClient } from "@/lib/better-auth-client";
+import { useClientAuth } from "@/hooks/use-client-auth";
 import { useToast } from "@/hooks/use-toast";
+import { useGlobalLoading } from "@/components/shared/GlobalLoadingProvider";
+import { resolveHotelImage } from "@/lib/images/hotel-image";
 
 function FavoriteCardSkeleton() {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-md overflow-hidden">
-      <Skeleton className="w-full h-56 rounded-none" />
-      <div className="p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Skeleton className="h-4 w-4 rounded" />
-          <Skeleton className="h-4 w-20" />
-          <Skeleton className="h-4 w-16 ml-2" />
-        </div>
-        <Skeleton className="h-5 w-[75%] mb-2" />
-        <Skeleton className="h-4 w-1/2 mb-4" />
-        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-          <Skeleton className="h-8 w-24" />
-          <Skeleton className="h-9 w-16 rounded-md" />
-        </div>
+    <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-md">
+      <Skeleton className="h-48 w-full rounded-none" />
+      <div className="space-y-3 p-4">
+        <Skeleton className="h-5 w-[75%]" />
+        <Skeleton className="h-4 w-1/2" />
+        <Skeleton className="h-10 w-full" />
       </div>
     </div>
   );
@@ -37,7 +30,7 @@ function FavoriteCardSkeleton() {
 
 function FavoritesListSkeleton() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
       {[1, 2, 3].map((i) => (
         <FavoriteCardSkeleton key={i} />
       ))}
@@ -45,60 +38,70 @@ function FavoritesListSkeleton() {
   );
 }
 
-export function FavoritesList({ favoriteHotels: initialFavoriteHotels }: { favoriteHotels?: Hotel[] }) {
-  const { data: session } = authClient.useSession();
+export function FavoritesList({
+  favoriteHotels: initialFavoriteHotels,
+}: {
+  favoriteHotels?: Hotel[];
+}) {
+  const { isAuthenticated, isAuthPending } = useClientAuth();
   const { toast } = useToast();
-  const [favoriteHotels, setFavoriteHotels] = useState<Hotel[]>(initialFavoriteHotels || []);
+  const { runWithLoading } = useGlobalLoading();
+  const [favoriteHotels, setFavoriteHotels] = useState<Hotel[]>(
+    initialFavoriteHotels || [],
+  );
   const [isLoading, setIsLoading] = useState(!initialFavoriteHotels);
 
   useEffect(() => {
-    if (!initialFavoriteHotels && session?.user?.id) {
+    if (isAuthPending) {
+      return;
+    }
+
+    if (!initialFavoriteHotels && isAuthenticated) {
       setIsLoading(true);
-      getFavorites(session.user.id)
+      runWithLoading(() => getFavorites())
         .then((hotels) => {
           setFavoriteHotels(hotels);
         })
         .finally(() => {
           setIsLoading(false);
         });
-    } else if (initialFavoriteHotels) {
+    } else if (initialFavoriteHotels || !isAuthenticated) {
       setIsLoading(false);
     }
-  }, [session?.user?.id, initialFavoriteHotels]);
+  }, [isAuthenticated, isAuthPending, initialFavoriteHotels, runWithLoading]);
 
   const handleRemoveFavorite = async (hotelId: string) => {
-    if (!session?.user?.id) return;
+    if (!isAuthenticated) return;
 
-    const result = await deleteFavorite(hotelId, session.user.id);
+    const result = await runWithLoading(() => deleteFavorite(hotelId));
 
-    if (result.success) {
-      setFavoriteHotels(favoriteHotels.filter((h) => h.id !== hotelId));
+    if (!result.success) {
       toast({
-        title: "Favori supprimé",
-        description: "L'hôtel a été retiré de vos favoris",
-        variant: "success",
+        title: "Impossible de retirer le favori",
+        description: result.error,
+        variant: "destructive",
       });
     } else {
+      setFavoriteHotels(favoriteHotels.filter((h) => h.id !== hotelId));
       toast({
-        title: "Erreur",
-        description: result.error || "Une erreur est survenue",
-        variant: "destructive",
+        title: "Favori retiré",
+        description: "L'hôtel a été retiré de vos favoris.",
+        variant: "success",
       });
     }
   };
 
+  const description = isLoading
+    ? "Chargement de vos favoris..."
+    : favoriteHotels.length === 0
+      ? "Vos hôtels favoris apparaîtront ici"
+      : `${favoriteHotels.length} hôtel${favoriteHotels.length > 1 ? "s" : ""} sauvegardé${favoriteHotels.length > 1 ? "s" : ""}`;
+
   return (
     <div>
-      <div className="mb-6">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">Mes favoris</h2>
-        <p className="text-gray-600">
-          {isLoading ? "Chargement..." : favoriteHotels.length === 0 ? "Vos hôtels favoris apparaîtront ici" : `Vos hôtels favoris (${favoriteHotels.length})`}
-        </p>
-      </div>
+      <DashboardPageHeader icon={Heart} title="Mes favoris" description={description} />
 
-      {isLoading ? (
-        <FavoritesListSkeleton />
-      ) : favoriteHotels.length === 0 ? (
+      {isLoading ? null : favoriteHotels.length === 0 ? (
         <EmptyState
           icon={Heart}
           title="Aucun favori"
@@ -107,69 +110,33 @@ export function FavoritesList({ favoriteHotels: initialFavoriteHotels }: { favor
           onAction={() => (window.location.href = "/hotels")}
         />
       ) : (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {favoriteHotels.map((hotel) => (
-          <div
-            key={hotel.id}
-            className="group relative bg-white rounded-xl border border-gray-200 shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden"
-          >
-            {hotel.images && hotel.images[0] && (
-              <div className="relative w-full h-56 overflow-hidden">
-                <Image
-                  src={hotel.images[0]}
-                  alt={hotel.name}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-200"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-transparent" />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute top-3 right-3 bg-white/90 hover:bg-white backdrop-blur-sm"
-                  onClick={() => handleRemoveFavorite(hotel.id)}
-                >
-                  <HeartOff className="w-5 h-5 text-red-500 fill-red-500" />
-                </Button>
-                <div className="absolute bottom-3 left-3 right-3">
-                  <h3 className="font-bold text-xl text-white mb-1 drop-shadow-lg">
-                    {hotel.name}
-                  </h3>
-                  <div className="flex items-center gap-2 text-white/90 text-sm">
-                    <MapPin className="w-4 h-4" />
-                    <span>{hotel.city}, {hotel.country}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="flex items-center">
-                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                  <span className="text-sm font-semibold ml-1 text-gray-900">{hotel.rating}</span>
-                </div>
-                <span className="text-sm text-gray-500">
-                  ({hotel.reviewCount} avis)
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                <div>
-                  <span className="text-2xl font-bold text-client-primary-600">
-                    {hotel.currency === "USD" ? "$" : hotel.currency} {hotel.minPrice}
-                  </span>
-                  <span className="text-sm text-gray-500 ml-1">/jour</span>
-                </div>
-                <Button asChild size="sm" className="bg-client-primary-600 hover:bg-client-primary-700">
-                  <Link href={`/hotels/${hotel.id}`}>Voir</Link>
-                </Button>
-              </div>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {favoriteHotels.map((hotel) => (
+            <div key={hotel.id} className="group relative">
+              <HotelCard
+                id={hotel.id}
+                name={hotel.name}
+                city={`${hotel.city}, ${hotel.country}`}
+                image={resolveHotelImage(hotel.images?.[0])}
+                stars={hotel.stars}
+                rating={hotel.rating}
+                reviewCount={hotel.reviewCount}
+                minPrice={hotel.minPrice}
+                timeSlots={[]}
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-3 top-3 z-10 bg-white/90 shadow-sm backdrop-blur-sm hover:bg-white"
+                onClick={() => handleRemoveFavorite(hotel.id)}
+                aria-label="Retirer des favoris"
+              >
+                <HeartOff className="h-4 w-4 text-red-500" />
+              </Button>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
       )}
     </div>
   );
 }
-

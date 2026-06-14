@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getUserDisplayName, StoredUserProfile } from "@/lib/api/user-profile";
 import {
   Form,
   FormControl,
@@ -17,37 +18,104 @@ import {
   FormDescription,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CheckCircle } from "lucide-react";
-import { authClient } from "@/lib/better-auth-client";
+import { Loader2, CheckCircle, User } from "lucide-react";
+import { useClientAuth } from "@/hooks/use-client-auth";
 import { updateProfile } from "@/app/actions/users/update-profile";
+import { DashboardPageHeader } from "@/components/client/dashboard/DashboardPageHeader";
+import { getCurrentProfile } from "@/app/actions/auth/get-current-profile";
+import { storeUserProfile } from "@/lib/api/auth-storage";
+import { useGlobalLoading } from "@/components/shared/GlobalLoadingProvider";
 
 const profileSchema = z.object({
   name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
   email: z.string().email("Email invalide"),
-  phone: z.string().min(10, "Le numéro de téléphone doit contenir au moins 10 chiffres").regex(/^[\d\s\+\-\(\)]+$/, "Le numéro de téléphone n'est pas valide"),
+  phone: z
+    .string()
+    .refine(
+      (value) =>
+        value === "" ||
+        (value.length >= 10 && /^[\d\s+\-()]+$/.test(value)),
+      "Numéro de téléphone invalide (min. 10 chiffres)",
+    ),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
+function buildFormValues(
+  profile: StoredUserProfile | null,
+  userEmail: string | null,
+  userName: string,
+): ProfileFormValues {
+  const name =
+    [profile?.firstName, profile?.lastName].filter(Boolean).join(" ").trim() ||
+    userName ||
+    "";
+
+  return {
+    name: name === "Utilisateur" ? "" : name,
+    email: profile?.email || userEmail || "",
+    phone: profile?.phone || "",
+  };
+}
+
 export function ProfileForm() {
-  const { data: session } = authClient.useSession();
+  const { isAuthenticated, isAuthPending, userEmail, userName, userProfile } =
+    useClientAuth();
   const { toast } = useToast();
+  const { runWithLoading } = useGlobalLoading();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  
-  const user = session?.user;
+  const [isProfileReady, setIsProfileReady] = useState(false);
+  const [loadedProfile, setLoadedProfile] = useState(userProfile);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      name: user?.name || "",
-      email: user?.email || "",
+      name: "",
+      email: "",
       phone: "",
     },
   });
 
+  useEffect(() => {
+    if (isAuthPending) {
+      return;
+    }
+
+    if (!isAuthenticated) {
+      setIsProfileReady(true);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadProfile() {
+      await runWithLoading(async () => {
+        const profile = userProfile ?? (await getCurrentProfile());
+
+        if (cancelled) {
+          return;
+        }
+
+        if (profile) {
+          storeUserProfile(profile);
+          setLoadedProfile(profile);
+        }
+
+        form.reset(buildFormValues(profile, userEmail, userName));
+        setIsProfileReady(true);
+      });
+    }
+
+    loadProfile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthPending, isAuthenticated, userProfile, userEmail, userName, form, runWithLoading]);
+
   const onSubmit = async (data: ProfileFormValues) => {
-    if (!session?.user?.id) {
+    if (!isAuthenticated) {
       toast({
         title: "Erreur",
         description: "Vous devez être connecté pour mettre à jour votre profil",
@@ -60,23 +128,34 @@ export function ProfileForm() {
     setIsSuccess(false);
 
     try {
-      const result = await updateProfile(
-        {
+      const result = await runWithLoading(() =>
+        updateProfile({
           name: data.name,
           phone: data.phone,
-          image: undefined, // TODO: Ajouter upload d'image si nécessaire
-        },
-        session.user.id
+        }),
       );
 
-      if (!result.success) {
+      if (!result.success || !result.profile) {
         toast({
           title: "Erreur",
-          description: result.error || "Une erreur est survenue lors de la mise à jour du profil",
+          description:
+            result.error ||
+            "Une erreur est survenue lors de la mise à jour du profil",
           variant: "destructive",
         });
         return;
       }
+
+      storeUserProfile(result.profile);
+      setLoadedProfile(result.profile);
+
+      form.reset(
+        buildFormValues(
+          result.profile,
+          result.profile.email || userEmail,
+          getUserDisplayName(result.profile, userEmail),
+        ),
+      );
 
       toast({
         title: "Profil mis à jour",
@@ -100,92 +179,104 @@ export function ProfileForm() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">Mon profil</h2>
-        <p className="text-gray-600">Gérez vos informations personnelles</p>
-      </div>
+      <DashboardPageHeader
+        icon={User}
+        title="Mon profil"
+        description="Gérez vos informations personnelles"
+      />
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Informations personnelles</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nom complet</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Jean Dupont" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input type="email" placeholder="jean.dupont@example.com" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Cet email sera utilisé pour les notifications et la connexion
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Téléphone *</FormLabel>
-                  <FormControl>
-                    <Input type="tel" placeholder="+243 900 000 000" {...field} required />
-                  </FormControl>
-                  <FormDescription>
-                    Requis pour vous contacter concernant vos réservations
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-              <div className="flex justify-end pt-4 border-t border-gray-100">
-                <Button
-                  type="submit"
-                  className="bg-client-primary-500 hover:bg-client-primary-600 text-white"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Enregistrement...
-                    </>
-                  ) : isSuccess ? (
-                    <>
-                      <CheckCircle className="mr-2 h-4 w-4" />
-                      Enregistré
-                    </>
-                  ) : (
-                    "Enregistrer les modifications"
+      {isProfileReady ? (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <Card className="overflow-hidden rounded-2xl border-gray-100 shadow-md">
+              <CardHeader className="border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+                <CardTitle>Informations personnelles</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6 pt-6">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nom complet</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Votre nom" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </form>
-      </Form>
+                />
+
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="email"
+                          readOnly
+                          disabled
+                          {...field}
+                          className="bg-gray-50"
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        L&apos;email de connexion ne peut pas être modifié ici
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Téléphone *</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="tel"
+                          placeholder="+243 900 000 000"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Requis pour vous contacter concernant vos réservations
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex justify-end border-t border-gray-100 pt-4">
+                  <Button
+                    type="submit"
+                    className="bg-client-primary-500 hover:bg-client-primary-600 text-white"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Enregistrement...
+                      </>
+                    ) : isSuccess ? (
+                      <>
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        Enregistré
+                      </>
+                    ) : (
+                      "Enregistrer les modifications"
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </form>
+        </Form>
+      ) : null}
     </div>
   );
 }
-

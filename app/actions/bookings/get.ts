@@ -1,49 +1,70 @@
 "use server";
 
-import db from "@/lib/db";
+import {
+  djangoFetch,
+  DjangoApiError,
+  DjangoBookingRecord,
+  DjangoPaginatedResponse,
+} from "@/lib/api/django-client";
+import { getServerApiToken } from "@/lib/api/server-auth";
+import { getTimeSlots, TimeSlot } from "@/app/actions/time-slots/get";
 import { Booking } from "@/types";
 
-export async function getBookings(userId?: string): Promise<Booking[]> {
-  try {
-    const bookings = await db.booking.findMany({
-      where: userId ? { userId } : undefined,
-      include: {
-        hotel: {
-          include: {
-            city: true,
-          },
-        },
-        timeSlot: true,
-        user: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+async function fetchBookings(token: string): Promise<DjangoBookingRecord[]> {
+  const payload = await djangoFetch<
+    DjangoPaginatedResponse<DjangoBookingRecord> | DjangoBookingRecord[]
+  >("/api/hotels/bookings/", token);
 
-    return bookings.map((booking) => {
-      return {
-        id: booking.id,
-        hotelId: booking.hotelId,
-        userId: booking.userId,
-        date: booking.date,
-        timeSlot: {
-          id: booking.timeSlot.id,
-          label: booking.timeSlot.name,
-          startTime: booking.timeSlot.startTime,
-          endTime: booking.timeSlot.endTime,
-        },
-        guestCount: {
-          adults: booking.guestCount,
-          children: 0, // Pas de distinction dans le schéma actuel
-        },
-        totalPrice: booking.finalPrice,
-        currency: booking.currency,
-        status: booking.status as Booking["status"], // Garder le statut en majuscules
-        createdAt: booking.createdAt,
-        updatedAt: booking.updatedAt,
-      } satisfies Booking;
-    });
+  return Array.isArray(payload) ? payload : payload.results;
+}
+
+async function buildTimeSlotMap(): Promise<Map<string, TimeSlot>> {
+  const slots = await getTimeSlots();
+  return new Map(slots.map((slot) => [slot.id, slot]));
+}
+
+function mapDjangoBooking(
+  record: DjangoBookingRecord,
+  timeSlotMap: Map<string, TimeSlot>,
+): Booking {
+  const slot = timeSlotMap.get(record.time_slot);
+
+  return {
+    id: record.uuid,
+    hotelId: record.hotel,
+    userId: record.profile,
+    date: record.date,
+    timeSlot: {
+      id: record.time_slot,
+      label: slot?.name,
+      startTime: slot?.startTime ?? "",
+      endTime: slot?.endTime ?? "",
+    },
+    guestCount: {
+      adults: record.guest_count,
+      children: 0,
+    },
+    totalPrice: Number(record.final_price),
+    currency: record.currency,
+    status: record.status as Booking["status"],
+    createdAt: record.create,
+    updatedAt: record.last_update,
+  };
+}
+
+export async function getBookings(): Promise<Booking[]> {
+  try {
+    const token = await getServerApiToken();
+    if (!token) {
+      return [];
+    }
+
+    const [records, timeSlotMap] = await Promise.all([
+      fetchBookings(token),
+      buildTimeSlotMap(),
+    ]);
+
+    return records.map((record) => mapDjangoBooking(record, timeSlotMap));
   } catch (error) {
     console.error("Error fetching bookings:", error);
     return [];
@@ -52,46 +73,17 @@ export async function getBookings(userId?: string): Promise<Booking[]> {
 
 export async function getBookingById(id: string): Promise<Booking | null> {
   try {
-    const booking = await db.booking.findUnique({
-      where: {
-        id,
-      },
-      include: {
-        hotel: {
-          include: {
-            city: true,
-          },
-        },
-        timeSlot: true,
-        user: true,
-      },
-    });
-
-    if (!booking) {
+    const token = await getServerApiToken();
+    if (!token) {
       return null;
     }
 
-    return {
-      id: booking.id,
-      hotelId: booking.hotelId,
-      userId: booking.userId,
-      date: booking.date,
-      timeSlot: {
-        id: booking.timeSlot.id,
-        label: booking.timeSlot.name,
-        startTime: booking.timeSlot.startTime,
-        endTime: booking.timeSlot.endTime,
-      },
-      guestCount: {
-        adults: booking.guestCount,
-        children: 0,
-      },
-      totalPrice: booking.finalPrice,
-      currency: booking.currency,
-      status: booking.status as Booking["status"], // Garder le statut en majuscules
-      createdAt: booking.createdAt,
-      updatedAt: booking.updatedAt,
-    } satisfies Booking;
+    const [record, timeSlotMap] = await Promise.all([
+      djangoFetch<DjangoBookingRecord>(`/api/hotels/bookings/${id}/`, token),
+      buildTimeSlotMap(),
+    ]);
+
+    return mapDjangoBooking(record, timeSlotMap);
   } catch (error) {
     console.error("Error fetching booking:", error);
     return null;
@@ -99,49 +91,6 @@ export async function getBookingById(id: string): Promise<Booking | null> {
 }
 
 export async function getBookingsByHotelId(hotelId: string): Promise<Booking[]> {
-  try {
-    const bookings = await db.booking.findMany({
-      where: {
-        hotelId,
-      },
-      include: {
-        hotel: {
-          include: {
-            city: true,
-          },
-        },
-        timeSlot: true,
-        user: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-
-    return bookings.map((booking) => ({
-      id: booking.id,
-      hotelId: booking.hotelId,
-      userId: booking.userId,
-      date: booking.date,
-      timeSlot: {
-        id: booking.timeSlot.id,
-        label: booking.timeSlot.name,
-        startTime: booking.timeSlot.startTime,
-        endTime: booking.timeSlot.endTime,
-      },
-      guestCount: {
-        adults: booking.guestCount,
-        children: 0,
-      },
-      totalPrice: booking.finalPrice,
-      currency: booking.currency,
-      status: booking.status as Booking["status"], // Garder le statut en majuscules
-      createdAt: booking.createdAt,
-      updatedAt: booking.updatedAt,
-    })) satisfies Booking[];
-  } catch (error) {
-    console.error("Error fetching bookings by hotel:", error);
-    return [];
-  }
+  const bookings = await getBookings();
+  return bookings.filter((booking) => booking.hotelId === hotelId);
 }
-

@@ -2,118 +2,141 @@ import { SearchForm } from "@/components/client/SearchForm";
 import { HotelCard } from "@/components/client/HotelCard";
 import { getHotels } from "@/app/actions/hotels/get";
 import { getTimeSlots } from "@/app/actions/time-slots/get";
-import { Check, Shield, Clock, Star } from "lucide-react";
+import { Check, Shield, Clock } from "lucide-react";
 import Image from "next/image";
+
+const valueProps = [
+  {
+    icon: Clock,
+    title: "Jusqu'à -75%",
+    description: "Sur le prix de la nuitée",
+  },
+  {
+    icon: Shield,
+    title: "Annulation gratuite",
+    description: "Sans frais jusqu'à la dernière minute",
+  },
+  {
+    icon: Check,
+    title: "Paiement à l'hôtel",
+    description: "Pas de carte requise",
+  },
+];
 
 export default async function Home() {
   const hotels = await getHotels();
   const timeSlots = await getTimeSlots();
+
   return (
     <div className="flex flex-col">
-      {/* Hero Section */}
-      <section className="relative h-[500px] md:h-[600px] flex items-center justify-center">
-        {/* Background Image */}
+      <section className="relative overflow-hidden border-b border-gray-200">
         <div className="absolute inset-0 z-0">
           <Image
             src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=2070&auto=format&fit=crop"
             alt="Luxury Hotel"
             fill
-            className="object-cover brightness-75"
+            className="object-cover brightness-[0.55]"
             priority
           />
         </div>
 
-        {/* Hero Content */}
-        <div className="relative z-10 container mx-auto px-4 text-center text-white mt-10">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 drop-shadow-lg">
-            Réservez votre hôtel en journée
-          </h1>
-          <p className="text-xl md:text-2xl mb-10 max-w-2xl mx-auto drop-shadow-md font-light">
-            Profitez d'une chambre d'hôtel pour quelques heures à prix réduit.
-            <br className="hidden md:block" /> Idéal pour travailler, se détendre ou voyager.
-          </p>
+        <div className="relative z-10 container mx-auto px-4 py-5 md:py-6">
+          <div className="mb-4 max-w-2xl">
+            <h1 className="text-xl font-bold text-white drop-shadow-sm md:text-2xl">
+              Réservez votre hôtel en journée
+            </h1>
+            <p className="mt-1 text-sm text-white/90 md:text-base">
+              Quelques heures à prix réduit — idéal pour travailler ou se détendre.
+            </p>
+          </div>
+          <SearchForm compact />
+        </div>
+      </section>
 
-          {/* Search Form */}
-          <div className="transform translate-y-8">
-            <SearchForm />
+      <section className="border-b border-gray-200 bg-white">
+        <div className="container mx-auto px-4 py-2.5">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:gap-x-8 sm:gap-y-1 md:justify-between">
+            {valueProps.map((item, index) => {
+              const Icon = item.icon;
+              return (
+                <div
+                  key={item.title}
+                  className="flex items-center gap-2 text-sm text-gray-700"
+                >
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-client-primary-50 text-client-primary-600">
+                    <Icon className="h-3.5 w-3.5" />
+                  </div>
+                  <span className="font-semibold text-gray-900">{item.title}</span>
+                  <span className="hidden text-gray-500 lg:inline">
+                    — {item.description}
+                  </span>
+                  {index < valueProps.length - 1 && (
+                    <span className="mx-2 hidden h-4 w-px bg-gray-200 md:inline" />
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* Value Props */}
-      <section className="py-20 bg-white mt-12 hidden md:block">
+      <section className="bg-gray-100 py-8 md:py-10">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            <div className="flex flex-col items-center p-6">
-              <div className="w-16 h-16 bg-client-primary-50 rounded-full flex items-center justify-center mb-4 text-client-primary-500">
-                <Clock className="w-8 h-8" />
-              </div>
-              <h3 className="text-xl font-bold mb-2">Jusqu'à -75%</h3>
-              <p className="text-gray-500">Sur le prix de la nuitée pour une réservation de quelques heures.</p>
-            </div>
-            <div className="flex flex-col items-center p-6">
-              <div className="w-16 h-16 bg-client-primary-50 rounded-full flex items-center justify-center mb-4 text-client-primary-500">
-                <Shield className="w-8 h-8" />
-              </div>
-              <h3 className="text-xl font-bold mb-2">Annulation Gratuite</h3>
-              <p className="text-gray-500">Annulez sans frais jusqu'à la dernière minute sur la plupart des offres.</p>
-            </div>
-            <div className="flex flex-col items-center p-6">
-              <div className="w-16 h-16 bg-client-primary-50 rounded-full flex items-center justify-center mb-4 text-client-primary-500">
-                <Check className="w-8 h-8" />
-              </div>
-              <h3 className="text-xl font-bold mb-2">Paiement à l'hôtel</h3>
-              <p className="text-gray-500">Pas de carte bancaire requise pour réserver. Payez directement sur place.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Hotels */}
-      <section className="py-16 bg-gray-100">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-end mb-8">
+          <div className="mb-6 flex items-end justify-between">
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Nos coups de cœur à Kinshasa</h2>
-              <p className="text-gray-500">Sélectionnés pour leur charme et leur qualité de service</p>
+              <h2 className="text-2xl font-bold text-gray-900 md:text-3xl">
+                Nos coups de cœur à Kinshasa
+              </h2>
+              <p className="mt-1 text-sm text-gray-500 md:text-base">
+                Sélectionnés pour leur charme et leur qualité de service
+              </p>
             </div>
-            <a href="/hotels" className="text-client-primary-600 font-medium hover:underline hidden md:block">
+            <a
+              href="/hotels"
+              className="hidden text-sm font-medium text-client-primary-600 hover:underline md:block"
+            >
               Voir tous les hôtels
             </a>
           </div>
 
-          {/* Bouton mobile en haut */}
-          <div className="mb-6 text-center md:hidden">
-            <a href="/hotels" className="text-client-primary-600 font-medium hover:underline">
+          <div className="mb-4 text-center md:hidden">
+            <a
+              href="/hotels"
+              className="text-sm font-medium text-client-primary-600 hover:underline"
+            >
               Voir tous les hôtels
             </a>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-3 md:gap-6 lg:grid-cols-4">
             {hotels.slice(0, 4).map((hotel) => (
               <HotelCard
                 key={hotel.id}
                 {...hotel}
                 image={hotel.images[0] || ""}
                 reviewCount={hotel.reviewCount}
-                timeSlots={timeSlots.slice(0, 3).map((slot) => `${slot.startTime} - ${slot.endTime}`)}
+                timeSlots={timeSlots
+                  .slice(0, 3)
+                  .map((slot) => `${slot.startTime} - ${slot.endTime}`)}
               />
             ))}
           </div>
         </div>
       </section>
 
-      {/* SEO Content / Footer Text */}
-      <section className="py-16 bg-white border-t border-gray-100">
-        <div className="container mx-auto px-4 max-w-4xl text-center">
-          <h2 className="text-2xl font-bold mb-6">Réservez votre hôtel en journée à Kinshasa</h2>
-          <p className="text-gray-500 mb-4">
-            DayBooker vous permet de réserver une chambre d'hôtel en journée pour quelques heures à Kinshasa, 
-            à prix réduit. Profitez d'un espace confortable et professionnel sans réserver pour toute la nuit.
+      <section className="border-t border-gray-100 bg-white py-10">
+        <div className="container mx-auto max-w-4xl px-4 text-center">
+          <h2 className="mb-4 text-xl font-bold md:text-2xl">
+            Réservez votre hôtel en journée à Kinshasa
+          </h2>
+          <p className="mb-3 text-sm text-gray-500 md:text-base">
+            DayBooker vous permet de réserver une chambre d&apos;hôtel en journée
+            pour quelques heures à Kinshasa, à prix réduit. Profitez d&apos;un
+            espace confortable sans réserver pour toute la nuit.
           </p>
-          <p className="text-gray-500">
-            Que vous ayez besoin d'un espace de travail, d'un moment de détente, ou d'un lieu pour une rencontre, 
-            trouvez l'hôtel en journée qui correspond à vos besoins et à votre budget à Kinshasa.
+          <p className="text-sm text-gray-500 md:text-base">
+            Travail, détente ou rendez-vous : trouvez l&apos;hôtel en journée
+            adapté à vos besoins à Kinshasa.
           </p>
         </div>
       </section>

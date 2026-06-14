@@ -1,7 +1,18 @@
 "use server";
 
-import db from "@/lib/db";
 import { Hotel } from "@/types";
+import {
+  djangoFetch,
+  djangoFetchPublic,
+  DjangoHotelRecord,
+  DjangoPaginatedResponse,
+} from "@/lib/api/django-client";
+import { getServerApiToken } from "@/lib/api/server-auth";
+import { resolveHotelImages } from "@/lib/images/hotel-image";
+import {
+  resolveCityName,
+  resolveCountryName,
+} from "@/lib/locations/format-location";
 
 export interface HotelSearchParams {
   location?: string;
@@ -10,161 +21,92 @@ export interface HotelSearchParams {
   timeSlotId?: string;
 }
 
+function mapDjangoHotel(hotel: DjangoHotelRecord): Hotel {
+  return {
+    id: hotel.uuid,
+    name: hotel.name,
+    city: resolveCityName(hotel.city, hotel.city_name, hotel.address),
+    country: resolveCountryName(hotel.country_name),
+    address: hotel.address,
+    description: hotel.description ?? "",
+    stars: hotel.stars,
+    rating: 0,
+    reviewCount: 0,
+    minPrice: hotel.min_price ?? 0,
+    currency: "USD",
+    images: resolveHotelImages(hotel.images),
+    amenities: [],
+    latitude: hotel.latitude ?? undefined,
+    longitude: hotel.longitude ?? undefined,
+  };
+}
+
+async function getHotelsFromDjango(
+  params?: HotelSearchParams,
+  token?: string,
+): Promise<Hotel[]> {
+  const query = new URLSearchParams();
+  query.set("status", "ACTIVE");
+  if (params?.location) {
+    query.set("city", params.location);
+  }
+
+  const path = query.toString()
+    ? `/api/hotels/hotels/?${query.toString()}`
+    : "/api/hotels/hotels/";
+  const payload = token
+    ? await djangoFetch<
+        DjangoPaginatedResponse<DjangoHotelRecord> | DjangoHotelRecord[]
+      >(path, token)
+    : await djangoFetchPublic<
+        DjangoPaginatedResponse<DjangoHotelRecord> | DjangoHotelRecord[]
+      >(path);
+
+  const records = Array.isArray(payload) ? payload : payload.results;
+  let hotels = records.map(mapDjangoHotel);
+
+  if (params?.searchTerm) {
+    const term = params.searchTerm.toLowerCase();
+    hotels = hotels.filter(
+      (hotel) =>
+        hotel.name.toLowerCase().includes(term) ||
+        hotel.address.toLowerCase().includes(term),
+    );
+  }
+
+  return hotels;
+}
+
 export async function getHotels(params?: HotelSearchParams): Promise<Hotel[]> {
   try {
-    // Construction dynamique des filtres
-    const whereClause: any = {
-      status: "ACTIVE",
-    };
-
-    // Filtrage par localisation (nom de ville)
-    if (params?.location) {
-      whereClause.city = {
-        name: {
-          contains: params.location,
-          mode: "insensitive",
-        },
-      };
+    let token: string | undefined;
+    try {
+      token = await getServerApiToken();
+    } catch {
+      token = undefined;
     }
-
-    // Filtrage par terme de recherche (nom d'hôtel ou adresse)
-    if (params?.searchTerm) {
-      whereClause.OR = [
-        {
-          name: {
-            contains: params.searchTerm,
-            mode: "insensitive",
-          },
-        },
-        {
-          address: {
-            contains: params.searchTerm,
-            mode: "insensitive",
-          },
-        },
-      ];
-    }
-
-    const hotels = await db.hotel.findMany({
-      where: whereClause,
-      include: {
-        city: true,
-        amenities: {
-          include: {
-            amenity: true,
-          },
-        },
-        reviews: {
-          select: {
-            rating: true,
-          },
-        },
-        roomTypes: {
-          select: {
-            basePrice: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-
-    return hotels.map((hotel) => {
-      // Calculer la note moyenne
-      const ratings = hotel.reviews.map((r) => r.rating);
-      const avgRating = ratings.length > 0
-        ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length
-        : 0;
-
-      // Trouver le prix minimum
-      const prices = hotel.roomTypes.map((rt) => rt.basePrice);
-      const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
-
-      return {
-        id: hotel.id,
-        name: hotel.name,
-        city: hotel.city.name,
-        country: hotel.city.country,
-        address: hotel.address,
-        description: hotel.description || "",
-        stars: hotel.stars,
-        rating: Math.round(avgRating * 10) / 10, // Arrondir à 1 décimale
-        reviewCount: hotel.reviews.length,
-        minPrice,
-        currency: "USD", // Les roomTypes dans le schéma ont currency, mais on simplifie ici
-        images: hotel.images || [],
-        amenities: hotel.amenities.map((ha) => ha.amenity.name.toLowerCase()),
-        latitude: hotel.latitude || undefined,
-        longitude: hotel.longitude || undefined,
-      } satisfies Hotel;
-    });
+    return await getHotelsFromDjango(params, token);
   } catch (error) {
-    console.error("Error fetching hotels:", error);
+    console.error("Error fetching hotels from Django:", error);
     return [];
   }
 }
 
 export async function getHotelById(id: string): Promise<Hotel | null> {
   try {
-    const hotel = await db.hotel.findUnique({
-      where: {
-        id,
-      },
-      include: {
-        city: true,
-        amenities: {
-          include: {
-            amenity: true,
-          },
-        },
-        reviews: {
-          select: {
-            rating: true,
-          },
-        },
-        roomTypes: {
-          select: {
-            basePrice: true,
-          },
-        },
-      },
-    });
-
-    if (!hotel) {
-      return null;
+    let token: string | undefined;
+    try {
+      token = await getServerApiToken();
+    } catch {
+      token = undefined;
     }
-
-    // Calculer la note moyenne
-    const ratings = hotel.reviews.map((r) => r.rating);
-    const avgRating = ratings.length > 0
-      ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length
-      : 0;
-
-    // Trouver le prix minimum
-    const prices = hotel.roomTypes.map((rt) => rt.basePrice);
-    const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
-
-    return {
-      id: hotel.id,
-      name: hotel.name,
-      city: hotel.city.name,
-      country: hotel.city.country,
-      address: hotel.address,
-      description: hotel.description || "",
-      stars: hotel.stars,
-      rating: Math.round(avgRating * 10) / 10,
-      reviewCount: hotel.reviews.length,
-      minPrice,
-      currency: "USD", // Les roomTypes dans le schéma ont currency, mais on simplifie ici
-      images: hotel.images || [],
-      amenities: hotel.amenities.map((ha) => ha.amenity.name.toLowerCase()),
-      latitude: hotel.latitude || undefined,
-      longitude: hotel.longitude || undefined,
-    } satisfies Hotel;
+    const path = `/api/hotels/hotels/${id}/`;
+    const hotel = token
+      ? await djangoFetch<DjangoHotelRecord>(path, token)
+      : await djangoFetchPublic<DjangoHotelRecord>(path);
+    return mapDjangoHotel(hotel);
   } catch (error) {
-    console.error("Error fetching hotel:", error);
+    console.error("Error fetching hotel from Django:", error);
     return null;
   }
 }
-

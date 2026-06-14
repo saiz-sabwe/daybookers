@@ -1,56 +1,51 @@
 "use server";
 
-import db from "@/lib/db";
+import {
+  djangoFetch,
+  DjangoFavoriteRecord,
+  DjangoPaginatedResponse,
+} from "@/lib/api/django-client";
+import { getServerApiToken } from "@/lib/api/server-auth";
 import { getHotels } from "@/app/actions/hotels/get";
 import { Hotel } from "@/types";
 
-export async function getFavorites(userId: string): Promise<Hotel[]> {
-  try {
-    const favorites = await db.favorite.findMany({
-      where: {
-        userId,
-      },
-      include: {
-        hotel: {
-          include: {
-            city: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+async function listFavorites(token: string): Promise<DjangoFavoriteRecord[]> {
+  const payload = await djangoFetch<
+    DjangoPaginatedResponse<DjangoFavoriteRecord> | DjangoFavoriteRecord[]
+  >("/api/hotels/favorites/", token);
 
-    // Mapper les hôtels vers le format Hotel
+  return Array.isArray(payload) ? payload : payload.results;
+}
+
+export async function getFavorites(): Promise<Hotel[]> {
+  try {
+    const token = await getServerApiToken();
+    if (!token) {
+      return [];
+    }
+
+    const favorites = await listFavorites(token);
+    const favoriteHotelIds = new Set(favorites.map((f) => f.hotel));
     const hotels = await getHotels();
-    const favoriteHotelIds = favorites.map((f) => f.hotelId);
-    
-    return hotels.filter((hotel) => favoriteHotelIds.includes(hotel.id));
+
+    return hotels.filter((hotel) => favoriteHotelIds.has(hotel.id));
   } catch (error) {
     console.error("Erreur lors de la récupération des favoris:", error);
     return [];
   }
 }
 
-export async function isFavorite(
-  hotelId: string,
-  userId: string
-): Promise<boolean> {
+export async function isFavorite(hotelId: string): Promise<boolean> {
   try {
-    const favorite = await db.favorite.findUnique({
-      where: {
-        userId_hotelId: {
-          userId,
-          hotelId,
-        },
-      },
-    });
+    const token = await getServerApiToken();
+    if (!token) {
+      return false;
+    }
 
-    return !!favorite;
+    const favorites = await listFavorites(token);
+    return favorites.some((f) => f.hotel === hotelId);
   } catch (error) {
     console.error("Erreur lors de la vérification du favori:", error);
     return false;
   }
 }
-

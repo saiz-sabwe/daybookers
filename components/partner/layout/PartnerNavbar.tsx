@@ -5,25 +5,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Bell, Settings, LogOut, Home, Loader2 } from "lucide-react";
-import { authClient } from "@/lib/better-auth-client";
-import { useRouter } from "next/navigation";
+import { clientSignOut } from "@/lib/api/client-sign-out";
 import { cn } from "@/lib/utils";
 
 export function PartnerNavbar() {
   const pathname = usePathname();
-  const router = useRouter();
   const [isSigningOut, setIsSigningOut] = useState(false);
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
     try {
-      await authClient.signOut({
-        fetchOptions: {
-          onSuccess: () => {
-            router.push("/");
-          },
-        },
-      });
+      await clientSignOut("/");
     } finally {
       setIsSigningOut(false);
     }

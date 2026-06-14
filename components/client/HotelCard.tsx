@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Star, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { resolveHotelImage } from "@/lib/images/hotel-image";
 
 interface HotelCardProps {
     id: string;
@@ -35,7 +36,7 @@ export function HotelCard({
             {/* Image Container */}
             <Link href={`/hotels/${id}`} className="relative h-48 overflow-hidden block">
                 <Image
-                    src={image}
+                    src={resolveHotelImage(image)}
                     alt={name}
                     fill
                     className="object-cover transition-transform duration-500 group-hover:scale-105"

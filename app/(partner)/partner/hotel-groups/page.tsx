@@ -2,36 +2,42 @@
 
 import { useState, useEffect } from "react";
 import { BreadcrumbPartner } from "@/components/partner/layout/BreadcrumbPartner";
-import { authClient } from "@/lib/better-auth-client";
+import { useClientAuth } from "@/hooks/use-client-auth";
 import { getHotelGroupsByManager } from "@/app/actions/partner/hotel-groups/get";
 import { HotelGroupsList } from "@/components/partner/hotel-groups/HotelGroupsList";
 import { HotelGroupData } from "@/app/actions/partner/hotel-groups/get";
 import { Building2 } from "lucide-react";
 
 export default function HotelGroupsPage() {
-  const { data: session } = authClient.useSession();
+  const { isAuthenticated, isAuthPending } = useClientAuth();
   const [groups, setGroups] = useState<HotelGroupData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadGroups = async () => {
-    if (session?.user?.id) {
-      setIsLoading(true);
-      try {
-        const data = await getHotelGroupsByManager(session.user.id);
-        setGroups(data);
-      } catch (error) {
-        console.error("Error loading groups:", error);
-      } finally {
-        setIsLoading(false);
-      }
+    if (!isAuthenticated) {
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const data = await getHotelGroupsByManager("");
+      setGroups(data);
+    } catch (error) {
+      console.error("Error loading groups:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadGroups();
-  }, [session?.user?.id]);
+    if (isAuthPending) {
+      return;
+    }
 
-  if (!session?.user?.id) {
+    loadGroups();
+  }, [isAuthenticated, isAuthPending]);
+
+  if (isAuthPending || !isAuthenticated) {
     return null;
   }
 
@@ -56,9 +62,8 @@ export default function HotelGroupsPage() {
           <p className="text-gray-500">Chargement...</p>
         </div>
       ) : (
-        <HotelGroupsList groups={groups} userId={session.user.id} onUpdate={loadGroups} />
+        <HotelGroupsList groups={groups} userId="" onUpdate={loadGroups} />
       )}
     </div>
   );
 }
-

@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { getTimeSlots } from "@/app/actions/time-slots/get";
 import { TimeSlot } from "@/app/actions/time-slots/get";
 
-export function SearchForm() {
+export function SearchForm({ compact = false }: { compact?: boolean }) {
     const router = useRouter();
     const [date, setDate] = useState<Date | undefined>(new Date());
     const [timeSlotId, setTimeSlotId] = useState<string>("");
@@ -57,10 +57,20 @@ export function SearchForm() {
         router.push(`/hotels${queryString ? `?${queryString}` : ""}`);
     };
 
+    const fieldHeight = compact ? "h-10" : "h-12";
+    const formClass = cn(
+        "bg-white rounded-xl shadow-lg max-w-4xl mx-auto flex flex-col md:flex-row gap-3 md:gap-4 items-center",
+        compact ? "p-2.5 md:p-3" : "p-4",
+    );
+    const buttonClass = cn(
+        "w-full md:w-auto px-6 bg-client-primary-500 hover:bg-client-primary-600 text-white font-bold rounded-lg shadow-md transition-transform active:scale-95",
+        compact ? "h-10 text-base" : "h-12 px-8 text-lg",
+    );
+
     // Rendre un placeholder pendant le montage pour éviter les erreurs d'hydratation
     if (!mounted) {
         return (
-            <form className="bg-white p-4 rounded-xl shadow-lg max-w-4xl mx-auto flex flex-col md:flex-row gap-4 items-center">
+            <form className={formClass}>
                 {/* Location Input */}
                 <div className="flex-1 w-full relative">
                     <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10">
@@ -70,7 +80,7 @@ export function SearchForm() {
                         placeholder="Où allez-vous ?"
                         value=""
                         disabled
-                        className="pl-10 h-12 border-gray-200 text-base text-gray-900"
+                        className={cn("pl-10 border-gray-200 text-base text-gray-900", fieldHeight)}
                     />
                 </div>
 
@@ -81,7 +91,10 @@ export function SearchForm() {
                     <Button
                         variant={"outline"}
                         disabled
-                        className="w-full md:w-[240px] h-12 justify-start text-left font-normal border-gray-200 text-gray-500"
+                        className={cn(
+                            "w-full md:w-[240px] justify-start text-left font-normal border-gray-200 text-gray-500",
+                            fieldHeight,
+                        )}
                     >
                         <CalendarIcon className="mr-2 h-4 w-4 text-gray-400" />
                         <span>Date</span>
@@ -98,17 +111,20 @@ export function SearchForm() {
                     <Button
                         variant={"outline"}
                         disabled
-                        className="w-full h-12 pl-10 pr-8 border-gray-200 bg-white text-gray-500"
+                        className={cn(
+                            "w-full pl-10 pr-8 border-gray-200 bg-white text-gray-500",
+                            fieldHeight,
+                        )}
                     >
                         Créneau horaire
                     </Button>
                 </div>
 
                 {/* Search Button */}
-                <Button 
+                <Button
                     type="submit"
                     disabled
-                    className="w-full md:w-auto h-12 px-8 bg-client-primary-500 text-white font-bold text-lg rounded-lg shadow-md"
+                    className={buttonClass}
                 >
                     <Search className="w-5 h-5 md:hidden mr-2" />
                     <span className="hidden md:inline">Rechercher</span>
@@ -119,7 +135,7 @@ export function SearchForm() {
     }
 
     return (
-        <form onSubmit={handleSearch} className="bg-white p-4 rounded-xl shadow-lg max-w-4xl mx-auto flex flex-col md:flex-row gap-4 items-center">
+        <form onSubmit={handleSearch} className={formClass}>
             {/* Location Input */}
             <div className="flex-1 w-full relative">
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10">
@@ -129,7 +145,10 @@ export function SearchForm() {
                     placeholder="Où allez-vous ?"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
-                    className="pl-10 h-12 border-gray-200 focus:border-client-primary-500 focus:ring-client-primary-500 text-base text-gray-900"
+                    className={cn(
+                        "pl-10 border-gray-200 focus:border-client-primary-500 focus:ring-client-primary-500 text-base text-gray-900",
+                        fieldHeight,
+                    )}
                 />
             </div>
 
@@ -142,8 +161,9 @@ export function SearchForm() {
                         <Button
                             variant={"outline"}
                             className={cn(
-                                "w-full md:w-[240px] h-12 justify-start text-left font-normal border-gray-200 hover:bg-gray-50 text-gray-900",
-                                !date && "text-gray-500"
+                                "w-full md:w-[240px] justify-start text-left font-normal border-gray-200 hover:bg-gray-50 text-gray-900",
+                                fieldHeight,
+                                !date && "text-gray-500",
                             )}
                         >
                             <CalendarIcon className="mr-2 h-4 w-4 text-gray-400" />
@@ -175,7 +195,10 @@ export function SearchForm() {
                     <Clock className="w-4 h-4 text-gray-400" />
                 </div>
                 <Select value={timeSlotId} onValueChange={setTimeSlotId}>
-                    <SelectTrigger className="w-full h-12 pl-10 pr-8 border-gray-200 bg-white text-gray-900 focus:border-client-primary-500 focus:ring-client-primary-500">
+                    <SelectTrigger className={cn(
+                        "w-full pl-10 pr-8 border-gray-200 bg-white text-gray-900 focus:border-client-primary-500 focus:ring-client-primary-500",
+                        fieldHeight,
+                    )}>
                         <SelectValue placeholder="Créneau horaire" className="text-gray-900" />
                     </SelectTrigger>
                     <SelectContent className="bg-white text-gray-900 border-gray-200">
@@ -189,9 +212,9 @@ export function SearchForm() {
             </div>
 
             {/* Search Button */}
-            <Button 
+            <Button
                 type="submit"
-                className="w-full md:w-auto h-12 px-8 bg-client-primary-500 hover:bg-client-primary-600 text-white font-bold text-lg rounded-lg shadow-md transition-transform active:scale-95"
+                className={buttonClass}
             >
                 <Search className="w-5 h-5 md:hidden mr-2" />
                 <span className="hidden md:inline">Rechercher</span>

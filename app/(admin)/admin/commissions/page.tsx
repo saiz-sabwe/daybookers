@@ -25,11 +25,11 @@ import { Label } from "@/components/ui/label";
 import { Loader2, Edit } from "lucide-react";
 import { getAllPartnerCommissions } from "@/app/actions/admin/commissions/get";
 import { updatePartnerCommission } from "@/app/actions/admin/commissions/update";
-import { authClient } from "@/lib/better-auth-client";
+import { useClientAuth } from "@/hooks/use-client-auth";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AdminCommissionsPage() {
-  const { data: session } = authClient.useSession();
+  const { isAuthenticated, isAuthPending } = useClientAuth();
   const { toast } = useToast();
   const [commissions, setCommissions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -39,11 +39,11 @@ export default function AdminCommissionsPage() {
   const [isSaving, setIsSaving] = useState(false);
 
   const fetchCommissions = async () => {
-    if (!session?.user?.id) return;
+    if (!isAuthenticated) return;
 
     setIsLoading(true);
     try {
-      const data = await getAllPartnerCommissions(session.user.id);
+      const data = await getAllPartnerCommissions("");
       setCommissions(data);
     } catch (error) {
       console.error("Erreur lors de la récupération des commissions:", error);
@@ -59,7 +59,7 @@ export default function AdminCommissionsPage() {
 
   useEffect(() => {
     fetchCommissions();
-  }, [session?.user?.id]);
+  }, [isAuthenticated, isAuthPending]);
 
   const handleEditClick = (partner: any) => {
     setSelectedPartner(partner);
@@ -72,7 +72,7 @@ export default function AdminCommissionsPage() {
   };
 
   const handleSave = async () => {
-    if (!session?.user?.id || !selectedPartner) return;
+    if (!isAuthenticated || !selectedPartner) return;
 
     const rate = parseFloat(commissionRate);
     if (isNaN(rate) || rate < 0 || rate > 100) {
@@ -96,7 +96,7 @@ export default function AdminCommissionsPage() {
     setIsSaving(true);
     try {
       const result = await updatePartnerCommission(
-        session.user.id,
+        "",
         selectedPartner.hotelId,
         rate / 100
       );

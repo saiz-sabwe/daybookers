@@ -26,6 +26,7 @@ const today = () => startOfDay(new Date());
 export function SearchEditSheet({ initialDate, initialTimeSlotId, initialLocation }: SearchEditSheetProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [date, setDate] = useState<Date | undefined>(() => {
     if (!initialDate) return today();
     const d = new Date(initialDate);
@@ -34,6 +35,10 @@ export function SearchEditSheet({ initialDate, initialTimeSlotId, initialLocatio
   const [timeSlotId, setTimeSlotId] = useState<string>(initialTimeSlotId || "");
   const [location, setLocation] = useState<string>(initialLocation || "");
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     getTimeSlots().then(setTimeSlots);
@@ -58,6 +63,19 @@ export function SearchEditSheet({ initialDate, initialTimeSlotId, initialLocatio
     router.push(`/hotels${queryString ? `?${queryString}` : ""}`);
     setOpen(false);
   };
+
+  if (!mounted) {
+    return (
+      <button
+        type="button"
+        className="text-client-primary-600 font-medium hover:underline flex items-center gap-1"
+        disabled
+      >
+        <Edit className="w-4 h-4" />
+        Modifier la recherche
+      </button>
+    );
+  }
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>

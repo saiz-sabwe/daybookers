@@ -34,8 +34,8 @@ const roomTypeSchema = z.object({
   description: z.string().optional(),
   maxGuests: z.number().min(1, "Le nombre de personnes doit être au moins 1").max(10, "Le nombre de personnes ne peut pas dépasser 10"),
   basePrice: z.number().min(0, "Le prix doit être positif"),
-  currency: z.string().default("USD"),
-  roomCount: z.number().min(1, "Le nombre de chambres doit être au moins 1").default(1),
+  currency: z.string().min(1),
+  roomCount: z.number().min(1, "Le nombre de chambres doit être au moins 1"),
   timeSlotIds: z.array(z.string()).min(1, "Sélectionnez au moins un créneau horaire"),
 });
 

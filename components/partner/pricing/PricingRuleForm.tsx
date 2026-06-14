@@ -54,8 +54,8 @@ const pricingRuleSchema = z.object({
   endDate: z.date().optional().nullable(),
   minDaysAdvance: z.number().optional(),
   maxDaysAdvance: z.number().optional(),
-  priority: z.number().default(0),
-  active: z.boolean().default(true),
+  priority: z.number(),
+  active: z.boolean(),
 });
 
 type PricingRuleFormValues = z.infer<typeof pricingRuleSchema>;

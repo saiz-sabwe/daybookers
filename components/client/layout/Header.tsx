@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,7 +16,8 @@ import {
   Phone,
   User,
 } from "lucide-react";
-import { authClient } from "@/lib/better-auth-client";
+import { useClientAuth } from "@/hooks/use-client-auth";
+import { clientSignOut } from "@/lib/api/client-sign-out";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,21 +34,30 @@ const publicLinks = [
 ];
 
 export function Header() {
-  const { data: session, isPending } = authClient.useSession();
-  const user = session?.user;
-  const isAuthenticated = !!user;
+  const { isAuthenticated, isAuthPending, userEmail, userName } = useClientAuth();
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const showAuthenticated = mounted && !isAuthPending && isAuthenticated;
+
+  const authPlaceholder = (
+    <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse" />
+  );
+
+  const mobileMenuPlaceholder = (
+    <Button variant="ghost" size="icon" aria-label="Menu" disabled>
+      <Menu className="w-6 h-6" />
+    </Button>
+  );
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
     try {
-      await authClient.signOut({
-        fetchOptions: {
-          onSuccess: () => {
-            window.location.href = "/";
-          },
-        },
-      });
+      await clientSignOut("/");
     } finally {
       setIsSigningOut(false);
     }
@@ -81,9 +91,9 @@ export function Header() {
           })}
           <div className="h-6 w-px bg-gray-200 mx-2" />
           
-          {isPending ? (
-            <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse" />
-          ) : isAuthenticated ? (
+          {!mounted || isAuthPending ? (
+            authPlaceholder
+          ) : showAuthenticated ? (
             // Utilisateur connecté - Menu déroulant
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -93,7 +103,7 @@ export function Header() {
                       <User className="h-4 w-4 text-client-primary-600" />
                     </div>
                     <span className="text-sm font-medium text-gray-900 hidden lg:inline">
-                      {user?.name || user?.email?.split("@")[0] || "Utilisateur"}
+                      {userName}
                     </span>
                   </div>
                 </Button>
@@ -101,8 +111,8 @@ export function Header() {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium">{user?.name || "Utilisateur"}</p>
-                    <p className="text-xs text-gray-500">{user?.email}</p>
+                    <p className="text-sm font-medium">{userName}</p>
+                    <p className="text-xs text-gray-500">{userEmail}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -159,9 +169,9 @@ export function Header() {
 
         {/* Mobile Menu */}
         <div className="md:hidden flex items-center gap-4">
-          {isPending ? (
-            <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse" />
-          ) : isAuthenticated ? (
+          {!mounted || isAuthPending ? (
+            authPlaceholder
+          ) : showAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">
@@ -171,8 +181,8 @@ export function Header() {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium">{user?.name || "Utilisateur"}</p>
-                    <p className="text-xs text-gray-500">{user?.email}</p>
+                    <p className="text-sm font-medium">{userName}</p>
+                    <p className="text-xs text-gray-500">{userEmail}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -219,9 +229,12 @@ export function Header() {
               <User className="w-5 h-5" />
             </Link>
           )}
+          {!mounted ? (
+            mobileMenuPlaceholder
+          ) : (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" aria-label="Menu">
                 <Menu className="w-6 h-6" />
               </Button>
             </DropdownMenuTrigger>
@@ -266,6 +279,7 @@ export function Header() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          )}
         </div>
       </div>
     </header>

@@ -3,13 +3,13 @@
 import { useState } from "react";
 import { BreadcrumbPartner } from "@/components/partner/layout/BreadcrumbPartner";
 import { Card, CardContent } from "@/components/ui/card";
-import { authClient } from "@/lib/better-auth-client";
+import { useClientAuth } from "@/hooks/use-client-auth";
 import { HotelRoomTypeSelector } from "@/components/partner/availability/HotelRoomTypeSelector";
 import { PricingRulesList } from "@/components/partner/pricing/PricingRulesList";
 import { PricingHelp } from "@/components/partner/pricing/PricingHelp";
 
 export default function PartnerPricingPage() {
-  const { data: session } = authClient.useSession();
+  const { isAuthenticated, isAuthPending } = useClientAuth();
   const [selectedHotelId, setSelectedHotelId] = useState<string | null>(null);
   const [selectedRoomTypeId, setSelectedRoomTypeId] = useState<string | null>(null);
 
@@ -18,9 +18,11 @@ export default function PartnerPricingPage() {
     setSelectedRoomTypeId(roomTypeId);
   };
 
-  if (!session?.user?.id) {
+  if (isAuthPending || !isAuthenticated) {
     return null;
   }
+
+  const userId = "";
 
   return (
     <div>
@@ -40,7 +42,7 @@ export default function PartnerPricingPage() {
         <Card>
           <CardContent className="pt-6">
             <HotelRoomTypeSelector
-              userId={session.user.id}
+              userId={userId}
               onSelectionChange={handleSelectionChange}
             />
           </CardContent>
@@ -49,7 +51,7 @@ export default function PartnerPricingPage() {
         <PricingRulesList
           hotelId={selectedHotelId}
           roomTypeId={selectedRoomTypeId}
-          userId={session.user.id}
+          userId={userId}
         />
       </div>
     </div>

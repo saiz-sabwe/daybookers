@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { BreadcrumbPartner } from "@/components/partner/layout/BreadcrumbPartner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getPartnerEarnings } from "@/app/actions/partner/earnings/get";
-import { authClient } from "@/lib/better-auth-client";
+import { useClientAuth } from "@/hooks/use-client-auth";
 import { TransactionsTable } from "@/components/partner/earnings/TransactionsTable";
 import {
   Select,
@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 
 export default function PartnerEarningsPage() {
-  const { data: session } = authClient.useSession();
+  const { isAuthenticated, isAuthPending } = useClientAuth();
   const [earnings, setEarnings] = useState({
     totalRevenue: 0,
     commission: 0,
@@ -27,14 +27,16 @@ export default function PartnerEarningsPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (session?.user?.id) {
-      setIsLoading(true);
-      getPartnerEarnings(session.user.id, period).then((earningsData) => {
-        setEarnings(earningsData);
-        setIsLoading(false);
-      });
+    if (isAuthPending || !isAuthenticated) {
+      return;
     }
-  }, [session?.user?.id, period]);
+
+    setIsLoading(true);
+    getPartnerEarnings("", period).then((earningsData) => {
+      setEarnings(earningsData);
+      setIsLoading(false);
+    });
+  }, [isAuthenticated, isAuthPending, period]);
 
   const handlePeriodChange = (value: string) => {
     setPeriod(value as "today" | "week" | "month" | "year" | "all");
@@ -118,7 +120,7 @@ export default function PartnerEarningsPage() {
           <CardTitle>Transactions</CardTitle>
         </CardHeader>
         <CardContent>
-          <TransactionsTable userId={session.user.id} period={period} />
+          <TransactionsTable userId="" period={period} />
         </CardContent>
       </Card>
     </div>

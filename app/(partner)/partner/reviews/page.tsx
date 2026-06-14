@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { BreadcrumbPartner } from "@/components/partner/layout/BreadcrumbPartner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getPartnerReviews } from "@/app/actions/partner/reviews/get";
-import { authClient } from "@/lib/better-auth-client";
+import { useClientAuth } from "@/hooks/use-client-auth";
 import { Star, ChevronLeft, ChevronRight, Filter } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -21,7 +21,7 @@ import { getPartnerHotels } from "@/app/actions/partner/hotels/get";
 import { Hotel } from "@/types";
 
 export default function PartnerReviewsPage() {
-  const { data: session } = authClient.useSession();
+  const { isAuthenticated, isAuthPending } = useClientAuth();
   const [reviews, setReviews] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,48 +35,52 @@ export default function PartnerReviewsPage() {
 
   useEffect(() => {
     const fetchHotels = async () => {
-      if (session?.user?.id) {
-        try {
-          const hotelsData = await getPartnerHotels(session.user.id);
-          setHotels(hotelsData);
-        } catch (error) {
-          console.error("Erreur lors de la récupération des hôtels:", error);
-        }
+      if (isAuthPending || !isAuthenticated) {
+        return;
+      }
+
+      try {
+        const hotelsData = await getPartnerHotels("");
+        setHotels(hotelsData);
+      } catch (error) {
+        console.error("Erreur lors de la récupération des hôtels:", error);
       }
     };
 
     fetchHotels();
-  }, [session?.user?.id]);
+  }, [isAuthenticated, isAuthPending]);
 
   useEffect(() => {
     const fetchReviews = async () => {
-      if (session?.user?.id) {
-        setIsLoading(true);
-        setError(null);
-        try {
-          const result = await getPartnerReviews(session.user.id, {
-            hotelId: selectedHotelId !== "all" ? selectedHotelId : undefined,
-            rating: selectedRating !== "all" ? parseInt(selectedRating) : undefined,
-            page,
-            pageSize,
-          });
-          setReviews(result.reviews);
-          setTotal(result.total);
-          setTotalPages(result.totalPages);
-        } catch (err) {
-          console.error("Erreur lors de la récupération des avis:", err);
-          setError("Impossible de charger les avis. Veuillez réessayer.");
-          setReviews([]);
-          setTotal(0);
-          setTotalPages(0);
-        } finally {
-          setIsLoading(false);
-        }
+      if (isAuthPending || !isAuthenticated) {
+        return;
+      }
+
+      setIsLoading(true);
+      setError(null);
+      try {
+        const result = await getPartnerReviews("", {
+          hotelId: selectedHotelId !== "all" ? selectedHotelId : undefined,
+          rating: selectedRating !== "all" ? parseInt(selectedRating) : undefined,
+          page,
+          pageSize,
+        });
+        setReviews(result.reviews);
+        setTotal(result.total);
+        setTotalPages(result.totalPages);
+      } catch (err) {
+        console.error("Erreur lors de la récupération des avis:", err);
+        setError("Impossible de charger les avis. Veuillez réessayer.");
+        setReviews([]);
+        setTotal(0);
+        setTotalPages(0);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchReviews();
-  }, [session?.user?.id, page, selectedHotelId, selectedRating]);
+  }, [isAuthenticated, isAuthPending, page, selectedHotelId, selectedRating]);
 
   // Réinitialiser la page à 1 quand les filtres changent
   useEffect(() => {
@@ -84,8 +88,8 @@ export default function PartnerReviewsPage() {
   }, [selectedHotelId, selectedRating]);
 
   const handleRefresh = () => {
-    if (session?.user?.id) {
-      getPartnerReviews(session.user.id, {
+    if (isAuthenticated) {
+      getPartnerReviews("", {
         hotelId: selectedHotelId !== "all" ? selectedHotelId : undefined,
         rating: selectedRating !== "all" ? parseInt(selectedRating) : undefined,
         page,
@@ -219,10 +223,10 @@ export default function PartnerReviewsPage() {
                     </p>
 
                     {/* Réponse du partenaire */}
-                    {session?.user?.id && (
+                    {isAuthenticated && (
                       <ReviewResponse
                         reviewId={review.id}
-                        userId={session.user.id}
+                        userId=""
                         existingResponse={review.response}
                         responseAt={review.responseAt}
                         onSuccess={handleRefresh}

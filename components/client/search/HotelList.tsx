@@ -20,9 +20,11 @@ export function HotelList({ hotels, timeSlots, selectedDate, selectedTimeSlotId 
     const filteredHotels = useMemo(() => {
         let filtered: Hotel[] = [...hotels];
 
-        // Filter by price
+        // Filter by price (0 = prix inconnu, ne pas exclure)
         filtered = filtered.filter(
-            (hotel) => hotel.minPrice >= priceRange[0] && hotel.minPrice <= priceRange[1]
+            (hotel) =>
+                hotel.minPrice === 0 ||
+                (hotel.minPrice >= priceRange[0] && hotel.minPrice <= priceRange[1])
         );
 
         // Filter by stars
@@ -55,7 +57,7 @@ export function HotelList({ hotels, timeSlots, selectedDate, selectedTimeSlotId 
         }
 
         return sorted;
-    }, [priceRange, selectedStars, selectedAmenities, sortBy]);
+    }, [hotels, priceRange, selectedStars, selectedAmenities, sortBy]);
 
     // Déterminer le nom de la localisation depuis les hôtels
     const locationName = filteredHotels.length > 0 ? filteredHotels[0].city : "Kinshasa";

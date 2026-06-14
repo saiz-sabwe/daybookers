@@ -4,11 +4,11 @@ import { useState, useEffect } from "react";
 import { BreadcrumbAdmin } from "@/components/admin/layout/BreadcrumbAdmin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAdminStats } from "@/app/actions/admin/stats/get";
-import { authClient } from "@/lib/better-auth-client";
+import { useClientAuth } from "@/hooks/use-client-auth";
 import { Building2, Users, Calendar, DollarSign, AlertCircle } from "lucide-react";
 
 export default function AdminDashboardPage() {
-  const { data: session } = authClient.useSession();
+  const { isAuthenticated, isAuthPending } = useClientAuth();
   const [stats, setStats] = useState({
     totalHotels: 0,
     activeHotels: 0,
@@ -20,18 +20,20 @@ export default function AdminDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (session?.user?.id) {
-      getAdminStats(session.user.id)
-        .then((statsData) => {
-          setStats(statsData);
-          setIsLoading(false);
-        })
-        .catch((error) => {
-          console.error("Erreur lors de la récupération des statistiques:", error);
-          setIsLoading(false);
-        });
+    if (isAuthPending || !isAuthenticated) {
+      return;
     }
-  }, [session?.user?.id]);
+
+    getAdminStats("")
+      .then((statsData) => {
+        setStats(statsData);
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        console.error("Erreur lors de la récupération des statistiques:", error);
+        setIsLoading(false);
+      });
+  }, [isAuthenticated, isAuthPending]);
 
   if (isLoading) {
     return (

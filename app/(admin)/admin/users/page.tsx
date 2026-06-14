@@ -23,13 +23,13 @@ import {
 } from "@/components/ui/select";
 import { Search, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { getAllUsers } from "@/app/actions/admin/users/get";
-import { authClient } from "@/lib/better-auth-client";
+import { useClientAuth } from "@/hooks/use-client-auth";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { UserRole } from "@/lib/generated/prisma/client";
+import { UserRole } from "@/types";
 
 export default function AdminUsersPage() {
-  const { data: session } = authClient.useSession();
+  const { isAuthenticated, isAuthPending } = useClientAuth();
   const [users, setUsers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -40,11 +40,11 @@ export default function AdminUsersPage() {
   const pageSize = 10;
 
   const fetchUsers = async () => {
-    if (!session?.user?.id) return;
+    if (!isAuthenticated) return;
 
     setIsLoading(true);
     try {
-      const result = await getAllUsers(session.user.id, {
+      const result = await getAllUsers("", {
         page,
         pageSize,
         search: search || undefined,
@@ -62,7 +62,7 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     fetchUsers();
-  }, [session?.user?.id, page, search, roleFilter]);
+  }, [isAuthenticated, isAuthPending, page, search, roleFilter]);
 
   const getRoleLabel = (role: string) => {
     const roleLabels: Record<string, string> = {

@@ -6,20 +6,17 @@ import { BreadcrumbPartner } from "@/components/partner/layout/BreadcrumbPartner
 import { AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getServerApiToken } from "@/lib/api/server-auth";
 import { redirect } from "next/navigation";
 
 export default async function ComplaintsPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const token = await getServerApiToken();
 
-  if (!session?.user) {
+  if (!token) {
     redirect("/login");
   }
 
-  const complaints = await getComplaints(session.user.id);
+  const complaints = await getComplaints("");
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -109,4 +106,3 @@ export default async function ComplaintsPage() {
     </div>
   );
 }
-

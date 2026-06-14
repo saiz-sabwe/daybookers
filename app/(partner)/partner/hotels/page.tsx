@@ -12,7 +12,7 @@ import { Hotel } from "@/types";
 import { Plus, Building2, Edit, Eye } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { authClient } from "@/lib/better-auth-client";
+import { useClientAuth } from "@/hooks/use-client-auth";
 import { CreateHotelDialog } from "@/components/partner/hotels/CreateHotelDialog";
 import { getUserById } from "@/app/actions/users/get";
 
@@ -21,31 +21,30 @@ export default function PartnerHotelsPage() {
   const [hotelGroups, setHotelGroups] = useState<Array<{ id: string; name: string }>>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isGroupManager, setIsGroupManager] = useState(false);
-  const { data: session } = authClient.useSession();
+  const { isAuthenticated, isAuthPending } = useClientAuth();
 
   useEffect(() => {
-    if (session?.user?.id) {
-      // Charger les hôtels
-      getPartnerHotels(session.user.id).then(setPartnerHotels);
-      
-      // Vérifier si l'utilisateur est gestionnaire de groupe
-      getUserById(session.user.id).then((user) => {
-        if (user) {
-          const isManager = user.roles.includes("ROLE_HOTEL_GROUP_MANAGER");
-          setIsGroupManager(isManager);
-          
-          // Charger les groupes si gestionnaire
-          if (isManager) {
-            getHotelGroupsByManager(session.user.id).then(setHotelGroups);
-          }
-        }
-      });
+    if (isAuthPending || !isAuthenticated) {
+      return;
     }
-  }, [session?.user?.id]);
+
+    getPartnerHotels("").then(setPartnerHotels);
+
+    getUserById("").then((user) => {
+      if (user) {
+        const isManager = user.roles.includes("ROLE_HOTEL_GROUP_MANAGER");
+        setIsGroupManager(isManager);
+
+        if (isManager) {
+          getHotelGroupsByManager("").then(setHotelGroups);
+        }
+      }
+    });
+  }, [isAuthenticated, isAuthPending]);
 
   const handleCreateSuccess = () => {
-    if (session?.user?.id) {
-      getPartnerHotels(session.user.id).then(setPartnerHotels);
+    if (isAuthenticated) {
+      getPartnerHotels("").then(setPartnerHotels);
     }
   };
 
@@ -138,11 +137,11 @@ export default function PartnerHotelsPage() {
       )}
 
       {/* Dialog de création d'hôtel */}
-      {session?.user?.id && (
+      {isAuthenticated && (
         <CreateHotelDialog
           open={isCreateDialogOpen}
           onOpenChange={setIsCreateDialogOpen}
-          userId={session.user.id}
+          userId=""
           hotelGroups={hotelGroups}
           onSuccess={handleCreateSuccess}
         />

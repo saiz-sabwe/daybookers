@@ -18,7 +18,7 @@ import {
 import { RatingInput } from "@/components/shared/forms/RatingInput";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, CheckCircle } from "lucide-react";
-import { authClient } from "@/lib/better-auth-client";
+import { useClientAuth } from "@/hooks/use-client-auth";
 import { getHotels } from "@/app/actions/hotels/get";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Hotel } from "@/types";
@@ -72,7 +72,7 @@ function ReviewFormSkeleton() {
 
 export default function ReviewsPage() {
   const { toast } = useToast();
-  const { data: session } = authClient.useSession();
+  const { isAuthenticated } = useClientAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [hotels, setHotels] = useState<Hotel[]>([]);
@@ -94,7 +94,7 @@ export default function ReviewsPage() {
   });
 
   const onSubmit = async (data: ReviewFormValues) => {
-    if (!session?.user?.id) {
+    if (!isAuthenticated) {
       toast({
         title: "Erreur",
         description: "Vous devez être connecté pour publier un avis",
@@ -111,16 +111,13 @@ export default function ReviewsPage() {
       // Pour l'instant, on utilise un ID mocké
       const bookingId = "mock-booking-id";
 
-      const result = await createReview(
-        {
-          hotelId: data.hotelId,
-          bookingId: bookingId,
-          rating: data.rating,
-          title: undefined,
-          comment: data.comment,
-        },
-        session.user.id
-      );
+      const result = await createReview({
+        hotelId: data.hotelId,
+        bookingId: bookingId,
+        rating: data.rating,
+        title: undefined,
+        comment: data.comment,
+      });
 
       if (!result.success) {
         toast({

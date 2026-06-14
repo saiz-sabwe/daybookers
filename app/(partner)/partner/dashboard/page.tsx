@@ -6,35 +6,37 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { getPartnerHotels } from "@/app/actions/partner/hotels/get";
-import { getPartnerBookings } from "@/app/actions/partner/bookings/get";
+import { getPartnerBookings, PartnerBooking } from "@/app/actions/partner/bookings/get";
 import { getPartnerReviews } from "@/app/actions/partner/reviews/get";
-import { authClient } from "@/lib/better-auth-client";
-import { Hotel, Booking } from "@/types";
+import { useClientAuth } from "@/hooks/use-client-auth";
+import { Hotel } from "@/types";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Calendar, DollarSign, TrendingUp, Star } from "lucide-react";
 
 export default function PartnerDashboard() {
-  const { data: session } = authClient.useSession();
+  const { isAuthenticated, isAuthPending } = useClientAuth();
   const [hotels, setHotels] = useState<Hotel[]>([]);
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookings, setBookings] = useState<PartnerBooking[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (session?.user?.id) {
-      Promise.all([
-        getPartnerHotels(session.user.id),
-        getPartnerBookings(session.user.id),
-        getPartnerReviews(session.user.id),
-      ]).then(([hotelsData, bookingsData, reviewsData]) => {
-        setHotels(hotelsData);
-        setBookings(bookingsData);
-        setReviews(reviewsData.reviews || reviewsData); // Support both old and new format
-        setIsLoading(false);
-      });
+    if (isAuthPending || !isAuthenticated) {
+      return;
     }
-  }, [session?.user?.id]);
+
+    Promise.all([
+      getPartnerHotels(""),
+      getPartnerBookings(""),
+      getPartnerReviews(""),
+    ]).then(([hotelsData, bookingsData, reviewsData]) => {
+      setHotels(hotelsData);
+      setBookings(bookingsData);
+      setReviews(reviewsData.reviews || reviewsData);
+      setIsLoading(false);
+    });
+  }, [isAuthenticated, isAuthPending]);
 
   // Calculer les statistiques
   const today = new Date();
@@ -66,7 +68,10 @@ export default function PartnerDashboard() {
 
   // Chiffre d'affaires (réservations confirmées uniquement)
   const confirmedBookings = bookings.filter((b) => b.status === "CONFIRMED");
-  const totalRevenue = confirmedBookings.reduce((sum, booking) => sum + booking.finalPrice, 0);
+  const totalRevenue = confirmedBookings.reduce(
+    (sum, booking) => sum + (booking.finalPrice ?? booking.totalPrice),
+    0,
+  );
 
   // Chiffre d'affaires d'hier (pour la comparaison)
   const yesterdayConfirmedBookings = bookings.filter((booking) => {
@@ -75,8 +80,8 @@ export default function PartnerDashboard() {
     return bookingDate.getTime() === yesterday.getTime() && booking.status === "CONFIRMED";
   });
   const yesterdayRevenue = yesterdayConfirmedBookings.reduce(
-    (sum, booking) => sum + booking.finalPrice,
-    0
+    (sum, booking) => sum + (booking.finalPrice ?? booking.totalPrice),
+    0,
   );
   const revenueGrowth =
     yesterdayRevenue > 0
@@ -239,7 +244,7 @@ export default function PartnerDashboard() {
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-partner-primary-600">
-                        {booking.currency === "USD" ? "$" : booking.currency} {booking.finalPrice}
+                        {booking.currency === "USD" ? "$" : booking.currency} {booking.finalPrice ?? booking.totalPrice}
                       </p>
                       <span
                         className={`text-xs px-2 py-0.5 rounded-full ${

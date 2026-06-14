@@ -2,8 +2,8 @@
 
 import { ReactNode, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { authClient } from "@/lib/better-auth-client";
 import { hasAnyPartnerRole, hasAdminRole } from "@/app/actions/users/get";
+import { useClientAuth } from "@/hooks/use-client-auth";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -17,16 +17,23 @@ export function ProtectedRoute({
   redirectTo = "/login",
 }: ProtectedRouteProps) {
   const router = useRouter();
-  const { data: session, isPending } = authClient.useSession();
+  const { isAuthenticated, isAuthPending } = useClientAuth();
   const [isCheckingRole, setIsCheckingRole] = useState(false);
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);
 
   useEffect(() => {
-    if (!isPending && !session?.user) {
+    if (isAuthPending) {
+      return;
+    }
+
+    if (!isAuthenticated) {
       router.push(redirectTo);
-    } else if (session?.user && requiredRole === "partner") {
+      return;
+    }
+
+    if (requiredRole === "partner") {
       setIsCheckingRole(true);
-      hasAnyPartnerRole(session.user.id)
+      hasAnyPartnerRole("")
         .then((hasRole) => {
           if (!hasRole) {
             router.push(redirectTo);
@@ -41,9 +48,9 @@ export function ProtectedRoute({
         .finally(() => {
           setIsCheckingRole(false);
         });
-    } else if (session?.user && requiredRole === "admin") {
+    } else if (requiredRole === "admin") {
       setIsCheckingRole(true);
-      hasAdminRole(session.user.id)
+      hasAdminRole("")
         .then((hasRole) => {
           if (!hasRole) {
             router.push(redirectTo);
@@ -58,15 +65,12 @@ export function ProtectedRoute({
         .finally(() => {
           setIsCheckingRole(false);
         });
-    } else if (session?.user && requiredRole === "client") {
-      // Pour "client", on accepte pour l'instant
-      setHasAccess(true);
-    } else if (session?.user) {
+    } else {
       setHasAccess(true);
     }
-  }, [session, isPending, router, redirectTo, requiredRole]);
+  }, [isAuthenticated, isAuthPending, router, redirectTo, requiredRole]);
 
-  if (isPending || isCheckingRole) {
+  if (isAuthPending || isCheckingRole) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-client-primary-500"></div>
@@ -74,10 +78,9 @@ export function ProtectedRoute({
     );
   }
 
-  if (!session?.user || (requiredRole === "partner" && hasAccess === false)) {
+  if (!isAuthenticated || (requiredRole === "partner" && hasAccess === false)) {
     return null;
   }
 
   return <>{children}</>;
 }
-

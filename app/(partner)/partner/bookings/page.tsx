@@ -5,12 +5,12 @@ import { BreadcrumbPartner } from "@/components/partner/layout/BreadcrumbPartner
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { getPartnerBookings } from "@/app/actions/partner/bookings/get";
+import { getPartnerBookings, PartnerBooking } from "@/app/actions/partner/bookings/get";
 import { confirmBooking, cancelBookingByPartner } from "@/app/actions/partner/bookings/update";
-import { Booking, Hotel } from "@/types";
+import { Hotel } from "@/types";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { authClient } from "@/lib/better-auth-client";
+import { useClientAuth } from "@/hooks/use-client-auth";
 import { useToast } from "@/hooks/use-toast";
 import {
   Select,
@@ -23,28 +23,30 @@ import { CheckCircle2, XCircle, Eye } from "lucide-react";
 import Link from "next/link";
 
 export default function PartnerBookingsPage() {
-  const { data: session } = authClient.useSession();
+  const { isAuthenticated, isAuthPending } = useClientAuth();
   const { toast } = useToast();
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookings, setBookings] = useState<PartnerBooking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [processingBookingId, setProcessingBookingId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (session?.user?.id) {
-      getPartnerBookings(session.user.id).then((bookingsData) => {
-        setBookings(bookingsData);
-        setIsLoading(false);
-      });
+    if (isAuthPending || !isAuthenticated) {
+      return;
     }
-  }, [session?.user?.id]);
+
+    getPartnerBookings("").then((bookingsData) => {
+      setBookings(bookingsData);
+      setIsLoading(false);
+    });
+  }, [isAuthenticated, isAuthPending]);
 
   const handleConfirmBooking = async (bookingId: string) => {
-    if (!session?.user?.id) return;
+    if (!isAuthenticated) return;
 
     setProcessingBookingId(bookingId);
     try {
-      const result = await confirmBooking(bookingId, session.user.id);
+      const result = await confirmBooking(bookingId, "");
       if (result.success) {
         toast({
           title: "Réservation confirmée",
@@ -52,7 +54,7 @@ export default function PartnerBookingsPage() {
           variant: "default",
         });
         // Recharger les réservations
-        const updatedBookings = await getPartnerBookings(session.user.id);
+        const updatedBookings = await getPartnerBookings("");
         setBookings(updatedBookings);
       } else {
         toast({
@@ -74,11 +76,11 @@ export default function PartnerBookingsPage() {
   };
 
   const handleCancelBooking = async (bookingId: string) => {
-    if (!session?.user?.id) return;
+    if (!isAuthenticated) return;
 
     setProcessingBookingId(bookingId);
     try {
-      const result = await cancelBookingByPartner(bookingId, session.user.id);
+      const result = await cancelBookingByPartner(bookingId, "");
       if (result.success) {
         toast({
           title: "Réservation annulée",
@@ -86,7 +88,7 @@ export default function PartnerBookingsPage() {
           variant: "default",
         });
         // Recharger les réservations
-        const updatedBookings = await getPartnerBookings(session.user.id);
+        const updatedBookings = await getPartnerBookings("");
         setBookings(updatedBookings);
       } else {
         toast({
@@ -202,7 +204,7 @@ export default function PartnerBookingsPage() {
                     <div className="flex items-center gap-3">
                       <div className="text-right mr-4">
                         <p className="font-bold text-partner-primary-600">
-                          {booking.currency === "USD" ? "$" : booking.currency} {booking.finalPrice}
+                          {booking.currency === "USD" ? "$" : booking.currency} {booking.finalPrice ?? booking.totalPrice}
                         </p>
                       </div>
                       <div className="flex gap-2">

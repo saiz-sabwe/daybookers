@@ -3,24 +3,19 @@ import { CheckInOutList } from "@/components/partner/checkin-checkout/CheckInOut
 import { BreadcrumbPartner } from "@/components/partner/layout/BreadcrumbPartner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "lucide-react";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getServerApiToken } from "@/lib/api/server-auth";
 import { redirect } from "next/navigation";
 
 export default async function CheckInOutPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const token = await getServerApiToken();
 
-  if (!session?.user) {
+  if (!token) {
     redirect("/login");
   }
 
-  const userId = session.user.id;
-
   const [checkIns, checkOuts] = await Promise.all([
-    getTodayCheckIns(userId),
-    getTodayCheckOuts(userId),
+    getTodayCheckIns(""),
+    getTodayCheckOuts(""),
   ]);
 
   return (
@@ -60,4 +55,3 @@ export default async function CheckInOutPage() {
     </div>
   );
 }
-

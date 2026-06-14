@@ -70,7 +70,7 @@ export function RoomList({ roomTypes, hotelId }: RoomListProps) {
                                     return (
                                         <div key={slot.id} className="border border-gray-200 rounded-lg p-3 hover:border-client-primary-500 hover:bg-client-primary-50 cursor-pointer transition-all group">
                                             <div className="flex flex-col mb-2">
-                                                <span className="font-bold text-gray-900 text-sm">{slot.name || slot.label}</span>
+                                                <span className="font-bold text-gray-900 text-sm">{slot.name}</span>
                                                 <span className="text-xs text-gray-600">{timeDisplay}</span>
                                             </div>
                                             <div className="flex justify-between items-end">

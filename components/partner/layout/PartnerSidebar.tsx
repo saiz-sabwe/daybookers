@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
-import { authClient } from "@/lib/better-auth-client";
+import { useClientAuth } from "@/hooks/use-client-auth";
 import { getUserById } from "@/app/actions/users/get";
 import {
   LayoutDashboard,
@@ -38,18 +38,20 @@ const menuItems = [
 
 export function PartnerSidebar() {
   const pathname = usePathname();
-  const { data: session } = authClient.useSession();
+  const { isAuthenticated, isAuthPending } = useClientAuth();
   const [userRoles, setUserRoles] = useState<string[]>([]);
 
   useEffect(() => {
-    if (session?.user?.id) {
-      getUserById(session.user.id).then((user) => {
-        if (user) {
-          setUserRoles(user.roles);
-        }
-      });
+    if (isAuthPending || !isAuthenticated) {
+      return;
     }
-  }, [session?.user?.id]);
+
+    getUserById("").then((user) => {
+      if (user) {
+        setUserRoles(user.roles);
+      }
+    });
+  }, [isAuthenticated, isAuthPending]);
 
   const isReceptionist = userRoles.includes("ROLE_HOTEL_RECEPTIONIST") && 
                         !userRoles.includes("ROLE_HOTEL_MANAGER") && 

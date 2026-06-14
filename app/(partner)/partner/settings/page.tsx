@@ -16,12 +16,12 @@ import {
 } from "@/components/ui/select";
 import { getPartnerSettings } from "@/app/actions/partner/settings/get";
 import { updatePartnerSettings } from "@/app/actions/partner/settings/update";
-import { authClient } from "@/lib/better-auth-client";
+import { useClientAuth } from "@/hooks/use-client-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
 export default function PartnerSettingsPage() {
-  const { data: session } = authClient.useSession();
+  const { isAuthenticated, isAuthPending } = useClientAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -35,31 +35,38 @@ export default function PartnerSettingsPage() {
   });
 
   useEffect(() => {
-    if (session?.user?.id) {
-      getPartnerSettings(session.user.id).then((settingsData) => {
-        if (settingsData) {
-          setSettings({
-            commissionRate: settingsData.commissionRate || 0.1,
-            payoutMethod: settingsData.payoutMethod || "",
-            payoutSchedule: settingsData.payoutSchedule || "monthly",
-            autoConfirm: settingsData.autoConfirm || false,
-            emailNotifications: settingsData.emailNotifications ?? true,
-            smsNotifications: settingsData.smsNotifications ?? false,
-          });
-        }
-        setIsLoading(false);
-      });
+    if (isAuthPending) {
+      return;
     }
-  }, [session?.user?.id]);
+
+    if (!isAuthenticated) {
+      setIsLoading(false);
+      return;
+    }
+
+    getPartnerSettings("").then((settingsData) => {
+      if (settingsData) {
+        setSettings({
+          commissionRate: settingsData.commissionRate || 0.1,
+          payoutMethod: settingsData.payoutMethod || "",
+          payoutSchedule: settingsData.payoutSchedule || "monthly",
+          autoConfirm: settingsData.autoConfirm || false,
+          emailNotifications: settingsData.emailNotifications ?? true,
+          smsNotifications: settingsData.smsNotifications ?? false,
+        });
+      }
+      setIsLoading(false);
+    });
+  }, [isAuthenticated, isAuthPending]);
 
   const handleSave = async () => {
-    if (!session?.user?.id) return;
+    if (!isAuthenticated) return;
 
     setIsSaving(true);
     try {
       // Ne pas envoyer commissionRate car il ne peut pas être modifié par le partenaire
       const { commissionRate, ...settingsToUpdate } = settings;
-      const result = await updatePartnerSettings(session.user.id, settingsToUpdate);
+      const result = await updatePartnerSettings("", settingsToUpdate);
       if (result.success) {
         toast({
           title: "Paramètres mis à jour",

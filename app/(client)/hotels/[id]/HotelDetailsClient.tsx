@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { createFavorite } from "@/app/actions/favorites/create";
 import { deleteFavorite } from "@/app/actions/favorites/delete";
 import { isFavorite } from "@/app/actions/favorites/get";
-import { authClient } from "@/lib/better-auth-client";
+import { useClientAuth } from "@/hooks/use-client-auth";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -21,59 +21,63 @@ interface HotelDetailsClientProps {
 export function HotelDetailsClient({ hotel }: HotelDetailsClientProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const { data: session } = authClient.useSession();
+  const { isAuthenticated, isAuthPending } = useClientAuth();
   const [isFavoriteState, setIsFavoriteState] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isToggling, setIsToggling] = useState(false);
 
   useEffect(() => {
-    if (session?.user?.id) {
-      isFavorite(hotel.id, session.user.id).then((fav) => {
+    if (isAuthPending) {
+      return;
+    }
+
+    if (isAuthenticated) {
+      isFavorite(hotel.id).then((fav) => {
         setIsFavoriteState(fav);
         setIsLoading(false);
       });
     } else {
       setIsLoading(false);
     }
-  }, [session?.user?.id, hotel.id]);
+  }, [isAuthenticated, isAuthPending, hotel.id]);
 
   const handleToggleFavorite = async () => {
-    if (!session?.user?.id) {
-      router.push("/login");
+    if (!isAuthenticated) {
+      router.push(`/login?callbackUrl=${encodeURIComponent(`/hotels/${hotel.id}`)}`);
       return;
     }
 
     setIsToggling(true);
     try {
       if (isFavoriteState) {
-        const result = await deleteFavorite(hotel.id, session.user.id);
+        const result = await deleteFavorite(hotel.id);
         if (result.success) {
           setIsFavoriteState(false);
           toast({
-            title: "Favori supprimé",
-            description: "L'hôtel a été retiré de vos favoris",
+            title: "Favori retiré",
+            description: "L'hôtel a été retiré de vos favoris.",
             variant: "success",
           });
         } else {
           toast({
-            title: "Erreur",
-            description: result.error || "Une erreur est survenue",
+            title: "Impossible de retirer le favori",
+            description: result.error,
             variant: "destructive",
           });
         }
       } else {
-        const result = await createFavorite(hotel.id, session.user.id);
+        const result = await createFavorite(hotel.id);
         if (result.success) {
           setIsFavoriteState(true);
           toast({
             title: "Ajouté aux favoris",
-            description: "L'hôtel a été ajouté à vos favoris",
+            description: "L'hôtel a été ajouté à vos favoris.",
             variant: "success",
           });
         } else {
           toast({
-            title: "Erreur",
-            description: result.error || "Une erreur est survenue",
+            title: "Impossible d'ajouter aux favoris",
+            description: result.error,
             variant: "destructive",
           });
         }
@@ -81,8 +85,8 @@ export function HotelDetailsClient({ hotel }: HotelDetailsClientProps) {
     } catch (error) {
       console.error("Erreur lors du toggle du favori:", error);
       toast({
-        title: "Erreur",
-        description: "Une erreur est survenue",
+        title: "Une erreur est survenue",
+        description: "Veuillez réessayer dans quelques instants.",
         variant: "destructive",
       });
     } finally {
@@ -112,4 +116,3 @@ export function HotelDetailsClient({ hotel }: HotelDetailsClientProps) {
     </div>
   );
 }
-

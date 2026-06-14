@@ -1,20 +1,17 @@
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getServerApiToken } from "@/lib/api/server-auth";
 import { redirect } from "next/navigation";
 import { getPaymentsByUserId } from "@/app/actions/partner/payments/get";
 import { PaymentsList } from "@/components/partner/payments/PaymentsList";
 import { CreditCard } from "lucide-react";
 
 export default async function PaymentsPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const token = await getServerApiToken();
 
-  if (!session?.user) {
+  if (!token) {
     redirect("/login");
   }
 
-  const payments = await getPaymentsByUserId(session.user.id);
+  const payments = await getPaymentsByUserId("");
 
   return (
     <div className="p-8">
@@ -45,4 +42,3 @@ export default async function PaymentsPage() {
     </div>
   );
 }
-

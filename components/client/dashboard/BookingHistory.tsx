@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { BookingCard } from "@/components/client/booking/BookingCard";
+import { DashboardPageHeader } from "@/components/client/dashboard/DashboardPageHeader";
 import { EmptyState } from "@/components/shared/utils/EmptyState";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -18,29 +18,39 @@ import { getBookings } from "@/app/actions/bookings/get";
 import { getHotels } from "@/app/actions/hotels/get";
 import { cancelBooking } from "@/app/actions/bookings/update";
 import { Booking, Hotel } from "@/types";
-import { CalendarX, AlertTriangle, Clock } from "lucide-react";
+import {
+  CalendarX,
+  AlertTriangle,
+  Clock,
+  CalendarCheck,
+  History,
+  Ban,
+  Calendar,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { authClient } from "@/lib/better-auth-client";
+import { useClientAuth } from "@/hooks/use-client-auth";
+import { useGlobalLoading } from "@/components/shared/GlobalLoadingProvider";
+import { cn } from "@/lib/utils";
 
 function BookingCardSkeleton() {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-md overflow-hidden">
-      <div className="p-6">
-        <div className="flex flex-col md:flex-row gap-6">
-          <Skeleton className="w-full md:w-32 h-48 md:h-32 rounded-xl flex-shrink-0" />
-          <div className="flex-1 min-w-0 space-y-3">
-            <Skeleton className="h-6 w-[70%]" />
-            <Skeleton className="h-4 w-40" />
-            <div className="grid grid-cols-2 gap-3">
-              <Skeleton className="h-14 rounded-lg" />
-              <Skeleton className="h-14 rounded-lg" />
-              <Skeleton className="h-14 rounded-lg" />
-              <Skeleton className="h-14 rounded-lg" />
-            </div>
-            <div className="flex gap-2 pt-2">
-              <Skeleton className="h-9 w-24 rounded-md" />
-              <Skeleton className="h-9 w-28 rounded-md" />
-            </div>
+    <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-md">
+      <div className="flex flex-col sm:flex-row">
+        <Skeleton className="h-44 w-full sm:h-auto sm:w-52 md:w-56 shrink-0 rounded-none" />
+        <div className="flex-1 space-y-3 p-5 md:p-6">
+          <div className="flex justify-between">
+            <Skeleton className="h-6 w-[55%]" />
+            <Skeleton className="h-8 w-16" />
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-8 w-28 rounded-lg" />
+            <Skeleton className="h-8 w-24 rounded-lg" />
+            <Skeleton className="h-8 w-20 rounded-lg" />
+          </div>
+          <Skeleton className="h-4 w-24" />
+          <div className="flex gap-2 border-t border-gray-100 pt-4">
+            <Skeleton className="h-9 w-24 rounded-md" />
+            <Skeleton className="h-9 w-20 rounded-md" />
           </div>
         </div>
       </div>
@@ -60,27 +70,37 @@ function BookingHistorySkeleton() {
 
 export function BookingHistory({ bookings: initialBookings, hotels: initialHotels }: { bookings?: Booking[]; hotels?: Hotel[] }) {
   const { toast } = useToast();
-  const { data: session } = authClient.useSession();
+  const { runWithLoading } = useGlobalLoading();
+  const { isAuthenticated, isAuthPending } = useClientAuth();
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [bookingToCancel, setBookingToCancel] = useState<string | null>(null);
   const [bookings, setBookings] = useState<Booking[]>(initialBookings || []);
   const [hotels, setHotels] = useState<Hotel[]>(initialHotels || []);
   const [isCancelling, setIsCancelling] = useState(false);
   const [isLoading, setIsLoading] = useState(!initialBookings);
+  const [activeTab, setActiveTab] = useState<
+    "active" | "pending" | "past" | "cancelled"
+  >("active");
 
   useEffect(() => {
-    if (!initialBookings && session?.user?.id) {
+    if (isAuthPending) {
+      return;
+    }
+
+    if (!initialBookings && isAuthenticated) {
       setIsLoading(true);
-      Promise.all([getBookings(session.user.id), getHotels()])
-        .then(([bookingsData, hotelsData]) => {
-          setBookings(bookingsData);
-          setHotels(hotelsData);
-        })
-        .finally(() => setIsLoading(false));
-    } else if (initialBookings) {
+      runWithLoading(() =>
+        Promise.all([getBookings(), getHotels()]).then(
+          ([bookingsData, hotelsData]) => {
+            setBookings(bookingsData);
+            setHotels(hotelsData);
+          },
+        ),
+      ).finally(() => setIsLoading(false));
+    } else if (initialBookings || !isAuthenticated) {
       setIsLoading(false);
     }
-  }, [session?.user?.id, initialBookings]);
+  }, [isAuthenticated, isAuthPending, initialBookings, runWithLoading]);
 
   const allBookings = bookings.map((booking) => {
     const hotel = hotels.find((h) => h.id === booking.hotelId);
@@ -109,17 +129,16 @@ export function BookingHistory({ bookings: initialBookings, hotels: initialHotel
   };
 
   const handleConfirmCancel = async () => {
-    if (!bookingToCancel || !session?.user?.id) {
+    if (!bookingToCancel || !isAuthenticated) {
       return;
     }
 
     setIsCancelling(true);
     try {
-      const result = await cancelBooking(bookingToCancel, session.user.id);
+      const result = await runWithLoading(() => cancelBooking(bookingToCancel));
 
       if (result.success) {
-        // Recharger les réservations depuis la base de données
-        const updatedBookings = await getBookings(session.user.id);
+        const updatedBookings = await runWithLoading(() => getBookings());
         setBookings(updatedBookings);
 
         toast({
@@ -153,115 +172,154 @@ export function BookingHistory({ bookings: initialBookings, hotels: initialHotel
     setBookingToCancel(null);
   };
 
+  const tabs = [
+    {
+      id: "active" as const,
+      label: "Actives",
+      count: activeBookings.length,
+      icon: CalendarCheck,
+    },
+    {
+      id: "pending" as const,
+      label: "En attente",
+      count: pendingBookings.length,
+      icon: Clock,
+    },
+    {
+      id: "past" as const,
+      label: "Passées",
+      count: pastBookings.length,
+      icon: History,
+    },
+    {
+      id: "cancelled" as const,
+      label: "Annulées",
+      count: cancelled.length,
+      icon: Ban,
+    },
+  ];
+
+  const currentList =
+    activeTab === "active"
+      ? activeBookings
+      : activeTab === "pending"
+        ? pendingBookings
+        : activeTab === "past"
+          ? pastBookings
+          : cancelled;
+
   if (isLoading) {
     return (
       <div>
-        <div className="mb-6">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Mes réservations</h2>
-          <p className="text-gray-600">Chargement...</p>
-        </div>
-        <BookingHistorySkeleton />
+        <DashboardPageHeader
+          icon={Calendar}
+          title="Mes réservations"
+          description="Chargement de vos réservations..."
+        />
       </div>
     );
   }
 
   return (
     <div>
-      <div className="mb-6">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">Mes réservations</h2>
-        <p className="text-gray-600">Gérez toutes vos réservations en un seul endroit</p>
+      <DashboardPageHeader
+        icon={Calendar}
+        title="Mes réservations"
+        description="Gérez toutes vos réservations en un seul endroit"
+      />
+
+      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {tabs.map((tab) => {
+          const TabIcon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                "rounded-xl border p-4 text-left transition-all",
+                isActive
+                  ? "border-client-primary-200 bg-client-primary-50 shadow-sm ring-1 ring-client-primary-100"
+                  : "border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm",
+              )}
+            >
+              <div className="mb-2 flex items-center justify-between">
+                <TabIcon
+                  className={cn(
+                    "h-5 w-5",
+                    isActive ? "text-client-primary-600" : "text-gray-400",
+                  )}
+                />
+                <span
+                  className={cn(
+                    "text-2xl font-bold",
+                    isActive ? "text-client-primary-700" : "text-gray-900",
+                  )}
+                >
+                  {tab.count}
+                </span>
+              </div>
+              <p
+                className={cn(
+                  "text-sm font-medium",
+                  isActive ? "text-client-primary-700" : "text-gray-600",
+                )}
+              >
+                {tab.label}
+              </p>
+            </button>
+          );
+        })}
       </div>
 
-      <Tabs defaultValue="active" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="active">Actives ({activeBookings.length})</TabsTrigger>
-          <TabsTrigger value="pending">En attente ({pendingBookings.length})</TabsTrigger>
-          <TabsTrigger value="past">Passées ({pastBookings.length})</TabsTrigger>
-          <TabsTrigger value="cancelled">Annulées ({cancelled.length})</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="pending" className="space-y-4 mt-6">
-          {pendingBookings.length > 0 ? (
-            pendingBookings.map(({ booking, hotel }) => (
-              <BookingCard
-                key={booking.id}
-                booking={booking}
-                hotel={hotel!}
-                onCancel={handleCancelClick}
-              />
-            ))
-          ) : (
-            <EmptyState
-              icon={Clock}
-              title="Aucune réservation en attente"
-              description="Vous n'avez pas de réservation en attente de paiement."
+      <div className="space-y-4">
+        {currentList.length > 0 ? (
+          currentList.map(({ booking, hotel }) => (
+            <BookingCard
+              key={booking.id}
+              booking={booking}
+              hotel={hotel!}
+              showActions={activeTab !== "cancelled"}
+              onCancel={handleCancelClick}
+              onReviewSuccess={
+                activeTab === "past"
+                  ? async () => {
+                      if (isAuthenticated) {
+                        const updatedBookings = await getBookings();
+                        setBookings(updatedBookings);
+                      }
+                    }
+                  : undefined
+              }
             />
-          )}
-        </TabsContent>
-
-        <TabsContent value="active" className="space-y-4 mt-6">
-          {activeBookings.length > 0 ? (
-            activeBookings.map(({ booking, hotel }) => (
-              <BookingCard
-                key={booking.id}
-                booking={booking}
-                hotel={hotel!}
-                onCancel={handleCancelClick}
-              />
-            ))
-          ) : (
-            <EmptyState
-              icon={CalendarX}
-              title="Aucune réservation active"
-              description="Vous n'avez pas de réservation confirmée pour le moment."
-            />
-          )}
-        </TabsContent>
-
-        <TabsContent value="past" className="space-y-4 mt-6">
-          {pastBookings.length > 0 ? (
-            pastBookings.map(({ booking, hotel }) => (
-              <BookingCard
-                key={booking.id}
-                booking={booking}
-                hotel={hotel!}
-                showActions={true}
-                onReviewSuccess={async () => {
-                  if (session?.user?.id) {
-                    const updatedBookings = await getBookings(session.user.id);
-                    setBookings(updatedBookings);
-                  }
-                }}
-              />
-            ))
-          ) : (
-            <EmptyState
-              icon={CalendarX}
-              title="Aucune réservation passée"
-              description="Vos réservations terminées apparaîtront ici."
-            />
-          )}
-        </TabsContent>
-
-        <TabsContent value="cancelled" className="space-y-4 mt-6">
-          {cancelled.length > 0 ? (
-            cancelled.map(({ booking, hotel }) => (
-              <BookingCard
-                key={booking.id}
-                booking={booking}
-                hotel={hotel!}
-                showActions={false}
-              />
-            ))
-          ) : (
-            <EmptyState
-              icon={CalendarX}
-              title="Aucune réservation annulée"
-              description="Vous n'avez annulé aucune réservation."
-            />
-          )}
-        </TabsContent>
-      </Tabs>
+          ))
+        ) : activeTab === "pending" ? (
+          <EmptyState
+            icon={Clock}
+            title="Aucune réservation en attente"
+            description="Vous n'avez pas de réservation en attente de paiement."
+          />
+        ) : activeTab === "active" ? (
+          <EmptyState
+            icon={CalendarX}
+            title="Aucune réservation active"
+            description="Vous n'avez pas de réservation confirmée pour le moment."
+          />
+        ) : activeTab === "past" ? (
+          <EmptyState
+            icon={CalendarX}
+            title="Aucune réservation passée"
+            description="Vos réservations terminées apparaîtront ici."
+          />
+        ) : (
+          <EmptyState
+            icon={CalendarX}
+            title="Aucune réservation annulée"
+            description="Vous n'avez annulé aucune réservation."
+          />
+        )}
+      </div>
 
       {/* Modal de confirmation d'annulation */}
       <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>

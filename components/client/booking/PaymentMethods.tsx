@@ -9,9 +9,14 @@ import { useState } from "react";
 interface PaymentMethodsProps {
   onMethodSelect?: (method: string) => void;
   selectedMethod?: string;
+  compact?: boolean;
 }
 
-export function PaymentMethods({ onMethodSelect, selectedMethod: initialSelected }: PaymentMethodsProps) {
+export function PaymentMethods({
+  onMethodSelect,
+  selectedMethod: initialSelected,
+  compact = false,
+}: PaymentMethodsProps) {
   const [selectedMethod, setSelectedMethod] = useState(initialSelected || "card");
 
   const handleMethodChange = (value: string) => {
@@ -44,22 +49,28 @@ export function PaymentMethods({ onMethodSelect, selectedMethod: initialSelected
   ];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <Card className="h-full flex flex-col">
+      <CardHeader className={compact ? "pb-3" : undefined}>
+        <CardTitle className={`flex items-center gap-2 ${compact ? "text-base" : ""}`}>
           <CreditCard className="w-5 h-5 text-client-primary-600" />
           Moyens de paiement
         </CardTitle>
-        <CardDescription>
-          Sélectionnez votre mode de paiement préféré
+        <CardDescription className={compact ? "text-xs" : undefined}>
+          Choisissez comment régler votre réservation
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <RadioGroup value={selectedMethod} onValueChange={handleMethodChange} className="space-y-3">
+      <CardContent className="flex-1">
+        <RadioGroup
+          value={selectedMethod}
+          onValueChange={handleMethodChange}
+          className={compact ? "space-y-2" : "space-y-3"}
+        >
           {paymentMethods.map((method) => (
             <div key={method.id} className="relative">
               <div
-                className={`flex items-start space-x-3 p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                className={`flex items-center space-x-3 rounded-lg border-2 transition-all cursor-pointer ${
+                  compact ? "p-3" : "p-4 items-start"
+                } ${
                   selectedMethod === method.id
                     ? "border-client-primary-500 bg-client-primary-50"
                     : "border-gray-200 hover:border-gray-300"
@@ -69,22 +80,26 @@ export function PaymentMethods({ onMethodSelect, selectedMethod: initialSelected
                   value={method.id}
                   id={method.id}
                   disabled={!method.available}
-                  className="mt-1"
+                  className={compact ? "" : "mt-1"}
                 />
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <Label
                     htmlFor={method.id}
                     className="flex items-center gap-2 cursor-pointer"
                   >
-                    <method.icon className="w-5 h-5 text-gray-600" />
-                    <div>
-                      <p className="font-medium text-gray-900">{method.name}</p>
-                      <p className="text-sm text-gray-500">{method.description}</p>
+                    <method.icon className="w-4 h-4 text-gray-600 shrink-0" />
+                    <div className="min-w-0">
+                      <p className={`font-medium text-gray-900 ${compact ? "text-sm" : ""}`}>
+                        {method.name}
+                      </p>
+                      <p className={`text-gray-500 truncate ${compact ? "text-xs" : "text-sm"}`}>
+                        {method.description}
+                      </p>
                     </div>
                   </Label>
                 </div>
                 {selectedMethod === method.id && (
-                  <CheckCircle2 className="w-5 h-5 text-client-primary-600 flex-shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 text-client-primary-600 shrink-0" />
                 )}
               </div>
             </div>
@@ -92,25 +107,25 @@ export function PaymentMethods({ onMethodSelect, selectedMethod: initialSelected
         </RadioGroup>
 
         {selectedMethod === "card" && (
-          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-800">
-              <strong>Sécurisé :</strong> Vos informations de carte sont cryptées et sécurisées.
+          <div className={`${compact ? "mt-2 p-2" : "mt-4 p-3"} bg-blue-50 border border-blue-200 rounded-lg`}>
+            <p className={`text-blue-800 ${compact ? "text-xs" : "text-sm"}`}>
+              <strong>Sécurisé :</strong> Paiement crypté et sécurisé.
             </p>
           </div>
         )}
 
         {selectedMethod === "mobile_money" && (
-          <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-sm text-green-800">
-              <strong>Mobile Money :</strong> Vous recevrez un code de paiement par SMS après la confirmation.
+          <div className={`${compact ? "mt-2 p-2" : "mt-4 p-3"} bg-green-50 border border-green-200 rounded-lg`}>
+            <p className={`text-green-800 ${compact ? "text-xs" : "text-sm"}`}>
+              <strong>Mobile Money :</strong> Instructions envoyées par SMS.
             </p>
           </div>
         )}
 
         {selectedMethod === "cash" && (
-          <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-            <p className="text-sm text-amber-800">
-              <strong>Paiement sur place :</strong> Vous pouvez payer directement à la réception de l'hôtel.
+          <div className={`${compact ? "mt-2 p-2" : "mt-4 p-3"} bg-amber-50 border border-amber-200 rounded-lg`}>
+            <p className={`text-amber-800 ${compact ? "text-xs" : "text-sm"}`}>
+              <strong>Sur place :</strong> Réglez à la réception de l&apos;hôtel.
             </p>
           </div>
         )}

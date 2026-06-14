@@ -3,15 +3,30 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Calendar, Clock, Users, MapPin, CheckCircle, XCircle, Clock as ClockIcon, Star } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  Users,
+  MapPin,
+  CheckCircle,
+  XCircle,
+  Clock as ClockIcon,
+  Star,
+  ArrowRight,
+  Hash,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Booking, Hotel } from "@/types";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { ReviewDialog } from "./ReviewDialog";
-import { authClient } from "@/lib/better-auth-client";
+import { useClientAuth } from "@/hooks/use-client-auth";
+import {
+  formatBookingRef,
+  formatTimeLabel,
+} from "@/lib/bookings/format-booking-ref";
+import { resolveHotelImage } from "@/lib/images/hotel-image";
 
 interface BookingCardProps {
   booking: Booking;
@@ -21,174 +36,215 @@ interface BookingCardProps {
   onReviewSuccess?: () => void;
 }
 
-export function BookingCard({ booking, hotel, showActions = true, onCancel, onReviewSuccess }: BookingCardProps) {
-  const { data: session } = authClient.useSession();
+const statusConfig: Record<
+  string,
+  {
+    label: string;
+    badge: string;
+    ring: string;
+    icon: typeof CheckCircle;
+  }
+> = {
+  CONFIRMED: {
+    label: "Confirmée",
+    badge: "bg-emerald-500/90 text-white",
+    ring: "ring-emerald-500/20",
+    icon: CheckCircle,
+  },
+  PENDING: {
+    label: "En attente",
+    badge: "bg-amber-500/90 text-white",
+    ring: "ring-amber-500/20",
+    icon: ClockIcon,
+  },
+  CANCELLED: {
+    label: "Annulée",
+    badge: "bg-red-500/90 text-white",
+    ring: "ring-red-500/20",
+    icon: XCircle,
+  },
+  COMPLETED: {
+    label: "Terminée",
+    badge: "bg-gray-700/90 text-white",
+    ring: "ring-gray-500/20",
+    icon: CheckCircle,
+  },
+  REFUNDED: {
+    label: "Remboursée",
+    badge: "bg-purple-500/90 text-white",
+    ring: "ring-purple-500/20",
+    icon: XCircle,
+  },
+};
+
+export function BookingCard({
+  booking,
+  hotel,
+  showActions = true,
+  onCancel,
+  onReviewSuccess,
+}: BookingCardProps) {
+  const { isAuthenticated } = useClientAuth();
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
-  const statusConfig: Record<string, { label: string; color: string; icon: typeof CheckCircle }> = {
-    CONFIRMED: { label: "Confirmée", color: "bg-green-100 text-green-800", icon: CheckCircle },
-    PENDING: { label: "En attente", color: "bg-yellow-100 text-yellow-800", icon: ClockIcon },
-    CANCELLED: { label: "Annulée", color: "bg-red-100 text-red-800", icon: XCircle },
-    COMPLETED: { label: "Terminée", color: "bg-gray-100 text-gray-800", icon: CheckCircle },
-    REFUNDED: { label: "Remboursée", color: "bg-purple-100 text-purple-800", icon: XCircle },
-  };
 
   const status = statusConfig[booking.status] || statusConfig.PENDING;
   const StatusIcon = status.icon;
+  const imageSrc = hotel.images?.[0]
+    ? resolveHotelImage(hotel.images[0])
+    : null;
 
   return (
-    <div className="group relative bg-white rounded-xl border border-gray-200 shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden">
-      <div className="p-6">
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* Hotel Image */}
-          {hotel.images && hotel.images[0] && (
-            <div className="relative w-full md:w-32 h-48 md:h-32 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
-              <Image
-                src={hotel.images[0]}
-                alt={hotel.name}
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-200"
-              />
-              <div className="absolute top-3 right-3">
-                <Badge className={cn("flex items-center gap-1 shadow-md", status.color)}>
-                  <StatusIcon className="w-3 h-3" />
-                  {status.label}
-                </Badge>
-              </div>
-            </div>
+    <article
+      className={cn(
+        "group overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-md transition-all duration-300 hover:shadow-xl",
+        status.ring,
+        "ring-1 ring-transparent",
+      )}
+    >
+      <div className="flex flex-col sm:flex-row">
+        {/* Image */}
+        <div className="relative h-44 w-full shrink-0 sm:h-auto sm:w-52 md:w-56">
+          {imageSrc ? (
+            <Image
+              src={imageSrc}
+              alt={hotel.name}
+              fill
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              sizes="(max-width: 640px) 100vw, 224px"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-client-primary-100 to-client-primary-200" />
           )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent sm:bg-gradient-to-r sm:from-black/50 sm:via-black/10 sm:to-transparent" />
 
-          {/* Booking Info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex-1">
-                <h3 className="font-bold text-xl text-gray-900 mb-1.5">
-                  {hotel.name}
-                </h3>
-                <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
-                  <MapPin className="w-4 h-4 text-gray-400" />
-                  <span>{hotel.city}, {hotel.country}</span>
-                </div>
-              </div>
-            </div>
+          <div className="absolute left-3 top-3">
+            <span
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold shadow-lg backdrop-blur-sm",
+                status.badge,
+              )}
+            >
+              <StatusIcon className="h-3 w-3" />
+              {status.label}
+            </span>
+          </div>
 
-            {/* Booking Details Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
-                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-white">
-                  <Calendar className="w-5 h-5 text-client-primary-600" />
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-0.5">Date</p>
-                  <p className="text-sm font-semibold text-gray-900">
-                  {format(new Date(booking.date), "EEEE d MMMM yyyy", { locale: fr })}
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
-                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-white">
-                  <Clock className="w-5 h-5 text-client-primary-600" />
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-0.5">Créneau</p>
-                  <p className="text-sm font-semibold text-gray-900">
-                    {booking.timeSlot.startTime} - {booking.timeSlot.endTime}
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
-                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-white">
-                  <Users className="w-5 h-5 text-client-primary-600" />
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-0.5">Invités</p>
-                  <p className="text-sm font-semibold text-gray-900">
-                  {booking.guestCount.adults} {booking.guestCount.adults > 1 ? "adultes" : "adulte"}
-                  {booking.guestCount.children > 0 && `, ${booking.guestCount.children} ${booking.guestCount.children > 1 ? "enfants" : "enfant"}`}
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
-                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-white">
-                  <span className="text-lg font-bold text-client-primary-600">$</span>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-0.5">Prix total</p>
-                  <p className="text-lg font-bold text-gray-900">
-                  {booking.currency === "USD" ? "$" : booking.currency} {booking.totalPrice}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Booking ID */}
-            <div className="mb-4 pt-4 border-t border-gray-100">
-              <p className="text-xs text-gray-500">
-                Réservation n° <span className="font-mono font-semibold text-gray-700">{booking.id}</span>
-              </p>
-            </div>
-
-            {/* Actions */}
-            {showActions && (
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  asChild
-                  variant="default"
-                  size="sm"
-                  className="bg-client-primary-600 hover:bg-client-primary-700"
-                >
-                  <Link href={`/booking/confirm/${booking.id}`}>
-                    Détails de la réservation
-                  </Link>
-                </Button>
-                {(booking.status === "CONFIRMED" || booking.status === "PENDING") && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onCancel?.(booking.id)}
-                    className="text-red-600 hover:text-red-700 hover:border-red-300 hover:bg-red-50"
-                  >
-                    Annuler
-                  </Button>
-                )}
-                {booking.status === "COMPLETED" && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setReviewDialogOpen(true)}
-                    className="text-client-primary-600 hover:text-client-primary-700 hover:border-client-primary-300 hover:bg-client-primary-50"
-                  >
-                    <Star className="w-4 h-4 mr-1" />
-                    Laisser un avis
-                  </Button>
-                )}
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                >
-                  <Link href={`/hotels/${hotel.id}`}>
-                    Voir l'hôtel
-                  </Link>
-                </Button>
-              </div>
-            )}
+          <div className="absolute bottom-3 left-3 right-3 sm:hidden">
+            <h3 className="truncate text-lg font-bold text-white drop-shadow-md">
+              {hotel.name}
+            </h3>
+            <p className="flex items-center gap-1 text-xs text-white/90">
+              <MapPin className="h-3 w-3" />
+              {hotel.city}
+            </p>
           </div>
         </div>
+
+        {/* Content */}
+        <div className="flex min-w-0 flex-1 flex-col p-5 md:p-6">
+          <div className="mb-4 flex items-start justify-between gap-4">
+            <div className="min-w-0 hidden sm:block">
+              <h3 className="truncate text-xl font-bold text-gray-900 group-hover:text-client-primary-600 transition-colors">
+                {hotel.name}
+              </h3>
+              <p className="mt-1 flex items-center gap-1.5 text-sm text-gray-500">
+                <MapPin className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">
+                  {hotel.city}, {hotel.country}
+                </span>
+              </p>
+            </div>
+            <div className="ml-auto shrink-0 text-right">
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                Total
+              </p>
+              <p className="text-2xl font-bold text-client-primary-600">
+                {booking.currency === "USD" ? "$" : booking.currency}{" "}
+                {booking.totalPrice}
+              </p>
+            </div>
+          </div>
+
+          <div className="mb-4 flex flex-wrap gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-gray-100 bg-gray-50 px-2.5 py-1.5 text-xs font-medium text-gray-700">
+              <Calendar className="h-3.5 w-3.5 text-client-primary-500" />
+              {format(new Date(booking.date), "EEE d MMM yyyy", {
+                locale: fr,
+              })}
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-gray-100 bg-gray-50 px-2.5 py-1.5 text-xs font-medium text-gray-700">
+              <Clock className="h-3.5 w-3.5 text-client-primary-500" />
+              {formatTimeLabel(booking.timeSlot.startTime)} –{" "}
+              {formatTimeLabel(booking.timeSlot.endTime)}
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-gray-100 bg-gray-50 px-2.5 py-1.5 text-xs font-medium text-gray-700">
+              <Users className="h-3.5 w-3.5 text-client-primary-500" />
+              {booking.guestCount.adults}{" "}
+              {booking.guestCount.adults > 1 ? "adultes" : "adulte"}
+              {booking.guestCount.children > 0 &&
+                `, ${booking.guestCount.children} enfant${booking.guestCount.children > 1 ? "s" : ""}`}
+            </span>
+          </div>
+
+          <div className="mb-4 flex items-center gap-1.5 text-xs text-gray-400">
+            <Hash className="h-3.5 w-3.5" />
+            <span>Réf. {formatBookingRef(booking.id)}</span>
+          </div>
+
+          {showActions && (
+            <div className="mt-auto flex flex-wrap items-center gap-2 border-t border-gray-100 pt-4">
+              <Button
+                asChild
+                size="sm"
+                className="bg-client-primary-600 hover:bg-client-primary-700 shadow-sm"
+              >
+                <Link href={`/booking/confirm/${booking.id}`}>
+                  Détails
+                  <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                </Link>
+              </Button>
+
+              {(booking.status === "CONFIRMED" ||
+                booking.status === "PENDING") && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onCancel?.(booking.id)}
+                  className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                >
+                  Annuler
+                </Button>
+              )}
+
+              {booking.status === "COMPLETED" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setReviewDialogOpen(true)}
+                  className="border-client-primary-200 text-client-primary-600 hover:bg-client-primary-50"
+                >
+                  <Star className="mr-1 h-3.5 w-3.5" />
+                  Avis
+                </Button>
+              )}
+
+              <Button asChild variant="ghost" size="sm" className="text-gray-600">
+                <Link href={`/hotels/${hotel.id}`}>Voir l&apos;hôtel</Link>
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
-      {session?.user?.id && (
+
+      {isAuthenticated && (
         <ReviewDialog
           open={reviewDialogOpen}
           onOpenChange={setReviewDialogOpen}
           bookingId={booking.id}
           hotelId={hotel.id}
-          userId={session.user.id}
           onSuccess={onReviewSuccess}
         />
       )}
-    </div>
+    </article>
   );
 }
-

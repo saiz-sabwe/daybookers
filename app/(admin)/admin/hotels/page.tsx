@@ -23,14 +23,14 @@ import {
 } from "@/components/ui/select";
 import { Plus, Search, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { getAllHotels } from "@/app/actions/admin/hotels/get";
-import { authClient } from "@/lib/better-auth-client";
+import { useClientAuth } from "@/hooks/use-client-auth";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import Link from "next/link";
-import { HotelStatus } from "@/lib/generated/prisma/client";
+import { HotelStatus } from "@/types";
 
 export default function AdminHotelsPage() {
-  const { data: session } = authClient.useSession();
+  const { isAuthenticated, isAuthPending } = useClientAuth();
   const [hotels, setHotels] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -41,11 +41,11 @@ export default function AdminHotelsPage() {
   const pageSize = 10;
 
   const fetchHotels = async () => {
-    if (!session?.user?.id) return;
+    if (!isAuthenticated) return;
 
     setIsLoading(true);
     try {
-      const result = await getAllHotels(session.user.id, {
+      const result = await getAllHotels("", {
         page,
         pageSize,
         search: search || undefined,
@@ -63,7 +63,7 @@ export default function AdminHotelsPage() {
 
   useEffect(() => {
     fetchHotels();
-  }, [session?.user?.id, page, search, statusFilter]);
+  }, [isAuthenticated, isAuthPending, page, search, statusFilter]);
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {

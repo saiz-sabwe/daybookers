@@ -121,7 +121,7 @@ export function GroupHotelsManager({
                   <Button
                     size="sm"
                     variant={isInGroup ? "default" : "outline"}
-                    onClick={() => handleToggleHotel(hotel.id, hotel.groupId)}
+                    onClick={() => handleToggleHotel(hotel.id, hotel.groupId ?? null)}
                     className={
                       isInGroup
                         ? "bg-green-600 hover:bg-green-700 text-white"

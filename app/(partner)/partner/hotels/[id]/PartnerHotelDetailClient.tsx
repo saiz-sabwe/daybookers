@@ -5,9 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Hotel } from "@/types";
 import { HotelEditForm } from "./HotelEditForm";
 import { RoomTypesList } from "./RoomTypesList";
-import { authClient } from "@/lib/better-auth-client";
+import { useClientAuth } from "@/hooks/use-client-auth";
 import { useEffect, useState } from "react";
-import { redirect } from "next/navigation";
 import { getRoomTypesByHotel } from "@/app/actions/partner/room-types/get";
 
 interface PartnerHotelDetailClientProps {
@@ -19,30 +18,31 @@ export function PartnerHotelDetailClient({
   hotel: initialHotel,
   roomTypes: initialRoomTypes,
 }: PartnerHotelDetailClientProps) {
-  const { data: session } = authClient.useSession();
+  const { isAuthenticated, isAuthPending } = useClientAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [roomTypes, setRoomTypes] = useState<any[]>(initialRoomTypes || []);
   const [hotel, setHotel] = useState<Hotel>(initialHotel);
 
   useEffect(() => {
     const fetchRoomTypes = async () => {
-      if (session?.user?.id) {
-        try {
-          // Toujours récupérer les roomTypes pour avoir les données à jour
-          const fetchedRoomTypes = await getRoomTypesByHotel(hotel.id, session.user.id);
-          setRoomTypes(fetchedRoomTypes);
-        } catch (error) {
-          console.error("Erreur lors de la récupération des roomTypes:", error);
-          setRoomTypes([]);
-        }
-        setIsLoading(false);
+      if (isAuthPending || !isAuthenticated) {
+        return;
       }
+
+      try {
+        const fetchedRoomTypes = await getRoomTypesByHotel(hotel.id, "");
+        setRoomTypes(fetchedRoomTypes);
+      } catch (error) {
+        console.error("Erreur lors de la récupération des roomTypes:", error);
+        setRoomTypes([]);
+      }
+      setIsLoading(false);
     };
 
     fetchRoomTypes();
-  }, [session?.user?.id, hotel.id]);
+  }, [isAuthenticated, isAuthPending, hotel.id]);
 
-  if (isLoading) {
+  if (isLoading || isAuthPending) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-partner-primary-500"></div>
@@ -50,7 +50,7 @@ export function PartnerHotelDetailClient({
     );
   }
 
-  if (!session?.user?.id) {
+  if (!isAuthenticated) {
     return null;
   }
 
@@ -81,9 +81,8 @@ export function PartnerHotelDetailClient({
             <CardContent>
               <HotelEditForm 
                 hotel={hotel} 
-                userId={session.user.id}
+                userId=""
                 onSuccess={(updatedData) => {
-                  // Mettre à jour le state local avec les nouvelles données
                   if (updatedData) {
                     setHotel((prev) => ({ ...prev, ...updatedData }));
                   }
@@ -97,7 +96,7 @@ export function PartnerHotelDetailClient({
               <CardTitle>Types de chambres</CardTitle>
             </CardHeader>
             <CardContent>
-              <RoomTypesList hotelId={hotel.id} userId={session.user.id} initialRoomTypes={roomTypes} />
+              <RoomTypesList hotelId={hotel.id} userId="" initialRoomTypes={roomTypes} />
             </CardContent>
           </Card>
         </div>
@@ -121,4 +120,3 @@ export function PartnerHotelDetailClient({
     </div>
   );
 }
-

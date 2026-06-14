@@ -16,13 +16,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createHotel } from "@/app/actions/admin/hotels/create";
-import { authClient } from "@/lib/better-auth-client";
+import { useClientAuth } from "@/hooks/use-client-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { HotelStatus } from "@/lib/generated/prisma/client";
+import { HotelStatus } from "@/types";
 
 export default function AdminCreateHotelPage() {
-  const { data: session } = authClient.useSession();
+  const { isAuthenticated } = useClientAuth();
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,11 +40,11 @@ export default function AdminCreateHotelPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!session?.user?.id) return;
+    if (!isAuthenticated) return;
 
     setIsSubmitting(true);
     try {
-      const result = await createHotel(session.user.id, formData);
+      const result = await createHotel("", formData);
       if (result.success) {
         toast({
           title: "Hôtel créé",

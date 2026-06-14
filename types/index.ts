@@ -16,6 +16,10 @@ export interface Hotel {
   latitude?: number;
   longitude?: number;
   partnerId?: string;
+  groupId?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
 }
 
 export interface TimeSlot {
@@ -48,4 +52,8 @@ export interface Booking {
   createdAt: string | Date;
   updatedAt: string | Date;
 }
+
+export type UserRole = "CLIENT" | "PARTNER" | "ADMIN" | "HOTEL_MANAGER";
+
+export type HotelStatus = "DRAFT" | "ACTIVE" | "INACTIVE" | "SUSPENDED";
 

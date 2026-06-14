@@ -1,57 +1,77 @@
 "use server";
 
-import { auth } from "@/lib/auth";
-import db from "@/lib/db";
+import { djangoFetch, DjangoApiError } from "@/lib/api/django-client";
+import { getServerApiToken } from "@/lib/api/server-auth";
+import {
+  mapApiUserProfile,
+  StoredUserProfile,
+} from "@/lib/api/user-profile";
 
 interface UpdateProfileData {
   name?: string;
   phone?: string;
-  image?: string;
+}
+
+function splitFullName(name: string): {
+  first_name: string;
+  last_name: string;
+} {
+  const trimmed = name.trim();
+  const parts = trimmed.split(/\s+/);
+  if (parts.length === 0) {
+    return { first_name: "", last_name: "" };
+  }
+  if (parts.length === 1) {
+    return { first_name: parts[0], last_name: "" };
+  }
+  return {
+    first_name: parts[0],
+    last_name: parts.slice(1).join(" "),
+  };
 }
 
 export async function updateProfile(
   data: UpdateProfileData,
-  userId: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; profile?: StoredUserProfile; error?: string }> {
   try {
-    // TODO: Vérifier que l'utilisateur est authentifié et peut modifier ce profil
-    // Pour l'instant, on accepte tous les utilisateurs
-
-    // Validation du téléphone si fourni
-    if (data.phone !== undefined) {
-      if (!data.phone || data.phone.length < 10) {
-        return {
-          success: false,
-          error: "Le numéro de téléphone doit contenir au moins 10 chiffres",
-        };
-      }
-      
-      // Vérifier format de base (chiffres, espaces, +, -, parenthèses)
-      const phoneRegex = /^[\d\s\+\-\(\)]+$/;
-      if (!phoneRegex.test(data.phone)) {
-        return {
-          success: false,
-          error: "Le format du numéro de téléphone n'est pas valide",
-        };
-      }
+    const token = await getServerApiToken();
+    if (!token) {
+      return { success: false, error: "Vous devez être connecté" };
     }
 
-    await db.user.update({
-      where: { id: userId },
-      data: {
-        name: data.name,
-        phone: data.phone,
-        image: data.image,
-      },
-    });
+    const payload: Record<string, string> = {};
 
-    return { success: true };
+    if (data.name !== undefined) {
+      const { first_name, last_name } = splitFullName(data.name);
+      payload.first_name = first_name;
+      payload.last_name = last_name;
+    }
+
+    if (data.phone !== undefined) {
+      payload.phone = data.phone;
+    }
+
+    const result = await djangoFetch<Record<string, unknown>>(
+      "/api/accounts/auth/me/",
+      token,
+      {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      },
+    );
+
+    return {
+      success: true,
+      profile: mapApiUserProfile(result),
+    };
   } catch (error) {
-    console.error("Erreur lors de la mise à jour du profil:", error);
+    if (error instanceof DjangoApiError) {
+      return { success: false, error: error.message };
+    }
+    console.error("Error updating profile:", error);
     return {
       success: false,
       error: "Une erreur est survenue lors de la mise à jour du profil",
     };
   }
 }
-

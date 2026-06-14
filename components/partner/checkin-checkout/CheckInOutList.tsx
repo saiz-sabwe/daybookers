@@ -17,7 +17,7 @@ import { CheckCircle, Clock, User, Phone, Mail, MessageSquare, Hotel, Loader2 } 
 import { CheckInOutBooking } from "@/app/actions/partner/bookings/get-checkin-checkout";
 import { performCheckIn, performCheckOut } from "@/app/actions/partner/bookings/checkin-checkout";
 import { useToast } from "@/hooks/use-toast";
-import { authClient } from "@/lib/better-auth-client";
+import { useClientAuth } from "@/hooks/use-client-auth";
 import { useRouter } from "next/navigation";
 
 interface CheckInOutListProps {
@@ -28,7 +28,7 @@ interface CheckInOutListProps {
 export function CheckInOutList({ bookings, type }: CheckInOutListProps) {
   const { toast } = useToast();
   const router = useRouter();
-  const { data: session } = authClient.useSession();
+  const { isAuthenticated } = useClientAuth();
   const [selectedBooking, setSelectedBooking] = useState<CheckInOutBooking | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -44,7 +44,7 @@ export function CheckInOutList({ bookings, type }: CheckInOutListProps) {
   };
 
   const handleCheckIn = async (bookingId: string) => {
-    if (!session?.user?.id) {
+    if (!isAuthenticated) {
       toast({
         title: "Erreur",
         description: "Vous devez être connecté pour effectuer cette action",
@@ -55,7 +55,7 @@ export function CheckInOutList({ bookings, type }: CheckInOutListProps) {
 
     setIsProcessing(true);
     try {
-      const result = await performCheckIn(bookingId, session.user.id);
+      const result = await performCheckIn(bookingId, "");
       if (result.success) {
         toast({
           title: "Check-in effectué",
@@ -83,7 +83,7 @@ export function CheckInOutList({ bookings, type }: CheckInOutListProps) {
   };
 
   const handleCheckOut = async (bookingId: string) => {
-    if (!session?.user?.id) {
+    if (!isAuthenticated) {
       toast({
         title: "Erreur",
         description: "Vous devez être connecté pour effectuer cette action",
@@ -94,7 +94,7 @@ export function CheckInOutList({ bookings, type }: CheckInOutListProps) {
 
     setIsProcessing(true);
     try {
-      const result = await performCheckOut(bookingId, session.user.id);
+      const result = await performCheckOut(bookingId, "");
       if (result.success) {
         toast({
           title: "Check-out effectué",
