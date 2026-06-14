@@ -1,8 +1,17 @@
 "use client";
 
-import { PartnerNavbar } from "@/components/partner/layout/PartnerNavbar";
-import { PartnerSidebar } from "@/components/partner/layout/PartnerSidebar";
+import { DashboardShell } from "@/components/shared/dashboard/DashboardShell";
+import { PARTNER_NAV_ITEMS } from "@/lib/auth/route-permissions";
 import { ProtectedRoute } from "@/components/shared/auth/ProtectedRoute";
+
+const partnerNavItems = PARTNER_NAV_ITEMS.map(
+  ({ href, label, icon, requiredPermissions }) => ({
+    href,
+    label,
+    icon,
+    requiredPermissions,
+  }),
+);
 
 export default function PartnerLayout({
   children,
@@ -10,19 +19,14 @@ export default function PartnerLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ProtectedRoute requiredRole="partner">
-      <div className="theme-partner min-h-screen bg-gray-50">
-        <PartnerNavbar />
-        <div className="flex">
-          <PartnerSidebar />
-          <main className="flex-1 md:ml-64 pt-16">
-            <div className="container mx-auto px-4 py-6">
-              {children}
-            </div>
-          </main>
-        </div>
-      </div>
+    <ProtectedRoute dashboard="partner">
+      <DashboardShell
+        theme="partner"
+        navItems={partnerNavItems}
+        maxWidth="wide"
+      >
+        {children}
+      </DashboardShell>
     </ProtectedRoute>
   );
 }
-

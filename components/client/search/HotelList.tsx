@@ -3,6 +3,13 @@
 import { useMemo, useState } from "react";
 import { HotelCard } from "@/components/client/HotelCard";
 import { useFilters } from "@/contexts/FilterContext";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Hotel } from "@/types";
 import { TimeSlot } from "@/app/actions/time-slots/get";
 
@@ -70,16 +77,17 @@ export function HotelList({ hotels, timeSlots, selectedDate, selectedTimeSlotId 
                 </h1>
                 <div className="flex items-center gap-2">
                     <span className="text-sm text-gray-500">Trier par:</span>
-                    <select
-                        className="text-sm font-medium bg-transparent border-none focus:ring-0 cursor-pointer text-gray-900"
-                        value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value)}
-                    >
-                        <option value="pertinence">Pertinence</option>
-                        <option value="prix-croissant">Prix croissant</option>
-                        <option value="prix-decroissant">Prix décroissant</option>
-                        <option value="note">Note</option>
-                    </select>
+                    <Select value={sortBy} onValueChange={setSortBy}>
+                        <SelectTrigger className="h-8 w-[180px] border-none bg-transparent text-sm font-medium text-gray-900 shadow-none focus:ring-0">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent align="end">
+                            <SelectItem value="pertinence">Pertinence</SelectItem>
+                            <SelectItem value="prix-croissant">Prix croissant</SelectItem>
+                            <SelectItem value="prix-decroissant">Prix décroissant</SelectItem>
+                            <SelectItem value="note">Note</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
             </div>
 

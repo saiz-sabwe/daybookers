@@ -1,3 +1,11 @@
+import { parsePermissions } from "@/lib/auth/permissions";
+import { Permission } from "@/types/auth";
+
+export interface ApiOrganization {
+  uuid: string;
+  name: string;
+}
+
 export interface ApiUserProfile {
   id: string;
   first_name: string | null;
@@ -5,6 +13,8 @@ export interface ApiUserProfile {
   pseudo: string | null;
   email: string | null;
   phone?: string | null;
+  permissions?: string[];
+  organizations?: ApiOrganization[];
 }
 
 export interface StoredUserProfile {
@@ -14,11 +24,28 @@ export interface StoredUserProfile {
   pseudo: string | null;
   email: string | null;
   phone: string | null;
+  permissions: Permission[];
+  organizations: ApiOrganization[];
 }
 
 export function mapApiUserProfile(
   profile: ApiUserProfile | Record<string, unknown>,
 ): StoredUserProfile {
+  const organizations = Array.isArray(profile.organizations)
+    ? profile.organizations
+        .filter(
+          (org): org is ApiOrganization =>
+            Boolean(org) &&
+            typeof org === "object" &&
+            typeof (org as ApiOrganization).uuid === "string" &&
+            typeof (org as ApiOrganization).name === "string",
+        )
+        .map((org) => ({
+          uuid: org.uuid,
+          name: org.name,
+        }))
+    : [];
+
   return {
     id: String(profile.id ?? ""),
     firstName:
@@ -27,6 +54,10 @@ export function mapApiUserProfile(
     pseudo: typeof profile.pseudo === "string" ? profile.pseudo : null,
     email: typeof profile.email === "string" ? profile.email : null,
     phone: typeof profile.phone === "string" ? profile.phone : null,
+    permissions: parsePermissions(
+      "permissions" in profile ? profile.permissions : undefined,
+    ),
+    organizations,
   };
 }
 

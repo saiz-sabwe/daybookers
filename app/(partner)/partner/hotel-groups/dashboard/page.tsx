@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BreadcrumbPartner } from "@/components/partner/layout/BreadcrumbPartner";
+import { DashboardPageHeader } from "@/components/shared/dashboard/DashboardPageHeader";
 import { useClientAuth } from "@/hooks/use-client-auth";
 import { getHotelGroupsByManager } from "@/app/actions/partner/hotel-groups/get";
 import { getGroupStatistics, GroupStatistics } from "@/app/actions/partner/hotel-groups/get-statistics";
@@ -64,32 +64,19 @@ export default function GroupDashboardPage() {
 
   return (
     <div>
-      <BreadcrumbPartner 
-        items={[
-          { label: "Groupes d'hôtels", href: "/partner/hotel-groups" },
-          { label: "Dashboard" },
-        ]} 
-      />
-
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-partner-primary-100 rounded-lg">
-              <BarChart3 className="w-6 h-6 text-partner-primary-600" />
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard & Reporting</h1>
-          </div>
-          {statistics && (
-            <ExportButtons
-              userId=""
-              groupId={selectedGroupId === "all" ? undefined : selectedGroupId}
-            />
-          )}
-        </div>
-        <p className="text-gray-600">
-          Analysez les performances de vos hôtels et groupes
-        </p>
-      </div>
+      <DashboardPageHeader
+        theme="partner"
+        icon={BarChart3}
+        title="Dashboard & Reporting"
+        description="Analysez les performances de vos hôtels et groupes"
+      >
+        {statistics && (
+          <ExportButtons
+            userId=""
+            groupId={selectedGroupId === "all" ? undefined : selectedGroupId}
+          />
+        )}
+      </DashboardPageHeader>
 
       {/* Filtres */}
       <Card className="mb-6">
@@ -119,8 +106,8 @@ export default function GroupDashboardPage() {
 
       {/* Contenu */}
       {isLoading ? (
-        <div className="text-center py-12">
-          <p className="text-gray-500">Chargement des statistiques...</p>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-partner-primary-500"></div>
         </div>
       ) : statistics ? (
         <div className="space-y-6">

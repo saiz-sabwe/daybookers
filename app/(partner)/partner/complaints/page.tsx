@@ -2,7 +2,7 @@ import { getComplaints } from "@/app/actions/partner/complaints/get";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BreadcrumbPartner } from "@/components/partner/layout/BreadcrumbPartner";
+import { DashboardPageHeader } from "@/components/shared/dashboard/DashboardPageHeader";
 import { AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -40,24 +40,14 @@ export default async function ComplaintsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <BreadcrumbPartner
-          items={[
-            { label: "Dashboard", href: "/partner/dashboard" },
-            { label: "Plaintes", href: "/partner/complaints" },
-          ]}
-        />
-        <div className="flex items-center justify-between mt-4">
-          <div className="flex items-center gap-3">
-            <AlertTriangle className="w-8 h-8 text-partner-primary-600" />
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Gestion des plaintes</h1>
-              <p className="text-gray-600 mt-1">Suivi et résolution des réclamations clients</p>
-            </div>
-          </div>
-          <Button>Nouvelle plainte</Button>
-        </div>
-      </div>
+      <DashboardPageHeader
+        theme="partner"
+        icon={AlertTriangle}
+        title="Gestion des plaintes"
+        description="Suivi et résolution des réclamations clients"
+      >
+        <Button>Nouvelle plainte</Button>
+      </DashboardPageHeader>
 
       <div className="grid gap-4">
         {complaints.length === 0 ? (

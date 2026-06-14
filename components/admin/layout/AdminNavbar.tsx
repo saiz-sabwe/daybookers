@@ -28,7 +28,7 @@ export function AdminNavbar() {
           {/* Logo */}
           <Link href="/admin/dashboard" className="flex items-center gap-2">
             <span className="text-2xl font-bold text-admin-primary-600">DayBooker</span>
-            <span className="text-sm text-gray-500">Admin</span>
+            <span className="text-sm text-gray-500">Super Admin</span>
           </Link>
 
           {/* Navigation Links */}

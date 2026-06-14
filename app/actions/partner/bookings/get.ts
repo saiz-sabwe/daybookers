@@ -1,6 +1,7 @@
 "use server";
 
-import { pendingDjango } from "@/lib/api/pending-django";
+import { loadPartnerBookings } from "@/lib/api/partner/data";
+import { requirePartnerToken } from "@/lib/api/partner/fetch";
 
 export interface PartnerBooking {
   id: string;
@@ -30,6 +31,18 @@ export interface PartnerBooking {
   };
 }
 
-export async function getPartnerBookings(_userId: string): Promise<PartnerBooking[]> {
-  return pendingDjango([], "partner.bookings.get");
+export async function getPartnerBookings(
+  _userId: string,
+  hotelId?: string,
+): Promise<PartnerBooking[]> {
+  try {
+    const token = await requirePartnerToken();
+    if (!token) {
+      return [];
+    }
+    return await loadPartnerBookings(token, hotelId);
+  } catch (error) {
+    console.error("Error fetching partner bookings:", error);
+    return [];
+  }
 }

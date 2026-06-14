@@ -137,8 +137,101 @@ export interface DjangoBookingRecord {
   date: string;
   guest_count: number;
   status: string;
+  original_price?: string | number;
   final_price: string | number;
   currency: string;
+  guest_name?: string;
+  guest_email?: string;
+  guest_phone?: string | null;
+  special_requests?: string | null;
   create: string;
   last_update: string;
+}
+
+export interface DjangoReviewRecord {
+  uuid: string;
+  profile: string;
+  hotel: string;
+  booking: string;
+  rating: number;
+  title: string | null;
+  comment: string | null;
+  response: string | null;
+  response_at: string | null;
+  verified: boolean;
+  helpful: number;
+  create: string;
+  last_update: string;
+}
+
+export interface DjangoComplaintRecord {
+  uuid: string;
+  profile: string;
+  hotel: string;
+  booking: string | null;
+  guest_name: string;
+  guest_email: string | null;
+  guest_phone: string | null;
+  title: string;
+  description: string;
+  status: string;
+  priority: string;
+  resolution: string | null;
+  resolved_at: string | null;
+  create: string;
+  last_update: string;
+}
+
+export interface DjangoAvailabilityRecord {
+  uuid: string;
+  room_type: string;
+  time_slot: string;
+  date: string;
+  available: boolean;
+  price: string | number | null;
+  max_guests: number | null;
+}
+
+export interface DjangoPricingRuleRecord {
+  uuid: string;
+  hotel: string | null;
+  room_type: string | null;
+  name: string;
+  type: string;
+  description: string | null;
+  multiplier: string | number | null;
+  fixed_amount: string | number | null;
+  percentage: string | number | null;
+  day_of_week: number[];
+  start_date: string | null;
+  end_date: string | null;
+  min_days_advance: number | null;
+  max_days_advance: number | null;
+  priority: number;
+  active: boolean;
+}
+
+export interface DjangoOrganizationRecord {
+  uuid: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  commission_rate?: string | number | null;
+  manager_name?: string | null;
+  manager_email?: string | null;
+}
+
+export interface DjangoAdminProfileRecord {
+  id: number;
+  first_name: string | null;
+  last_name: string | null;
+  pseudo: string | null;
+  email: string | null;
+  phone: string | null;
+  kind: string;
+  is_staff: boolean;
+  is_superuser: boolean;
+  has_organization: boolean;
+  create: string;
 }

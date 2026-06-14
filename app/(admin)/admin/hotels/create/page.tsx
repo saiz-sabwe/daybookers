@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { BreadcrumbAdmin } from "@/components/admin/layout/BreadcrumbAdmin";
+import { DashboardPageHeader } from "@/components/shared/dashboard/DashboardPageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +18,7 @@ import {
 import { createHotel } from "@/app/actions/admin/hotels/create";
 import { useClientAuth } from "@/hooks/use-client-auth";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { HotelStatus } from "@/types";
 
 export default function AdminCreateHotelPage() {
@@ -73,19 +73,12 @@ export default function AdminCreateHotelPage() {
 
   return (
     <div>
-      <BreadcrumbAdmin
-        items={[
-          { label: "Hôtels", href: "/admin/hotels" },
-          { label: "Créer un hôtel" },
-        ]}
+      <DashboardPageHeader
+        theme="sadmin"
+        icon={Plus}
+        title="Créer un hôtel"
+        description="Ajoutez un nouvel hôtel à la plateforme"
       />
-
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Créer un hôtel
-        </h1>
-        <p className="text-gray-600">Ajoutez un nouvel hôtel à la plateforme</p>
-      </div>
 
       <Card>
         <CardHeader>

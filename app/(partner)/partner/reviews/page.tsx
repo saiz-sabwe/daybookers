@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BreadcrumbPartner } from "@/components/partner/layout/BreadcrumbPartner";
+import { DashboardPageHeader } from "@/components/shared/dashboard/DashboardPageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getPartnerReviews } from "@/app/actions/partner/reviews/get";
 import { useClientAuth } from "@/hooks/use-client-auth";
@@ -104,25 +104,20 @@ export default function PartnerReviewsPage() {
 
   if (isLoading && reviews.length === 0) {
     return (
-      <div>
-        <BreadcrumbPartner items={[{ label: "Avis clients" }]} />
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-partner-primary-500"></div>
-        </div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-partner-primary-500"></div>
       </div>
     );
   }
 
   return (
     <div>
-      <BreadcrumbPartner items={[{ label: "Avis clients" }]} />
-
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-partner-text-primary mb-2">
-          Avis clients
-        </h1>
-        <p className="text-gray-600">Gérez et répondez aux avis de vos clients</p>
-      </div>
+      <DashboardPageHeader
+        theme="partner"
+        icon={Star}
+        title="Avis clients"
+        description="Gérez et répondez aux avis de vos clients"
+      />
 
       {/* Filtres */}
       <Card className="mb-6">

@@ -53,6 +53,7 @@ export interface Booking {
   updatedAt: string | Date;
 }
 
+/** @deprecated Legacy filter type for admin users page — will be replaced by permissions in phase 2 */
 export type UserRole = "CLIENT" | "PARTNER" | "ADMIN" | "HOTEL_MANAGER";
 
 export type HotelStatus = "DRAFT" | "ACTIVE" | "INACTIVE" | "SUSPENDED";

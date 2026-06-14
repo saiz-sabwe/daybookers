@@ -1,6 +1,7 @@
 "use server";
 
-import { pendingDjango } from "@/lib/api/pending-django";
+import { loadPartnerComplaints } from "@/lib/api/partner/data";
+import { requirePartnerToken } from "@/lib/api/partner/fetch";
 
 export interface PartnerComplaint {
   id: string;
@@ -19,7 +20,16 @@ export interface PartnerComplaint {
 
 export async function getComplaints(
   _userId?: string,
-  _hotelId?: string,
+  hotelId?: string,
 ): Promise<PartnerComplaint[]> {
-  return pendingDjango([], "partner.complaints.get");
+  try {
+    const token = await requirePartnerToken();
+    if (!token) {
+      return [];
+    }
+    return await loadPartnerComplaints(token, hotelId);
+  } catch (error) {
+    console.error("Error fetching partner complaints:", error);
+    return [];
+  }
 }

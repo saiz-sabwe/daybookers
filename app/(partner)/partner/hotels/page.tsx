@@ -5,23 +5,24 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BreadcrumbPartner } from "@/components/partner/layout/BreadcrumbPartner";
+import { DashboardPageHeader } from "@/components/shared/dashboard/DashboardPageHeader";
 import { getPartnerHotels } from "@/app/actions/partner/hotels/get";
 import { getHotelGroupsByManager } from "@/app/actions/partner/hotel-groups/get";
 import { Hotel } from "@/types";
 import { Plus, Building2, Edit, Eye } from "lucide-react";
 import Image from "next/image";
-import { cn } from "@/lib/utils";
 import { useClientAuth } from "@/hooks/use-client-auth";
+import { usePermissions } from "@/hooks/use-permissions";
 import { CreateHotelDialog } from "@/components/partner/hotels/CreateHotelDialog";
-import { getUserById } from "@/app/actions/users/get";
+import { PermissionGate } from "@/components/shared/auth/PermissionGate";
 
 export default function PartnerHotelsPage() {
   const [partnerHotels, setPartnerHotels] = useState<Hotel[]>([]);
   const [hotelGroups, setHotelGroups] = useState<Array<{ id: string; name: string }>>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isGroupManager, setIsGroupManager] = useState(false);
   const { isAuthenticated, isAuthPending } = useClientAuth();
+  const { can } = usePermissions();
+  const canManageHotels = can("partner.hotels.manage");
 
   useEffect(() => {
     if (isAuthPending || !isAuthenticated) {
@@ -29,18 +30,8 @@ export default function PartnerHotelsPage() {
     }
 
     getPartnerHotels("").then(setPartnerHotels);
-
-    getUserById("").then((user) => {
-      if (user) {
-        const isManager = user.roles.includes("ROLE_HOTEL_GROUP_MANAGER");
-        setIsGroupManager(isManager);
-
-        if (isManager) {
-          getHotelGroupsByManager("").then(setHotelGroups);
-        }
-      }
-    });
-  }, [isAuthenticated, isAuthPending]);
+    getHotelGroupsByManager("").then(setHotelGroups);
+  }, [isAuthPending, isAuthenticated]);
 
   const handleCreateSuccess = () => {
     if (isAuthenticated) {
@@ -50,23 +41,22 @@ export default function PartnerHotelsPage() {
 
   return (
     <div>
-      <BreadcrumbPartner items={[{ label: "Mes hôtels" }]} />
-
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-partner-text-primary mb-2">Mes hôtels</h1>
-          <p className="text-gray-600">Gérez tous vos hôtels en un seul endroit</p>
-        </div>
-        {isGroupManager && (
-          <Button 
+      <DashboardPageHeader
+        theme="partner"
+        icon={Building2}
+        title="Mes hôtels"
+        description="Gérez tous vos hôtels en un seul endroit"
+      >
+        <PermissionGate permissions={["partner.hotels.manage"]}>
+          <Button
             onClick={() => setIsCreateDialogOpen(true)}
             className="bg-partner-primary-600 hover:bg-partner-primary-700 text-white"
           >
             <Plus className="w-4 h-4 mr-2" />
             Ajouter un hôtel
           </Button>
-        )}
-      </div>
+        </PermissionGate>
+      </DashboardPageHeader>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {partnerHotels.map((hotel) => (
@@ -120,23 +110,22 @@ export default function PartnerHotelsPage() {
           <Building2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucun hôtel</h3>
           <p className="text-gray-600 mb-4">
-            {isGroupManager 
+            {canManageHotels
               ? "Commencez par ajouter votre premier hôtel"
-              : "Contactez l'administration pour ajouter un hôtel"}
+              : "Aucun hôtel disponible pour le moment"}
           </p>
-          {isGroupManager && (
-            <Button 
+          <PermissionGate permissions={["partner.hotels.manage"]}>
+            <Button
               onClick={() => setIsCreateDialogOpen(true)}
               className="bg-partner-primary-600 hover:bg-partner-primary-700 text-white"
             >
               <Plus className="w-4 h-4 mr-2" />
               Ajouter un hôtel
             </Button>
-          )}
+          </PermissionGate>
         </Card>
       )}
 
-      {/* Dialog de création d'hôtel */}
       {isAuthenticated && (
         <CreateHotelDialog
           open={isCreateDialogOpen}
@@ -149,4 +138,3 @@ export default function PartnerHotelsPage() {
     </div>
   );
 }
-

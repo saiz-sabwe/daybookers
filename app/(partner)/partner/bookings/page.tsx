@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BreadcrumbPartner } from "@/components/partner/layout/BreadcrumbPartner";
+import { DashboardPageHeader } from "@/components/shared/dashboard/DashboardPageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CheckCircle2, XCircle, Eye } from "lucide-react";
+import { CheckCircle2, XCircle, Eye, Calendar } from "lucide-react";
 import Link from "next/link";
 
 export default function PartnerBookingsPage() {
@@ -116,25 +116,20 @@ export default function PartnerBookingsPage() {
 
   if (isLoading) {
     return (
-      <div>
-        <BreadcrumbPartner items={[{ label: "Réservations" }]} />
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-partner-primary-500"></div>
-        </div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-partner-primary-500"></div>
       </div>
     );
   }
 
   return (
     <div>
-      <BreadcrumbPartner items={[{ label: "Réservations" }]} />
-
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-partner-text-primary mb-2">
-          Réservations
-        </h1>
-        <p className="text-gray-600">Gérez toutes les réservations de vos hôtels</p>
-      </div>
+      <DashboardPageHeader
+        theme="partner"
+        icon={Calendar}
+        title="Réservations"
+        description="Gérez toutes les réservations de vos hôtels"
+      />
 
       <div className="mb-4">
         <Select value={statusFilter} onValueChange={setStatusFilter}>

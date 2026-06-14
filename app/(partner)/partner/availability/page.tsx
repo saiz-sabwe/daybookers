@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { BreadcrumbPartner } from "@/components/partner/layout/BreadcrumbPartner";
+import { DashboardPageHeader } from "@/components/shared/dashboard/DashboardPageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { useClientAuth } from "@/hooks/use-client-auth";
 import { HotelRoomTypeSelector } from "@/components/partner/availability/HotelRoomTypeSelector";
 import { AvailabilityCalendar } from "@/components/partner/availability/AvailabilityCalendar";
 import { BulkAvailabilityActions } from "@/components/partner/availability/BulkAvailabilityActions";
+import { CalendarDays } from "lucide-react";
 
 export default function PartnerAvailabilityPage() {
   const { isAuthenticated, isAuthPending } = useClientAuth();
@@ -32,24 +33,19 @@ export default function PartnerAvailabilityPage() {
 
   return (
     <div>
-      <BreadcrumbPartner items={[{ label: "Disponibilités" }]} />
-
-      <div className="mb-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-partner-text-primary mb-2">
-              Disponibilités
-            </h1>
-            <p className="text-gray-600">Gérez les disponibilités de vos hôtels</p>
-          </div>
-          <BulkAvailabilityActions
-            hotelId={selectedHotelId}
-            roomTypeId={selectedRoomTypeId}
-            userId={userId}
-            onSuccess={handleBulkActionSuccess}
-          />
-        </div>
-      </div>
+      <DashboardPageHeader
+        theme="partner"
+        icon={CalendarDays}
+        title="Disponibilités"
+        description="Gérez les disponibilités de vos hôtels"
+      >
+        <BulkAvailabilityActions
+          hotelId={selectedHotelId}
+          roomTypeId={selectedRoomTypeId}
+          userId={userId}
+          onSuccess={handleBulkActionSuccess}
+        />
+      </DashboardPageHeader>
 
       <div className="space-y-6">
         <Card>

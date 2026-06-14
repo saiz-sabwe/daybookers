@@ -20,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, CheckCircle } from "lucide-react";
 import { useClientAuth } from "@/hooks/use-client-auth";
 import { getHotels } from "@/app/actions/hotels/get";
+import { FormCard } from "@/components/client/forms/FormCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Hotel } from "@/types";
 import { createReview } from "@/app/actions/reviews/create";
@@ -169,7 +170,7 @@ export default function ReviewsPage() {
           </p>
         </div>
 
-        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-md">
+        <FormCard title="Votre avis">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
@@ -264,7 +265,7 @@ export default function ReviewsPage() {
               </div>
             </form>
           </Form>
-        </div>
+        </FormCard>
       </div>
     </div>
   );

@@ -1,10 +1,11 @@
 "use server";
 
-import { pendingMutation } from "@/lib/api/pending-django";
+import { updatePricingRule } from "./update";
 
 export async function deletePricingRule(
   userId: string,
-  ruleId: string
+  ruleId: string,
 ): Promise<{ success: boolean; error?: string }> {
-  return pendingMutation("partner.pricingRules.delete");
+  const result = await updatePricingRule(userId, ruleId, { active: false });
+  return { success: result.success, error: result.error };
 }

@@ -1,10 +1,15 @@
 "use server";
 
-import { pendingDjango } from "@/lib/api/pending-django";
+import { getRoomTypesByHotelId } from "@/app/actions/rooms/get";
 
 export async function getRoomTypesByHotel(
   hotelId: string,
-  userId: string
-): Promise<any[]> {
-  return pendingDjango([], "partner.roomTypes.getByHotel");
+  _userId: string,
+): Promise<Awaited<ReturnType<typeof getRoomTypesByHotelId>>> {
+  try {
+    return await getRoomTypesByHotelId(hotelId);
+  } catch (error) {
+    console.error("Error fetching partner room types:", error);
+    return [];
+  }
 }

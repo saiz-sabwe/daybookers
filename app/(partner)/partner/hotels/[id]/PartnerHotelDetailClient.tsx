@@ -1,6 +1,6 @@
 "use client";
 
-import { BreadcrumbPartner } from "@/components/partner/layout/BreadcrumbPartner";
+import { DashboardPageHeader } from "@/components/shared/dashboard/DashboardPageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Hotel } from "@/types";
 import { HotelEditForm } from "./HotelEditForm";
@@ -8,6 +8,7 @@ import { RoomTypesList } from "./RoomTypesList";
 import { useClientAuth } from "@/hooks/use-client-auth";
 import { useEffect, useState } from "react";
 import { getRoomTypesByHotel } from "@/app/actions/partner/room-types/get";
+import { Building2 } from "lucide-react";
 
 interface PartnerHotelDetailClientProps {
   hotel: Hotel;
@@ -56,21 +57,12 @@ export function PartnerHotelDetailClient({
 
   return (
     <div>
-      <BreadcrumbPartner
-        items={[
-          { label: "Mes hôtels", href: "/partner/hotels" },
-          { label: hotel.name },
-        ]}
+      <DashboardPageHeader
+        theme="partner"
+        icon={Building2}
+        title={hotel.name}
+        description="Gérez les paramètres de votre hôtel"
       />
-
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-partner-text-primary mb-2">
-            {hotel.name}
-          </h1>
-          <p className="text-gray-600">Gérez les paramètres de votre hôtel</p>
-        </div>
-      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">

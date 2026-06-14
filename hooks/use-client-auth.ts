@@ -13,6 +13,7 @@ import {
   getUserDisplayName,
   StoredUserProfile,
 } from "@/lib/api/user-profile";
+import { Permission } from "@/types/auth";
 
 export function useClientAuth() {
   const [apiSessionReady, setApiSessionReady] = useState(false);
@@ -78,6 +79,7 @@ export function useClientAuth() {
   }, []);
 
   const userName = getUserDisplayName(userProfile, userEmail);
+  const permissions: Permission[] = userProfile?.permissions ?? [];
 
   return {
     isAuthenticated: hasDjangoSession,
@@ -85,5 +87,6 @@ export function useClientAuth() {
     userEmail,
     userProfile,
     userName,
+    permissions,
   };
 }

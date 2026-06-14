@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BreadcrumbAdmin } from "@/components/admin/layout/BreadcrumbAdmin";
+import { DashboardPageHeader } from "@/components/shared/dashboard/DashboardPageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -22,7 +22,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Loader2, Edit } from "lucide-react";
+import { Loader2, Edit, Percent } from "lucide-react";
 import { getAllPartnerCommissions } from "@/app/actions/admin/commissions/get";
 import { updatePartnerCommission } from "@/app/actions/admin/commissions/update";
 import { useClientAuth } from "@/hooks/use-client-auth";
@@ -130,16 +130,12 @@ export default function AdminCommissionsPage() {
 
   return (
     <div>
-      <BreadcrumbAdmin items={[{ label: "Commissions" }]} />
-
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Gestion des Commissions
-        </h1>
-        <p className="text-gray-600">
-          Définissez les taux de commission pour chaque hôtel
-        </p>
-      </div>
+      <DashboardPageHeader
+        theme="sadmin"
+        icon={Percent}
+        title="Gestion des Commissions"
+        description="Définissez les taux de commission pour chaque hôtel"
+      />
 
       <Card>
         <CardHeader>

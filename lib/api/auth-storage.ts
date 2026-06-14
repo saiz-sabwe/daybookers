@@ -5,6 +5,7 @@ import {
   mapApiUserProfile,
   StoredUserProfile,
 } from "@/lib/api/user-profile";
+import { Permission } from "@/types/auth";
 
 export function getStoredApiToken(): string | null {
   if (typeof window === "undefined") {
@@ -35,7 +36,12 @@ export function getStoredUserProfile(): StoredUserProfile | null {
     if (!parsed || typeof parsed !== "object" || !parsed.id) {
       return null;
     }
-    return parsed;
+    return {
+      ...parsed,
+      permissions: Array.isArray(parsed.permissions)
+        ? (parsed.permissions as Permission[])
+        : [],
+    };
   } catch {
     return null;
   }

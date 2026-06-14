@@ -1,8 +1,8 @@
 import { getTodayCheckIns, getTodayCheckOuts } from "@/app/actions/partner/bookings/get-checkin-checkout";
 import { CheckInOutList } from "@/components/partner/checkin-checkout/CheckInOutList";
-import { BreadcrumbPartner } from "@/components/partner/layout/BreadcrumbPartner";
+import { DashboardPageHeader } from "@/components/shared/dashboard/DashboardPageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar } from "lucide-react";
+import { DoorOpen } from "lucide-react";
 import { getServerApiToken } from "@/lib/api/server-auth";
 import { redirect } from "next/navigation";
 
@@ -20,21 +20,12 @@ export default async function CheckInOutPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <BreadcrumbPartner
-          items={[
-            { label: "Dashboard", href: "/partner/dashboard" },
-            { label: "Check-in / Check-out", href: "/partner/checkin-checkout" },
-          ]}
-        />
-        <div className="flex items-center gap-3 mt-4">
-          <Calendar className="w-8 h-8 text-partner-primary-600" />
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Check-in / Check-out</h1>
-            <p className="text-gray-600 mt-1">Gérez les arrivées et départs du jour</p>
-          </div>
-        </div>
-      </div>
+      <DashboardPageHeader
+        theme="partner"
+        icon={DoorOpen}
+        title="Check-in / Check-out"
+        description="Gérez les arrivées et départs du jour"
+      />
 
       <Tabs defaultValue="checkin" className="w-full">
         <TabsList className="grid w-full grid-cols-2 max-w-md">

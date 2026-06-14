@@ -28,7 +28,7 @@ export function PartnerNavbar() {
           {/* Logo */}
           <Link href="/partner/dashboard" className="flex items-center gap-2">
             <span className="text-2xl font-bold text-partner-primary-600">DayBooker</span>
-            <span className="text-sm text-gray-500">Partenaire</span>
+            <span className="text-sm text-gray-500">Organisation</span>
           </Link>
 
           {/* Navigation Links */}

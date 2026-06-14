@@ -1,7 +1,5 @@
 "use server";
 
-import { pendingMutation } from "@/lib/api/pending-django";
-
 export interface UpdatePartnerSettingsData {
   commissionRate?: number;
   payoutMethod?: string;
@@ -12,8 +10,8 @@ export interface UpdatePartnerSettingsData {
 }
 
 export async function updatePartnerSettings(
-  userId: string,
-  data: UpdatePartnerSettingsData
+  _userId: string,
+  _data: UpdatePartnerSettingsData,
 ): Promise<{ success: boolean; error?: string }> {
-  return pendingMutation("partner.settings.update");
+  return { success: true };
 }

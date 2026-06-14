@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BreadcrumbPartner } from "@/components/partner/layout/BreadcrumbPartner";
+import { DashboardPageHeader } from "@/components/shared/dashboard/DashboardPageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -12,7 +12,7 @@ import { useClientAuth } from "@/hooks/use-client-auth";
 import { Hotel } from "@/types";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Calendar, DollarSign, TrendingUp, Star } from "lucide-react";
+import { Calendar, DollarSign, TrendingUp, Star, LayoutDashboard } from "lucide-react";
 
 export default function PartnerDashboard() {
   const { isAuthenticated, isAuthPending } = useClientAuth();
@@ -108,28 +108,23 @@ export default function PartnerDashboard() {
 
   if (isLoading) {
     return (
-      <div>
-        <BreadcrumbPartner items={[{ label: "Tableau de bord" }]} />
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-partner-primary-500"></div>
-        </div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-partner-primary-500"></div>
       </div>
     );
   }
 
   return (
     <div>
-      <BreadcrumbPartner items={[{ label: "Tableau de bord" }]} />
-
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Tableau de bord
-        </h1>
-        <p className="text-gray-600">Bienvenue</p>
-      </div>
+      <DashboardPageHeader
+        theme="partner"
+        icon={LayoutDashboard}
+        title="Tableau de bord"
+        description="Bienvenue dans votre espace organisation"
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card className="border-l-4 border-partner-primary-500">
+        <Card className="rounded-2xl border border-gray-100 shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
               Réservations du jour
@@ -154,7 +149,7 @@ export default function PartnerDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-green-500">
+        <Card className="rounded-2xl border border-gray-100 shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
               Chiffre d'affaires
@@ -179,7 +174,7 @@ export default function PartnerDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-blue-500">
+        <Card className="rounded-2xl border border-gray-100 shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
               Taux d'occupation
@@ -198,7 +193,7 @@ export default function PartnerDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-yellow-500">
+        <Card className="rounded-2xl border border-gray-100 shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
               Note moyenne
@@ -219,7 +214,7 @@ export default function PartnerDashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
+        <Card className="rounded-2xl border border-gray-100 shadow-sm">
           <CardHeader>
             <CardTitle>Dernières réservations</CardTitle>
           </CardHeader>
@@ -275,7 +270,7 @@ export default function PartnerDashboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="rounded-2xl border border-gray-100 shadow-sm">
           <CardHeader>
             <CardTitle>Disponibilités rapides</CardTitle>
           </CardHeader>

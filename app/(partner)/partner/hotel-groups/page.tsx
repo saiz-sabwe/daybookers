@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BreadcrumbPartner } from "@/components/partner/layout/BreadcrumbPartner";
+import { DashboardPageHeader } from "@/components/shared/dashboard/DashboardPageHeader";
 import { useClientAuth } from "@/hooks/use-client-auth";
 import { getHotelGroupsByManager } from "@/app/actions/partner/hotel-groups/get";
 import { HotelGroupsList } from "@/components/partner/hotel-groups/HotelGroupsList";
@@ -43,23 +43,16 @@ export default function HotelGroupsPage() {
 
   return (
     <div>
-      <BreadcrumbPartner items={[{ label: "Groupes d'hôtels" }]} />
-
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 bg-partner-primary-100 rounded-lg">
-            <Building2 className="w-6 h-6 text-partner-primary-600" />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900">Groupes d'hôtels</h1>
-        </div>
-        <p className="text-gray-600">
-          Organisez vos hôtels en groupes pour une gestion centralisée
-        </p>
-      </div>
+      <DashboardPageHeader
+        theme="partner"
+        icon={Building2}
+        title="Groupes d'hôtels"
+        description="Organisez vos hôtels en groupes pour une gestion centralisée"
+      />
 
       {isLoading ? (
-        <div className="text-center py-12">
-          <p className="text-gray-500">Chargement...</p>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-partner-primary-500"></div>
         </div>
       ) : (
         <HotelGroupsList groups={groups} userId="" onUpdate={loadGroups} />

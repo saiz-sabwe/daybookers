@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
@@ -18,8 +17,8 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useClientAuth } from "@/hooks/use-client-auth";
+import { usePermissions } from "@/hooks/use-permissions";
 import { clientSignOut } from "@/lib/api/client-sign-out";
-import { hasAnyPartnerRole, hasAdminRole } from "@/app/actions/users/get";
 
 const navigation = [
   {
@@ -58,15 +57,9 @@ export function ClientSidebar({ isOpen = true, onClose }: ClientSidebarProps) {
   const searchParams = useSearchParams();
   const activeTab = searchParams.get("tab") || "bookings";
   const { isAuthenticated, userEmail, userName } = useClientAuth();
-  const [isPartner, setIsPartner] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      hasAnyPartnerRole("").then(setIsPartner);
-      hasAdminRole("").then(setIsAdmin);
-    }
-  }, [isAuthenticated]);
+  const { canAccessDashboard } = usePermissions();
+  const showPartnerLink = isAuthenticated && canAccessDashboard("partner");
+  const showSadminLink = isAuthenticated && canAccessDashboard("sadmin");
 
   const handleSignOut = async () => {
     await clientSignOut("/");
@@ -175,25 +168,25 @@ export function ClientSidebar({ isOpen = true, onClose }: ClientSidebarProps) {
             Explorer les hôtels
           </Link>
 
-          {isPartner && (
+          {showPartnerLink && (
             <Link
               href="/partner/dashboard"
               onClick={handleLinkClick}
               className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900"
             >
               <Building2 className="h-5 w-5 text-gray-400" />
-              Dashboard Partenaire
+              Espace Organisation
             </Link>
           )}
 
-          {isAdmin && (
+          {showSadminLink && (
             <Link
               href="/admin/dashboard"
               onClick={handleLinkClick}
               className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900"
             >
               <Shield className="h-5 w-5 text-gray-400" />
-              Dashboard Admin
+              Super Admin
             </Link>
           )}
 

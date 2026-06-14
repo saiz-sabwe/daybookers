@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BreadcrumbAdmin } from "@/components/admin/layout/BreadcrumbAdmin";
+import { DashboardPageHeader } from "@/components/shared/dashboard/DashboardPageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -14,19 +14,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Search, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Loader2, Users } from "lucide-react";
 import { getAllUsers } from "@/app/actions/admin/users/get";
 import { useClientAuth } from "@/hooks/use-client-auth";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { UserRole } from "@/types";
 
 export default function AdminUsersPage() {
   const { isAuthenticated, isAuthPending } = useClientAuth();
@@ -36,7 +28,6 @@ export default function AdminUsersPage() {
   const [totalPages, setTotalPages] = useState(0);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState<string>("all");
   const pageSize = 10;
 
   const fetchUsers = async () => {
@@ -48,7 +39,6 @@ export default function AdminUsersPage() {
         page,
         pageSize,
         search: search || undefined,
-        role: roleFilter !== "all" ? (roleFilter as UserRole) : undefined,
       });
       setUsers(result.users);
       setTotalPages(result.totalPages);
@@ -62,31 +52,16 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     fetchUsers();
-  }, [isAuthenticated, isAuthPending, page, search, roleFilter]);
-
-  const getRoleLabel = (role: string) => {
-    const roleLabels: Record<string, string> = {
-      ROLE_USER: "Utilisateur",
-      ROLE_SUBSCRIBER: "Abonné",
-      ROLE_HOTEL_MANAGER: "Gestionnaire d'hôtel",
-      ROLE_HOTEL_GROUP_MANAGER: "Gestionnaire de groupe",
-      ROLE_HOTEL_RECEPTIONIST: "Réceptionniste",
-      ROLE_ADMIN: "Administrateur",
-      ROLE_SUPER_ADMIN: "Super Admin",
-    };
-    return roleLabels[role] || role;
-  };
+  }, [isAuthenticated, isAuthPending, page, search]);
 
   return (
     <div>
-      <BreadcrumbAdmin items={[{ label: "Utilisateurs" }]} />
-
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Gestion des Utilisateurs
-        </h1>
-        <p className="text-gray-600">Liste de tous les utilisateurs de la plateforme</p>
-      </div>
+      <DashboardPageHeader
+        theme="sadmin"
+        icon={Users}
+        title="Gestion des Utilisateurs"
+        description="Liste de tous les utilisateurs de la plateforme"
+      />
 
       <Card>
         <CardHeader>
@@ -103,21 +78,6 @@ export default function AdminUsersPage() {
                 className="pl-10"
               />
             </div>
-            <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Rôle" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les rôles</SelectItem>
-                <SelectItem value="ROLE_USER">Utilisateur</SelectItem>
-                <SelectItem value="ROLE_SUBSCRIBER">Abonné</SelectItem>
-                <SelectItem value="ROLE_HOTEL_MANAGER">Gestionnaire d'hôtel</SelectItem>
-                <SelectItem value="ROLE_HOTEL_GROUP_MANAGER">Gestionnaire de groupe</SelectItem>
-                <SelectItem value="ROLE_HOTEL_RECEPTIONIST">Réceptionniste</SelectItem>
-                <SelectItem value="ROLE_ADMIN">Administrateur</SelectItem>
-                <SelectItem value="ROLE_SUPER_ADMIN">Super Admin</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </CardHeader>
         <CardContent>
@@ -135,7 +95,6 @@ export default function AdminUsersPage() {
                     <TableRow>
                       <TableHead>Nom</TableHead>
                       <TableHead>Email</TableHead>
-                      <TableHead>Rôles</TableHead>
                       <TableHead>Email vérifié</TableHead>
                       <TableHead>Inscrit le</TableHead>
                     </TableRow>
@@ -145,15 +104,6 @@ export default function AdminUsersPage() {
                       <TableRow key={user.id}>
                         <TableCell className="font-medium">{user.name}</TableCell>
                         <TableCell>{user.email}</TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            {user.roles.map((role: string) => (
-                              <Badge key={role} variant="outline">
-                                {getRoleLabel(role)}
-                              </Badge>
-                            ))}
-                          </div>
-                        </TableCell>
                         <TableCell>
                           <Badge variant={user.emailVerified ? "default" : "secondary"}>
                             {user.emailVerified ? "Oui" : "Non"}

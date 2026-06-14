@@ -37,25 +37,41 @@ const AppAlertContext = createContext<AppAlertContextValue | null>(null);
 
 const variantStyles: Record<
   AppAlertVariant,
-  { icon: typeof CheckCircle2; border: string; iconClass: string; titleClass: string }
+  {
+    icon: typeof CheckCircle2;
+    container: string;
+    iconWrap: string;
+    iconClass: string;
+    titleClass: string;
+    descriptionClass: string;
+  }
 > = {
   success: {
     icon: CheckCircle2,
-    border: "border-green-200",
-    iconClass: "text-green-600",
-    titleClass: "text-green-900",
+    container:
+      "border-l-4 border-l-green-500 border border-green-200 bg-green-50 shadow-xl shadow-green-900/15 ring-1 ring-green-100",
+    iconWrap: "bg-green-100 ring-1 ring-green-200",
+    iconClass: "text-green-700",
+    titleClass: "text-green-950",
+    descriptionClass: "text-green-800",
   },
   error: {
     icon: XCircle,
-    border: "border-red-200",
-    iconClass: "text-red-600",
-    titleClass: "text-red-900",
+    container:
+      "border-l-4 border-l-red-500 border border-red-200 bg-red-50 shadow-xl shadow-red-900/15 ring-1 ring-red-100",
+    iconWrap: "bg-red-100 ring-1 ring-red-200",
+    iconClass: "text-red-700",
+    titleClass: "text-red-950",
+    descriptionClass: "text-red-800",
   },
   info: {
     icon: Info,
-    border: "border-blue-200",
-    iconClass: "text-blue-600",
-    titleClass: "text-blue-900",
+    container:
+      "border-l-4 border-l-blue-500 border border-blue-200 bg-blue-50 shadow-xl shadow-blue-900/15 ring-1 ring-blue-100",
+    iconWrap: "bg-blue-100 ring-1 ring-blue-200",
+    iconClass: "text-blue-700",
+    titleClass: "text-blue-950",
+    descriptionClass: "text-blue-800",
   },
 };
 
@@ -78,24 +94,36 @@ function ToastCard({
     <div
       role="alert"
       className={cn(
-        "pointer-events-auto w-full max-w-sm rounded-lg border bg-white p-4 shadow-lg animate-in slide-in-from-right-full fade-in duration-300",
-        styles.border,
+        "pointer-events-auto w-full max-w-sm rounded-xl p-4 animate-in slide-in-from-right-full fade-in duration-300",
+        styles.container,
       )}
     >
       <div className="flex items-start gap-3">
-        <Icon className={cn("mt-0.5 h-5 w-5 shrink-0", styles.iconClass)} />
-        <div className="min-w-0 flex-1">
-          <p className={cn("text-sm font-semibold", styles.titleClass)}>
+        <div
+          className={cn(
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
+            styles.iconWrap,
+          )}
+        >
+          <Icon className={cn("h-5 w-5", styles.iconClass)} />
+        </div>
+        <div className="min-w-0 flex-1 pt-0.5">
+          <p className={cn("text-sm font-semibold leading-snug", styles.titleClass)}>
             {toast.title}
           </p>
           {toast.description ? (
-            <p className="mt-1 text-sm text-gray-600">{toast.description}</p>
+            <p className={cn("mt-1 text-sm leading-relaxed", styles.descriptionClass)}>
+              {toast.description}
+            </p>
           ) : null}
         </div>
         <button
           type="button"
           onClick={() => onDismiss(toast.id)}
-          className="shrink-0 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+          className={cn(
+            "shrink-0 rounded-md p-1 opacity-70 transition-opacity hover:opacity-100",
+            styles.iconClass,
+          )}
           aria-label="Fermer"
         >
           <X className="h-4 w-4" />

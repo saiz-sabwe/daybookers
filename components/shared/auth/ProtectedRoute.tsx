@@ -1,76 +1,51 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { hasAnyPartnerRole, hasAdminRole } from "@/app/actions/users/get";
+import {
+  canAccessDashboard,
+  hasAnyPermission,
+  isPermissionsEnforced,
+} from "@/lib/auth/permissions";
 import { useClientAuth } from "@/hooks/use-client-auth";
+import { DashboardScope, Permission } from "@/types/auth";
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  requiredRole?: "client" | "partner" | "admin";
+  dashboard: DashboardScope;
+  requiredPermissions?: Permission[];
   redirectTo?: string;
 }
 
 export function ProtectedRoute({
   children,
-  requiredRole,
+  dashboard,
+  requiredPermissions,
   redirectTo = "/login",
 }: ProtectedRouteProps) {
   const router = useRouter();
-  const { isAuthenticated, isAuthPending } = useClientAuth();
-  const [isCheckingRole, setIsCheckingRole] = useState(false);
-  const [hasAccess, setHasAccess] = useState<boolean | null>(null);
+  const { isAuthenticated, isAuthPending, permissions } = useClientAuth();
+
+  const enforced = isPermissionsEnforced(permissions);
+  const hasDashboardAccess = canAccessDashboard(permissions, dashboard);
+  const hasRequiredPermissions =
+    !requiredPermissions?.length ||
+    hasAnyPermission(permissions, requiredPermissions);
+  const isAllowed =
+    isAuthenticated &&
+    (!enforced || (hasDashboardAccess && hasRequiredPermissions));
 
   useEffect(() => {
     if (isAuthPending) {
       return;
     }
 
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !isAllowed) {
       router.push(redirectTo);
-      return;
     }
+  }, [isAuthenticated, isAuthPending, isAllowed, router, redirectTo]);
 
-    if (requiredRole === "partner") {
-      setIsCheckingRole(true);
-      hasAnyPartnerRole("")
-        .then((hasRole) => {
-          if (!hasRole) {
-            router.push(redirectTo);
-          } else {
-            setHasAccess(true);
-          }
-        })
-        .catch((error) => {
-          console.error("Erreur lors de la vérification du rôle:", error);
-          router.push(redirectTo);
-        })
-        .finally(() => {
-          setIsCheckingRole(false);
-        });
-    } else if (requiredRole === "admin") {
-      setIsCheckingRole(true);
-      hasAdminRole("")
-        .then((hasRole) => {
-          if (!hasRole) {
-            router.push(redirectTo);
-          } else {
-            setHasAccess(true);
-          }
-        })
-        .catch((error) => {
-          console.error("Erreur lors de la vérification du rôle admin:", error);
-          router.push(redirectTo);
-        })
-        .finally(() => {
-          setIsCheckingRole(false);
-        });
-    } else {
-      setHasAccess(true);
-    }
-  }, [isAuthenticated, isAuthPending, router, redirectTo, requiredRole]);
-
-  if (isAuthPending || isCheckingRole) {
+  if (isAuthPending) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-client-primary-500"></div>
@@ -78,7 +53,7 @@ export function ProtectedRoute({
     );
   }
 
-  if (!isAuthenticated || (requiredRole === "partner" && hasAccess === false)) {
+  if (!isAllowed) {
     return null;
   }
 

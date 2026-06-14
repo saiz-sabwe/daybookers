@@ -1,6 +1,8 @@
 "use server";
 
-import { pendingDjango } from "@/lib/api/pending-django";
+import { DjangoPricingRuleRecord } from "@/lib/api/django-client";
+import { fetchPartnerAll, requirePartnerToken } from "@/lib/api/partner/fetch";
+import { mapPartnerPricingRule } from "@/lib/api/partner/mappers";
 
 export interface PricingRuleData {
   id: string;
@@ -24,7 +26,26 @@ export interface PricingRuleData {
 export async function getPricingRules(
   hotelId: string | null,
   roomTypeId: string | null,
-  userId: string
+  _userId: string,
 ): Promise<PricingRuleData[]> {
-  return pendingDjango([], "partner.pricingRules.get");
+  try {
+    const token = await requirePartnerToken();
+    if (!token) {
+      return [];
+    }
+
+    const records = await fetchPartnerAll<DjangoPricingRuleRecord>(
+      token,
+      "/api/hotels/pricing-rules/",
+      {
+        ...(hotelId ? { hotel: hotelId } : {}),
+        ...(roomTypeId ? { room_type: roomTypeId } : {}),
+      },
+    );
+
+    return records.map(mapPartnerPricingRule);
+  } catch (error) {
+    console.error("Error fetching pricing rules:", error);
+    return [];
+  }
 }

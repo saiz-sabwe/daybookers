@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BreadcrumbAdmin } from "@/components/admin/layout/BreadcrumbAdmin";
+import { DashboardPageHeader } from "@/components/shared/dashboard/DashboardPageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Plus, Search, ChevronLeft, ChevronRight, Loader2, Building2 } from "lucide-react";
 import { getAllHotels } from "@/app/actions/admin/hotels/get";
 import { useClientAuth } from "@/hooks/use-client-auth";
 import { format } from "date-fns";
@@ -97,22 +97,19 @@ export default function AdminHotelsPage() {
 
   return (
     <div>
-      <BreadcrumbAdmin items={[{ label: "Hôtels" }]} />
-
-      <div className="mb-6 flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Gestion des Hôtels
-          </h1>
-          <p className="text-gray-600">Liste de tous les hôtels de la plateforme</p>
-        </div>
+      <DashboardPageHeader
+        theme="sadmin"
+        icon={Building2}
+        title="Gestion des Hôtels"
+        description="Liste de tous les hôtels de la plateforme"
+      >
         <Button asChild className="bg-admin-primary-500 hover:bg-admin-primary-600 text-white">
           <Link href="/admin/hotels/create">
             <Plus className="w-4 h-4 mr-2" />
             Créer un hôtel
           </Link>
         </Button>
-      </div>
+      </DashboardPageHeader>
 
       <Card>
         <CardHeader>

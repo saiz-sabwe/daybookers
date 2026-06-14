@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { Building2, CalendarDays, Mail, MessageCircle, Phone } from "lucide-react";
 import { PageHero, PageSection } from "@/components/client/content/PageShell";
+import { ContactForm } from "@/components/client/forms/ContactForm";
+import { FormCard } from "@/components/client/forms/FormCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 
 export default function ContactPage() {
   return (
@@ -108,67 +107,15 @@ export default function ContactPage() {
 
       <PageSection
         title="Formulaire de contact"
-        description="Utilisez ce formulaire pour toute demande generale. Le raccordement de l'envoi sera branche a l'etape suivante."
+        description="Utilisez ce formulaire pour toute demande générale."
       >
-        <Card className="border-gray-300 bg-white shadow-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-2xl text-gray-900">
-              <MessageCircle className="h-5 w-5 text-client-primary-600" />
-              Ecrivez-nous
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <form className="space-y-6">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="full-name">Nom complet</Label>
-                  <Input id="full-name" placeholder="Votre nom complet" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Numero de telephone (WhatsApp)</Label>
-                  <Input id="phone" placeholder="+243 ..." />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="subject">Sujet</Label>
-                <select
-                  id="subject"
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-                  defaultValue=""
-                >
-                  <option value="" disabled>
-                    Selectionnez un sujet
-                  </option>
-                  <option>Question sur une reservation</option>
-                  <option>Devenir partenaire (Hotelier)</option>
-                  <option>Presse / Medias</option>
-                  <option>Recrutement</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="message">Votre message</Label>
-                <Textarea
-                  id="message"
-                  placeholder="Decrivez votre besoin, votre question ou votre projet..."
-                  className="min-h-[160px]"
-                />
-              </div>
-
-              <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4 text-sm leading-6 text-gray-600">
-                Cette page affiche deja le contenu et les champs attendus. Si vous
-                souhaitez que le formulaire envoie reellement les messages, il
-                faudra relier ce formulaire a une action serveur ou a un service
-                d&apos;email.
-              </div>
-
-              <Button type="button" className="bg-black text-white hover:bg-gray-800">
-                Envoyer le message
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+        <FormCard
+          title="Écrivez-nous"
+          description="Notre équipe vous répond sous 24 h ouvrées."
+          icon={<MessageCircle className="h-5 w-5 text-client-primary-600" />}
+        >
+          <ContactForm />
+        </FormCard>
       </PageSection>
 
       <PageSection

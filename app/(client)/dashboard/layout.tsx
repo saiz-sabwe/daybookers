@@ -1,7 +1,17 @@
 "use client";
 
-import { ClientNavbar } from "@/components/client/layout/ClientNavbar";
+import { DashboardShell } from "@/components/shared/dashboard/DashboardShell";
+import { CLIENT_NAV_ITEMS } from "@/lib/auth/route-permissions";
 import { ProtectedRoute } from "@/components/shared/auth/ProtectedRoute";
+
+const clientNavItems = CLIENT_NAV_ITEMS.map(
+  ({ href, label, icon, requiredPermissions }) => ({
+    href,
+    label,
+    icon,
+    requiredPermissions,
+  }),
+);
 
 export default function DashboardLayout({
   children,
@@ -9,12 +19,10 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ProtectedRoute requiredRole="client">
-      <div className="theme-client min-h-screen bg-gray-100">
-        <ClientNavbar />
-        <div className="pt-16">{children}</div>
-      </div>
+    <ProtectedRoute dashboard="client">
+      <DashboardShell theme="client" navItems={clientNavItems}>
+        {children}
+      </DashboardShell>
     </ProtectedRoute>
   );
 }
-

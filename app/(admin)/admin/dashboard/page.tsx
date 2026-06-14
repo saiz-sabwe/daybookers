@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BreadcrumbAdmin } from "@/components/admin/layout/BreadcrumbAdmin";
+import { DashboardPageHeader } from "@/components/shared/dashboard/DashboardPageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAdminStats } from "@/app/actions/admin/stats/get";
 import { useClientAuth } from "@/hooks/use-client-auth";
-import { Building2, Users, Calendar, DollarSign, AlertCircle } from "lucide-react";
+import { Building2, Users, Calendar, DollarSign, AlertCircle, LayoutDashboard } from "lucide-react";
 
 export default function AdminDashboardPage() {
   const { isAuthenticated, isAuthPending } = useClientAuth();
@@ -37,28 +37,23 @@ export default function AdminDashboardPage() {
 
   if (isLoading) {
     return (
-      <div>
-        <BreadcrumbAdmin items={[{ label: "Tableau de bord" }]} />
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-admin-primary-500"></div>
-        </div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-admin-primary-500"></div>
       </div>
     );
   }
 
   return (
     <div>
-      <BreadcrumbAdmin items={[{ label: "Tableau de bord" }]} />
-
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Tableau de bord Admin
-        </h1>
-        <p className="text-gray-600">Vue d'ensemble de la plateforme</p>
-      </div>
+      <DashboardPageHeader
+        theme="sadmin"
+        icon={LayoutDashboard}
+        title="Tableau de bord"
+        description="Vue d'ensemble de la plateforme"
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card className="border-l-4 border-admin-primary-500">
+        <Card className="rounded-2xl border border-gray-100 shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
               Total Hôtels
@@ -77,7 +72,7 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-blue-500">
+        <Card className="rounded-2xl border border-gray-100 shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
               Total Utilisateurs
@@ -93,7 +88,7 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-green-500">
+        <Card className="rounded-2xl border border-gray-100 shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
               Total Réservations
@@ -112,7 +107,7 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-yellow-500">
+        <Card className="rounded-2xl border border-gray-100 shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
               Revenus Totaux
@@ -130,7 +125,7 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-red-500">
+        <Card className="rounded-2xl border border-gray-100 shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
               Réservations en attente

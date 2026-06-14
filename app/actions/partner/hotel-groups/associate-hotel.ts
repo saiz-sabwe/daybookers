@@ -1,11 +1,29 @@
 "use server";
 
-import { pendingMutation } from "@/lib/api/pending-django";
+import {
+  partnerMutate,
+  parsePartnerError,
+  requirePartnerToken,
+} from "@/lib/api/partner/fetch";
 
 export async function associateHotelToGroup(
-  userId: string,
+  _userId: string,
   hotelId: string,
-  groupId: string | null
+  groupId: string | null,
 ) {
-  return pendingMutation("partner.hotelGroups.associateHotel");
+  try {
+    const token = await requirePartnerToken();
+    if (!token) {
+      return { success: false, error: "Session expirée." };
+    }
+
+    await partnerMutate(token, `/api/hotels/hotels/${hotelId}/`, "PATCH", {
+      organization: groupId,
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error associating hotel to group:", error);
+    return { success: false, error: parsePartnerError(error) };
+  }
 }

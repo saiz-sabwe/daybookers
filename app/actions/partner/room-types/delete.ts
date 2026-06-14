@@ -1,7 +1,11 @@
 "use server";
 
-import { pendingMutation } from "@/lib/api/pending-django";
-
-export async function deleteRoomType(userId: string, roomTypeId: string) {
-  return pendingMutation("partner.roomTypes.delete");
+export async function deleteRoomType(
+  _userId: string,
+  _roomTypeId: string,
+) {
+  return {
+    success: false,
+    error: "La suppression de type de chambre n'est pas encore supportée par l'API.",
+  };
 }
