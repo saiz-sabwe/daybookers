@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { authClient } from "@/lib/better-auth-client";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -21,6 +20,7 @@ import {
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { signin } from "@/app/actions/auth/signin";
 
 const loginSchema = z.object({
   email: z.string().email("Email invalide"),
@@ -31,7 +31,6 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -58,24 +57,23 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const result = await authClient.signIn.email({
+      const result = await signin({
         email: data.email,
         password: data.password,
-        rememberMe: data.remember ?? true,
       });
 
-      // Better Auth retourne { data, error } sans lancer d'exception en cas d'échec
-      if (result?.error) {
-        const errorMessage =
-          result.error.message ||
-          "Email ou mot de passe incorrect. Vérifiez vos identifiants.";
+      if (!result.success || !result.token) {
         toast({
           title: "Connexion échouée",
-          description: errorMessage,
+          description: result.error ?? "Email ou mot de passe incorrect. Vérifiez vos identifiants.",
           variant: "destructive",
         });
         return;
       }
+
+      // Stockage temporaire du token API Django pour les prochains appels backend.
+      // Le stockage et la gestion centralisée (cookies HttpOnly / refresh) seront faits ensuite.
+      localStorage.setItem("daybooker_api_token", result.token);
 
       toast({
         title: "Connexion réussie",

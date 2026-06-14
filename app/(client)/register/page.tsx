@@ -18,13 +18,13 @@ import {
 } from "@/components/ui/form";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
+import { signup } from "@/app/actions/auth/signup";
 import { useToast } from "@/hooks/use-toast";
-import { authClient } from "@/lib/better-auth-client";
 
 const registerSchema = z.object({
   name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
   email: z.string().email("Email invalide"),
-  password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères"),
+  password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères"),
   confirmPassword: z.string(),
   phone: z.string().optional(),
   acceptTerms: z.boolean().refine((val) => val === true, {
@@ -58,27 +58,35 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      const result = await authClient.signUp.email({
+      const result = await signup({
+        name: data.name,
         email: data.email,
         password: data.password,
-        name: data.name,
+        phone: data.phone,
       });
 
-      // Si aucune exception n'est levée, l'inscription a réussi
+      if (!result.success) {
+        toast({
+          title: "Erreur d'inscription",
+          description: result.error ?? "Une erreur est survenue lors de la création du compte.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       toast({
         title: "Compte créé avec succès",
-        description: "Vous êtes maintenant connecté",
+        description: "Connectez-vous avec votre email et mot de passe.",
         variant: "success",
       });
 
-      // Rediriger vers le dashboard après inscription réussie
-      // Utiliser window.location pour forcer un rechargement complet
-      window.location.href = "/dashboard";
+      router.push("/login");
     } catch (error) {
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : "Une erreur est survenue lors de la création du compte.";
-      
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Une erreur est survenue lors de la création du compte.";
+
       toast({
         title: "Erreur d'inscription",
         description: errorMessage,
