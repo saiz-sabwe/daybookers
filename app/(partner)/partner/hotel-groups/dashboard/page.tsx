@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { BarChart3 } from "lucide-react";
+import { RequirePagePermission } from "@/components/shared/auth/RequirePagePermission";
 
 export default function GroupDashboardPage() {
   const { isAuthenticated, isAuthPending } = useClientAuth();
@@ -63,6 +64,7 @@ export default function GroupDashboardPage() {
   }
 
   return (
+    <RequirePagePermission redirectTo="/partner/dashboard">
     <div>
       <DashboardPageHeader
         theme="partner"
@@ -140,5 +142,6 @@ export default function GroupDashboardPage() {
         </div>
       )}
     </div>
+    </RequirePagePermission>
   );
 }

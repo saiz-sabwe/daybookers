@@ -27,6 +27,8 @@ import { RatingInput } from "@/components/shared/forms/RatingInput";
 import { createReview } from "@/app/actions/reviews/create";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { PermissionGate } from "@/components/shared/auth/PermissionGate";
+import { djangoPerm } from "@/lib/auth/django-perm";
 
 const reviewSchema = z.object({
   rating: z.number().min(1, "La note est obligatoire").max(5),
@@ -171,16 +173,18 @@ export function ReviewDialog({
               >
                 Annuler
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Publication...
-                  </>
-                ) : (
-                  "Publier l'avis"
-                )}
-              </Button>
+              <PermissionGate permissions={[djangoPerm("hotels", "review", "add")]}>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Publication...
+                    </>
+                  ) : (
+                    "Publier l'avis"
+                  )}
+                </Button>
+              </PermissionGate>
             </DialogFooter>
           </form>
         </Form>

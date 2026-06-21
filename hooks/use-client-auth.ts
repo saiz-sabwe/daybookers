@@ -5,6 +5,7 @@ import { getCurrentProfile } from "@/app/actions/auth/get-current-profile";
 import { hasServerSession } from "@/app/actions/auth/session";
 import {
   getStoredApiUserEmail,
+  getStoredPermissionCatalog,
   getStoredUserProfile,
   hasApiSession,
   storeUserProfile,
@@ -20,6 +21,7 @@ export function useClientAuth() {
   const [hasDjangoSession, setHasDjangoSession] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<StoredUserProfile | null>(null);
+  const [permissionCatalog, setPermissionCatalog] = useState<Permission[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -27,12 +29,14 @@ export function useClientAuth() {
     async function resolveSession() {
       const localSession = hasApiSession();
       const storedProfile = getStoredUserProfile();
+      const storedCatalog = getStoredPermissionCatalog();
 
       if (localSession) {
         if (!cancelled) {
           setHasDjangoSession(true);
           setUserEmail(getStoredApiUserEmail());
           setUserProfile(storedProfile);
+          setPermissionCatalog(storedCatalog);
           setApiSessionReady(true);
         }
         return;
@@ -45,6 +49,7 @@ export function useClientAuth() {
             setHasDjangoSession(false);
             setUserEmail(null);
             setUserProfile(null);
+            setPermissionCatalog([]);
             setApiSessionReady(true);
           }
           return;
@@ -59,6 +64,7 @@ export function useClientAuth() {
           setHasDjangoSession(true);
           setUserEmail(profile?.email ?? getStoredApiUserEmail());
           setUserProfile(profile);
+          setPermissionCatalog(storedCatalog);
           setApiSessionReady(true);
         }
       } catch {
@@ -66,6 +72,7 @@ export function useClientAuth() {
           setHasDjangoSession(false);
           setUserEmail(null);
           setUserProfile(null);
+          setPermissionCatalog([]);
           setApiSessionReady(true);
         }
       }
@@ -88,5 +95,6 @@ export function useClientAuth() {
     userProfile,
     userName,
     permissions,
+    permissionCatalog,
   };
 }

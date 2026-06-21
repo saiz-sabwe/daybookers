@@ -27,6 +27,9 @@ import { getAllPartnerCommissions } from "@/app/actions/admin/commissions/get";
 import { updatePartnerCommission } from "@/app/actions/admin/commissions/update";
 import { useClientAuth } from "@/hooks/use-client-auth";
 import { useToast } from "@/hooks/use-toast";
+import { AdminPageGuard } from "@/components/shared/auth/AdminPageGuard";
+import { PermissionGate } from "@/components/shared/auth/PermissionGate";
+import { djangoPerm } from "@/lib/auth/django-perm";
 
 export default function AdminCommissionsPage() {
   const { isAuthenticated, isAuthPending } = useClientAuth();
@@ -129,6 +132,7 @@ export default function AdminCommissionsPage() {
   };
 
   return (
+    <AdminPageGuard>
     <div>
       <DashboardPageHeader
         theme="sadmin"
@@ -183,15 +187,17 @@ export default function AdminCommissionsPage() {
                           : "Non défini"}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEditClick(commission)}
-                          disabled={!commission.managerName}
-                        >
-                          <Edit className="w-4 h-4 mr-2" />
-                          Modifier
-                        </Button>
+                        <PermissionGate permissions={[djangoPerm("profils", "organization", "change")]}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditClick(commission)}
+                            disabled={!commission.managerName}
+                          >
+                            <Edit className="w-4 h-4 mr-2" />
+                            Modifier
+                          </Button>
+                        </PermissionGate>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -237,24 +243,27 @@ export default function AdminCommissionsPage() {
             >
               Annuler
             </Button>
-            <Button
-              onClick={handleSave}
-              disabled={isSaving}
-              className="bg-admin-primary-500 hover:bg-admin-primary-600 text-white"
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Enregistrement...
-                </>
-              ) : (
-                "Enregistrer"
-              )}
-            </Button>
+            <PermissionGate permissions={[djangoPerm("profils", "organization", "change")]}>
+              <Button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="bg-admin-primary-500 hover:bg-admin-primary-600 text-white"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Enregistrement...
+                  </>
+                ) : (
+                  "Enregistrer"
+                )}
+              </Button>
+            </PermissionGate>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
+    </AdminPageGuard>
   );
 }
 

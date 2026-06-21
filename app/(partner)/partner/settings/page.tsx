@@ -19,6 +19,9 @@ import { updatePartnerSettings } from "@/app/actions/partner/settings/update";
 import { useClientAuth } from "@/hooks/use-client-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Settings } from "lucide-react";
+import { RequirePagePermission } from "@/components/shared/auth/RequirePagePermission";
+import { PermissionGate } from "@/components/shared/auth/PermissionGate";
+import { djangoPerm } from "@/lib/auth/django-perm";
 
 export default function PartnerSettingsPage() {
   const { isAuthenticated, isAuthPending } = useClientAuth();
@@ -94,13 +97,16 @@ export default function PartnerSettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-partner-primary-500"></div>
-      </div>
+      <RequirePagePermission redirectTo="/partner/dashboard">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-partner-primary-500"></div>
+        </div>
+      </RequirePagePermission>
     );
   }
 
   return (
+    <RequirePagePermission redirectTo="/partner/dashboard">
     <div>
       <DashboardPageHeader
         theme="partner"
@@ -225,18 +231,21 @@ export default function PartnerSettingsPage() {
         </Card>
 
         <div className="flex justify-end">
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Enregistrement...
-              </>
-            ) : (
-              "Enregistrer les modifications"
-            )}
-          </Button>
+          <PermissionGate permissions={[djangoPerm("profils", "profile", "change")]}>
+            <Button onClick={handleSave} disabled={isSaving}>
+              {isSaving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Enregistrement...
+                </>
+              ) : (
+                "Enregistrer les modifications"
+              )}
+            </Button>
+          </PermissionGate>
         </div>
       </div>
     </div>
+    </RequirePagePermission>
   );
 }

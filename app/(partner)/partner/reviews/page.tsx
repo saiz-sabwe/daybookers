@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { getPartnerHotels } from "@/app/actions/partner/hotels/get";
 import { Hotel } from "@/types";
+import { RequirePagePermission } from "@/components/shared/auth/RequirePagePermission";
 
 export default function PartnerReviewsPage() {
   const { isAuthenticated, isAuthPending } = useClientAuth();
@@ -104,13 +105,16 @@ export default function PartnerReviewsPage() {
 
   if (isLoading && reviews.length === 0) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-partner-primary-500"></div>
-      </div>
+      <RequirePagePermission redirectTo="/partner/dashboard">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-partner-primary-500"></div>
+        </div>
+      </RequirePagePermission>
     );
   }
 
   return (
+    <RequirePagePermission redirectTo="/partner/dashboard">
     <div>
       <DashboardPageHeader
         theme="partner"
@@ -270,5 +274,6 @@ export default function PartnerReviewsPage() {
         </CardContent>
       </Card>
     </div>
+    </RequirePagePermission>
   );
 }

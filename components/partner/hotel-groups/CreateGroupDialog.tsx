@@ -25,6 +25,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { createHotelGroup } from "@/app/actions/partner/hotel-groups/create";
+import { PermissionGate } from "@/components/shared/auth/PermissionGate";
+import { djangoPerm } from "@/lib/auth/django-perm";
 
 const groupSchema = z.object({
   name: z.string().min(1, "Le nom est obligatoire"),
@@ -139,20 +141,22 @@ export function CreateGroupDialog({
               >
                 Annuler
               </Button>
-              <Button
-                type="submit"
-                className="bg-partner-primary-600 hover:bg-partner-primary-700 text-white"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Création...
-                  </>
-                ) : (
-                  "Créer le groupe"
-                )}
-              </Button>
+              <PermissionGate permissions={[djangoPerm("profils", "organization", "add")]}>
+                <Button
+                  type="submit"
+                  className="bg-partner-primary-600 hover:bg-partner-primary-700 text-white"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Création...
+                    </>
+                  ) : (
+                    "Créer le groupe"
+                  )}
+                </Button>
+              </PermissionGate>
             </div>
           </form>
         </Form>

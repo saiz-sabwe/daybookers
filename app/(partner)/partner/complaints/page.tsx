@@ -3,6 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DashboardPageHeader } from "@/components/shared/dashboard/DashboardPageHeader";
+import { NewComplaintButton, UpdateComplaintButton } from "@/components/partner/complaints/ComplaintsActions";
+import { PartnerPageGuard } from "@/components/shared/auth/PartnerPageGuard";
 import { AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -39,6 +41,7 @@ export default async function ComplaintsPage() {
   };
 
   return (
+    <PartnerPageGuard>
     <div className="space-y-6">
       <DashboardPageHeader
         theme="partner"
@@ -46,7 +49,7 @@ export default async function ComplaintsPage() {
         title="Gestion des plaintes"
         description="Suivi et résolution des réclamations clients"
       >
-        <Button>Nouvelle plainte</Button>
+        <NewComplaintButton />
       </DashboardPageHeader>
 
       <div className="grid gap-4">
@@ -86,7 +89,7 @@ export default async function ComplaintsPage() {
               <div className="mt-4 flex gap-2">
                 <Button size="sm" variant="outline">Voir détails</Button>
                 {complaint.status !== "CLOSED" && (
-                  <Button size="sm">Mettre à jour</Button>
+                  <UpdateComplaintButton />
                 )}
               </div>
             </Card>
@@ -94,5 +97,6 @@ export default async function ComplaintsPage() {
         )}
       </div>
     </div>
+    </PartnerPageGuard>
   );
 }

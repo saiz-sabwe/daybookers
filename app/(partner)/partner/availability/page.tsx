@@ -8,6 +8,7 @@ import { HotelRoomTypeSelector } from "@/components/partner/availability/HotelRo
 import { AvailabilityCalendar } from "@/components/partner/availability/AvailabilityCalendar";
 import { BulkAvailabilityActions } from "@/components/partner/availability/BulkAvailabilityActions";
 import { CalendarDays } from "lucide-react";
+import { RequirePagePermission } from "@/components/shared/auth/RequirePagePermission";
 
 export default function PartnerAvailabilityPage() {
   const { isAuthenticated, isAuthPending } = useClientAuth();
@@ -32,6 +33,7 @@ export default function PartnerAvailabilityPage() {
   const userId = "";
 
   return (
+    <RequirePagePermission redirectTo="/partner/dashboard">
     <div>
       <DashboardPageHeader
         theme="partner"
@@ -65,5 +67,6 @@ export default function PartnerAvailabilityPage() {
         />
       </div>
     </div>
+    </RequirePagePermission>
   );
 }

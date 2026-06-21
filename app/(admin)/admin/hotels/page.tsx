@@ -28,6 +28,9 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import Link from "next/link";
 import { HotelStatus } from "@/types";
+import { AdminPageGuard } from "@/components/shared/auth/AdminPageGuard";
+import { PermissionGate } from "@/components/shared/auth/PermissionGate";
+import { djangoPerm } from "@/lib/auth/django-perm";
 
 export default function AdminHotelsPage() {
   const { isAuthenticated, isAuthPending } = useClientAuth();
@@ -96,6 +99,7 @@ export default function AdminHotelsPage() {
   };
 
   return (
+    <AdminPageGuard>
     <div>
       <DashboardPageHeader
         theme="sadmin"
@@ -103,12 +107,14 @@ export default function AdminHotelsPage() {
         title="Gestion des Hôtels"
         description="Liste de tous les hôtels de la plateforme"
       >
-        <Button asChild className="bg-admin-primary-500 hover:bg-admin-primary-600 text-white">
-          <Link href="/admin/hotels/create">
-            <Plus className="w-4 h-4 mr-2" />
-            Créer un hôtel
-          </Link>
-        </Button>
+        <PermissionGate permissions={[djangoPerm("hotels", "hotel", "add")]}>
+          <Button asChild className="bg-admin-primary-500 hover:bg-admin-primary-600 text-white">
+            <Link href="/admin/hotels/create">
+              <Plus className="w-4 h-4 mr-2" />
+              Créer un hôtel
+            </Link>
+          </Button>
+        </PermissionGate>
       </DashboardPageHeader>
 
       <Card>
@@ -180,9 +186,11 @@ export default function AdminHotelsPage() {
                           {format(new Date(hotel.createdAt), "dd/MM/yyyy", { locale: fr })}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button variant="outline" size="sm" asChild>
-                            <Link href={`/admin/hotels/${hotel.id}`}>Voir</Link>
-                          </Button>
+                          <PermissionGate permissions={[djangoPerm("hotels", "hotel")]}>
+                            <Button variant="outline" size="sm" asChild>
+                              <Link href={`/admin/hotels/${hotel.id}`}>Voir</Link>
+                            </Button>
+                          </PermissionGate>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -219,6 +227,7 @@ export default function AdminHotelsPage() {
         </CardContent>
       </Card>
     </div>
+    </AdminPageGuard>
   );
 }
 

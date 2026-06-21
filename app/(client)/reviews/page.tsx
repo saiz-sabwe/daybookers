@@ -31,6 +31,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ClientPageGuard } from "@/components/shared/auth/ClientPageGuard";
+import { PermissionGate } from "@/components/shared/auth/PermissionGate";
+import { djangoPerm } from "@/lib/auth/django-perm";
 
 const reviewSchema = z.object({
   hotelId: z.string().min(1, "Veuillez sélectionner un hôtel"),
@@ -161,6 +164,7 @@ export default function ReviewsPage() {
   }
 
   return (
+    <ClientPageGuard>
     <div className="min-h-screen bg-gray-100 py-12">
       <div className="container mx-auto px-4 max-w-3xl">
         <div className="mb-8">
@@ -243,31 +247,34 @@ export default function ReviewsPage() {
               />
 
               <div className="flex justify-end pt-4 border-t border-gray-100">
-                <Button
-                  type="submit"
-                  className="bg-client-primary-500 hover:bg-client-primary-600 text-white"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Publication...
-                    </>
-                  ) : isSuccess ? (
-                    <>
-                      <CheckCircle className="mr-2 h-4 w-4" />
-                      Publié
-                    </>
-                  ) : (
-                    "Publier mon avis"
-                  )}
-                </Button>
+                <PermissionGate permissions={[djangoPerm("hotels", "review", "add")]}>
+                  <Button
+                    type="submit"
+                    className="bg-client-primary-500 hover:bg-client-primary-600 text-white"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Publication...
+                      </>
+                    ) : isSuccess ? (
+                      <>
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        Publié
+                      </>
+                    ) : (
+                      "Publier mon avis"
+                    )}
+                  </Button>
+                </PermissionGate>
               </div>
             </form>
           </Form>
         </FormCard>
       </div>
     </div>
+    </ClientPageGuard>
   );
 }
 

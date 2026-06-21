@@ -14,6 +14,8 @@ import { useClientAuth } from "@/hooks/use-client-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useGlobalLoading } from "@/components/shared/GlobalLoadingProvider";
 import { resolveHotelImage } from "@/lib/images/hotel-image";
+import { PermissionGate } from "@/components/shared/auth/PermissionGate";
+import { djangoPerm } from "@/lib/auth/django-perm";
 
 function FavoriteCardSkeleton() {
   return (
@@ -124,15 +126,17 @@ export function FavoritesList({
                 minPrice={hotel.minPrice}
                 timeSlots={[]}
               />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute right-3 top-3 z-10 bg-white/90 shadow-sm backdrop-blur-sm hover:bg-white"
-                onClick={() => handleRemoveFavorite(hotel.id)}
-                aria-label="Retirer des favoris"
-              >
-                <HeartOff className="h-4 w-4 text-red-500" />
-              </Button>
+              <PermissionGate permissions={[djangoPerm("hotels", "favorite", "delete")]}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-3 top-3 z-10 bg-white/90 shadow-sm backdrop-blur-sm hover:bg-white"
+                  onClick={() => handleRemoveFavorite(hotel.id)}
+                  aria-label="Retirer des favoris"
+                >
+                  <HeartOff className="h-4 w-4 text-red-500" />
+                </Button>
+              </PermissionGate>
             </div>
           ))}
         </div>

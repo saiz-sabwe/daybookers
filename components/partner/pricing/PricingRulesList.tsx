@@ -10,6 +10,8 @@ import { deletePricingRule } from "@/app/actions/partner/pricing-rules/delete";
 import { updatePricingRule } from "@/app/actions/partner/pricing-rules/update";
 import { useToast } from "@/hooks/use-toast";
 import { PricingRuleForm } from "./PricingRuleForm";
+import { PermissionGate } from "@/components/shared/auth/PermissionGate";
+import { djangoPerm } from "@/lib/auth/django-perm";
 import type { PricingRuleData } from "@/app/actions/partner/pricing-rules/get";
 
 const ruleTypeLabels: Record<string, { label: string; color: string; description: string }> = {
@@ -161,13 +163,15 @@ export function PricingRulesList({
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold">Règles de tarification</h2>
-          <Button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="bg-client-primary-500 hover:bg-client-primary-600 text-white"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Ajouter une règle
-          </Button>
+          <PermissionGate permissions={[djangoPerm("hotels", "pricingrule", "add")]}>
+            <Button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="bg-client-primary-500 hover:bg-client-primary-600 text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Ajouter une règle
+            </Button>
+          </PermissionGate>
         </div>
 
         {isLoading ? (
@@ -179,13 +183,15 @@ export function PricingRulesList({
             <CardContent className="pt-6">
               <div className="text-center py-8">
                 <p className="text-gray-500 mb-4">Aucune règle de tarification</p>
-                <Button
-                  onClick={() => setIsCreateModalOpen(true)}
-                  className="bg-client-primary-500 hover:bg-client-primary-600 text-white"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Créer une règle
-                </Button>
+                <PermissionGate permissions={[djangoPerm("hotels", "pricingrule", "add")]}>
+                  <Button
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="bg-client-primary-500 hover:bg-client-primary-600 text-white"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Créer une règle
+                  </Button>
+                </PermissionGate>
               </div>
             </CardContent>
           </Card>
@@ -235,42 +241,48 @@ export function PricingRulesList({
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleToggleActive(rule)}
-                        disabled={togglingRuleId === rule.id}
-                        title={rule.active ? "Désactiver" : "Activer"}
-                      >
-                        {togglingRuleId === rule.id ? (
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                        ) : rule.active ? (
-                          <ToggleRight className="w-5 h-5" />
-                        ) : (
-                          <ToggleLeft className="w-5 h-5" />
-                        )}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setEditingRule(rule)}
-                        disabled={deletingRuleId === rule.id || togglingRuleId === rule.id}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleDelete(rule.id)}
-                        disabled={deletingRuleId === rule.id}
-                        title="Supprimer"
-                      >
-                        {deletingRuleId === rule.id ? (
-                          <Loader2 className="w-4 h-4 animate-spin text-red-500" />
-                        ) : (
-                          <Trash2 className="w-4 h-4 text-red-500" />
-                        )}
-                      </Button>
+                      <PermissionGate permissions={[djangoPerm("hotels", "pricingrule", "change")]}>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleToggleActive(rule)}
+                          disabled={togglingRuleId === rule.id}
+                          title={rule.active ? "Désactiver" : "Activer"}
+                        >
+                          {togglingRuleId === rule.id ? (
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                          ) : rule.active ? (
+                            <ToggleRight className="w-5 h-5" />
+                          ) : (
+                            <ToggleLeft className="w-5 h-5" />
+                          )}
+                        </Button>
+                      </PermissionGate>
+                      <PermissionGate permissions={[djangoPerm("hotels", "pricingrule", "change")]}>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setEditingRule(rule)}
+                          disabled={deletingRuleId === rule.id || togglingRuleId === rule.id}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                      </PermissionGate>
+                      <PermissionGate permissions={[djangoPerm("hotels", "pricingrule", "delete")]}>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDelete(rule.id)}
+                          disabled={deletingRuleId === rule.id}
+                          title="Supprimer"
+                        >
+                          {deletingRuleId === rule.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin text-red-500" />
+                          ) : (
+                            <Trash2 className="w-4 h-4 text-red-500" />
+                          )}
+                        </Button>
+                      </PermissionGate>
                     </div>
                   </div>
                 </CardContent>

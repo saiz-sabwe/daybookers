@@ -30,6 +30,9 @@ import { Loader2, Clock, BedDouble } from "lucide-react";
 import { useClientAuth } from "@/hooks/use-client-auth";
 import { createBooking } from "@/app/actions/bookings/create";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ClientPageGuard } from "@/components/shared/auth/ClientPageGuard";
+import { PermissionGate } from "@/components/shared/auth/PermissionGate";
+import { djangoPerm } from "@/lib/auth/django-perm";
 
 const guestInfoSchema = z.object({
   firstName: z.string().min(2, "Le prénom doit contenir au moins 2 caractères"),
@@ -346,6 +349,7 @@ export default function BookingPageClient() {
   };
 
   return (
+    <ClientPageGuard>
     <div className="min-h-screen bg-gray-100 py-12">
       <div className="container mx-auto px-4 max-w-7xl">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Réserver votre séjour</h1>
@@ -471,20 +475,22 @@ export default function BookingPageClient() {
                       >
                         Retour
                       </Button>
-                      <Button
-                        type="submit"
-                        className="flex-1 bg-client-primary-500 hover:bg-client-primary-600 text-white"
-                        disabled={isSubmitting || !canProceed()}
-                      >
-                        {isSubmitting ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Traitement...
-                          </>
-                        ) : (
-                          "Confirmer la réservation"
-                        )}
-                      </Button>
+                      <PermissionGate permissions={[djangoPerm("hotels", "booking", "add")]}>
+                        <Button
+                          type="submit"
+                          className="flex-1 bg-client-primary-500 hover:bg-client-primary-600 text-white"
+                          disabled={isSubmitting || !canProceed()}
+                        >
+                          {isSubmitting ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Traitement...
+                            </>
+                          ) : (
+                            "Confirmer la réservation"
+                          )}
+                        </Button>
+                      </PermissionGate>
                     </div>
                   </form>
                 </Form>
@@ -531,5 +537,6 @@ export default function BookingPageClient() {
         </div>
       </div>
     </div>
+    </ClientPageGuard>
   );
 }

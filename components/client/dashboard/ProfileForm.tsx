@@ -25,6 +25,8 @@ import { DashboardPageHeader } from "@/components/client/dashboard/DashboardPage
 import { getCurrentProfile } from "@/app/actions/auth/get-current-profile";
 import { storeUserProfile } from "@/lib/api/auth-storage";
 import { useGlobalLoading } from "@/components/shared/GlobalLoadingProvider";
+import { PermissionGate } from "@/components/shared/auth/PermissionGate";
+import { djangoPerm } from "@/lib/auth/django-perm";
 
 const profileSchema = z.object({
   name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
@@ -252,25 +254,27 @@ export function ProfileForm() {
                 />
 
                 <div className="flex justify-end border-t border-gray-100 pt-4">
-                  <Button
-                    type="submit"
-                    className="bg-client-primary-500 hover:bg-client-primary-600 text-white"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Enregistrement...
-                      </>
-                    ) : isSuccess ? (
-                      <>
-                        <CheckCircle className="mr-2 h-4 w-4" />
-                        Enregistré
-                      </>
-                    ) : (
-                      "Enregistrer les modifications"
-                    )}
-                  </Button>
+                  <PermissionGate permissions={[djangoPerm("profils", "profile", "change")]}>
+                    <Button
+                      type="submit"
+                      className="bg-client-primary-500 hover:bg-client-primary-600 text-white"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Enregistrement...
+                        </>
+                      ) : isSuccess ? (
+                        <>
+                          <CheckCircle className="mr-2 h-4 w-4" />
+                          Enregistré
+                        </>
+                      ) : (
+                        "Enregistrer les modifications"
+                      )}
+                    </Button>
+                  </PermissionGate>
                 </div>
               </CardContent>
             </Card>

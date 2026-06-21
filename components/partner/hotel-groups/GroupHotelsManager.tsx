@@ -15,6 +15,8 @@ import { Building2, Check, X } from "lucide-react";
 import { getPartnerHotels } from "@/app/actions/partner/hotels/get";
 import { associateHotelToGroup } from "@/app/actions/partner/hotel-groups/associate-hotel";
 import { Hotel } from "@/types";
+import { PermissionGate } from "@/components/shared/auth/PermissionGate";
+import { djangoPerm } from "@/lib/auth/django-perm";
 
 interface GroupHotelsManagerProps {
   open: boolean;
@@ -118,28 +120,30 @@ export function GroupHotelsManager({
                       </p>
                     </div>
                   </div>
-                  <Button
-                    size="sm"
-                    variant={isInGroup ? "default" : "outline"}
-                    onClick={() => handleToggleHotel(hotel.id, hotel.groupId ?? null)}
-                    className={
-                      isInGroup
-                        ? "bg-green-600 hover:bg-green-700 text-white"
-                        : ""
-                    }
-                  >
-                    {isInGroup ? (
-                      <>
-                        <Check className="w-4 h-4 mr-1" />
-                        Dans le groupe
-                      </>
-                    ) : (
-                      <>
-                        <X className="w-4 h-4 mr-1" />
-                        Ajouter
-                      </>
-                    )}
-                  </Button>
+                  <PermissionGate permissions={[djangoPerm("profils", "organization", "change")]}>
+                    <Button
+                      size="sm"
+                      variant={isInGroup ? "default" : "outline"}
+                      onClick={() => handleToggleHotel(hotel.id, hotel.groupId ?? null)}
+                      className={
+                        isInGroup
+                          ? "bg-green-600 hover:bg-green-700 text-white"
+                          : ""
+                      }
+                    >
+                      {isInGroup ? (
+                        <>
+                          <Check className="w-4 h-4 mr-1" />
+                          Dans le groupe
+                        </>
+                      ) : (
+                        <>
+                          <X className="w-4 h-4 mr-1" />
+                          Ajouter
+                        </>
+                      )}
+                    </Button>
+                  </PermissionGate>
                 </div>
               );
             })}

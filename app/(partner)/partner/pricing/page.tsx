@@ -8,6 +8,7 @@ import { HotelRoomTypeSelector } from "@/components/partner/availability/HotelRo
 import { PricingRulesList } from "@/components/partner/pricing/PricingRulesList";
 import { PricingHelp } from "@/components/partner/pricing/PricingHelp";
 import { Tags } from "lucide-react";
+import { RequirePagePermission } from "@/components/shared/auth/RequirePagePermission";
 
 export default function PartnerPricingPage() {
   const { isAuthenticated, isAuthPending } = useClientAuth();
@@ -26,6 +27,7 @@ export default function PartnerPricingPage() {
   const userId = "";
 
   return (
+    <RequirePagePermission redirectTo="/partner/dashboard">
     <div>
       <DashboardPageHeader
         theme="partner"
@@ -54,5 +56,6 @@ export default function PartnerPricingPage() {
         />
       </div>
     </div>
+    </RequirePagePermission>
   );
 }

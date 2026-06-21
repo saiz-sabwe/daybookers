@@ -7,6 +7,7 @@ import { getHotelGroupsByManager } from "@/app/actions/partner/hotel-groups/get"
 import { HotelGroupsList } from "@/components/partner/hotel-groups/HotelGroupsList";
 import { HotelGroupData } from "@/app/actions/partner/hotel-groups/get";
 import { Building2 } from "lucide-react";
+import { RequirePagePermission } from "@/components/shared/auth/RequirePagePermission";
 
 export default function HotelGroupsPage() {
   const { isAuthenticated, isAuthPending } = useClientAuth();
@@ -42,6 +43,7 @@ export default function HotelGroupsPage() {
   }
 
   return (
+    <RequirePagePermission redirectTo="/partner/dashboard">
     <div>
       <DashboardPageHeader
         theme="partner"
@@ -58,5 +60,6 @@ export default function HotelGroupsPage() {
         <HotelGroupsList groups={groups} userId="" onUpdate={loadGroups} />
       )}
     </div>
+    </RequirePagePermission>
   );
 }

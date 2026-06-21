@@ -21,6 +21,9 @@ import {
 } from "@/components/ui/select";
 import { CheckCircle2, XCircle, Eye, Calendar } from "lucide-react";
 import Link from "next/link";
+import { RequirePagePermission } from "@/components/shared/auth/RequirePagePermission";
+import { PermissionGate } from "@/components/shared/auth/PermissionGate";
+import { djangoPerm } from "@/lib/auth/django-perm";
 
 export default function PartnerBookingsPage() {
   const { isAuthenticated, isAuthPending } = useClientAuth();
@@ -116,13 +119,16 @@ export default function PartnerBookingsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-partner-primary-500"></div>
-      </div>
+      <RequirePagePermission redirectTo="/partner/dashboard">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-partner-primary-500"></div>
+        </div>
+      </RequirePagePermission>
     );
   }
 
   return (
+    <RequirePagePermission redirectTo="/partner/dashboard">
     <div>
       <DashboardPageHeader
         theme="partner"
@@ -204,28 +210,32 @@ export default function PartnerBookingsPage() {
                       </div>
                       <div className="flex gap-2">
                         {booking.status === "PENDING" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleConfirmBooking(booking.id)}
-                            disabled={isProcessing}
-                            className="text-green-600 hover:text-green-700 hover:border-green-300 hover:bg-green-50"
-                          >
-                            <CheckCircle2 className="w-4 h-4 mr-1" />
-                            Confirmer
-                          </Button>
+                          <PermissionGate permissions={[djangoPerm("hotels", "booking", "change")]}>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleConfirmBooking(booking.id)}
+                              disabled={isProcessing}
+                              className="text-green-600 hover:text-green-700 hover:border-green-300 hover:bg-green-50"
+                            >
+                              <CheckCircle2 className="w-4 h-4 mr-1" />
+                              Confirmer
+                            </Button>
+                          </PermissionGate>
                         )}
                         {(booking.status === "PENDING" || booking.status === "CONFIRMED") && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleCancelBooking(booking.id)}
-                            disabled={isProcessing}
-                            className="text-red-600 hover:text-red-700 hover:border-red-300 hover:bg-red-50"
-                          >
-                            <XCircle className="w-4 h-4 mr-1" />
-                            Annuler
-                          </Button>
+                          <PermissionGate permissions={[djangoPerm("hotels", "booking", "change")]}>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleCancelBooking(booking.id)}
+                              disabled={isProcessing}
+                              className="text-red-600 hover:text-red-700 hover:border-red-300 hover:bg-red-50"
+                            >
+                              <XCircle className="w-4 h-4 mr-1" />
+                              Annuler
+                            </Button>
+                          </PermissionGate>
                         )}
                         <Button size="sm" variant="outline" asChild>
                           <Link href={`/booking/confirm/${booking.id}`}>
@@ -247,5 +257,6 @@ export default function PartnerBookingsPage() {
         </CardContent>
       </Card>
     </div>
+    </RequirePagePermission>
   );
 }

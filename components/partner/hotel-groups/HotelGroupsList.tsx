@@ -8,6 +8,8 @@ import { Building2, Plus, Edit } from "lucide-react";
 import { HotelGroupData } from "@/app/actions/partner/hotel-groups/get";
 import { CreateGroupDialog } from "./CreateGroupDialog";
 import { GroupHotelsManager } from "./GroupHotelsManager";
+import { PermissionGate } from "@/components/shared/auth/PermissionGate";
+import { djangoPerm } from "@/lib/auth/django-perm";
 
 interface HotelGroupsListProps {
   groups: HotelGroupData[];
@@ -33,20 +35,7 @@ export function HotelGroupsList({ groups, userId, onUpdate }: HotelGroupsListPro
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold">Groupes d'hôtels</h2>
-          <Button
-            onClick={() => setIsCreateDialogOpen(true)}
-            className="bg-partner-primary-600 hover:bg-partner-primary-700 text-white"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Créer un groupe
-          </Button>
-        </div>
-
-        {groups.length === 0 ? (
-          <Card className="p-12 text-center">
-            <Building2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucun groupe</h3>
-            <p className="text-gray-600 mb-4">Créez votre premier groupe pour organiser vos hôtels</p>
+          <PermissionGate permissions={[djangoPerm("profils", "organization", "add")]}>
             <Button
               onClick={() => setIsCreateDialogOpen(true)}
               className="bg-partner-primary-600 hover:bg-partner-primary-700 text-white"
@@ -54,6 +43,23 @@ export function HotelGroupsList({ groups, userId, onUpdate }: HotelGroupsListPro
               <Plus className="w-4 h-4 mr-2" />
               Créer un groupe
             </Button>
+          </PermissionGate>
+        </div>
+
+        {groups.length === 0 ? (
+          <Card className="p-12 text-center">
+            <Building2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucun groupe</h3>
+            <p className="text-gray-600 mb-4">Créez votre premier groupe pour organiser vos hôtels</p>
+            <PermissionGate permissions={[djangoPerm("profils", "organization", "add")]}>
+              <Button
+                onClick={() => setIsCreateDialogOpen(true)}
+                className="bg-partner-primary-600 hover:bg-partner-primary-700 text-white"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Créer un groupe
+              </Button>
+            </PermissionGate>
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -71,14 +77,16 @@ export function HotelGroupsList({ groups, userId, onUpdate }: HotelGroupsListPro
                   {group.description && (
                     <p className="text-sm text-gray-600 mb-4">{group.description}</p>
                   )}
-                  <Button
-                    onClick={() => handleManageClick(group.id)}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    <Building2 className="w-4 h-4 mr-2" />
-                    Gérer les hôtels
-                  </Button>
+                  <PermissionGate permissions={[djangoPerm("profils", "organization", "change")]}>
+                    <Button
+                      onClick={() => handleManageClick(group.id)}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      <Building2 className="w-4 h-4 mr-2" />
+                      Gérer les hôtels
+                    </Button>
+                  </PermissionGate>
                 </CardContent>
               </Card>
             ))}

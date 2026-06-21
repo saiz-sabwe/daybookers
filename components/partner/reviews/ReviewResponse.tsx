@@ -19,6 +19,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, MessageSquare, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { PermissionGate } from "@/components/shared/auth/PermissionGate";
+import { djangoPerm } from "@/lib/auth/django-perm";
 
 const responseSchema = z.object({
   response: z
@@ -99,15 +101,17 @@ export function ReviewResponse({
               Votre réponse
             </span>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsEditing(true)}
-            className="h-7"
-          >
-            <Edit className="w-3 h-3 mr-1" />
-            Modifier
-          </Button>
+          <PermissionGate permissions={[djangoPerm("hotels", "review", "change")]}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsEditing(true)}
+              className="h-7"
+            >
+              <Edit className="w-3 h-3 mr-1" />
+              Modifier
+            </Button>
+          </PermissionGate>
         </div>
         <p className="text-sm text-gray-700 whitespace-pre-wrap">{existingResponse}</p>
         {responseAt && (
@@ -147,21 +151,23 @@ export function ReviewResponse({
             )}
           />
           <div className="flex gap-2">
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="bg-client-primary-500 hover:bg-client-primary-600 text-white"
-              size="sm"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  {existingResponse ? "Modification..." : "Envoi..."}
-                </>
-              ) : (
-                existingResponse ? "Modifier" : "Publier la réponse"
-              )}
-            </Button>
+            <PermissionGate permissions={[djangoPerm("hotels", "review", "change")]}>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-client-primary-500 hover:bg-client-primary-600 text-white"
+                size="sm"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    {existingResponse ? "Modification..." : "Envoi..."}
+                  </>
+                ) : (
+                  existingResponse ? "Modifier" : "Publier la réponse"
+                )}
+              </Button>
+            </PermissionGate>
             {existingResponse && (
               <Button
                 type="button"

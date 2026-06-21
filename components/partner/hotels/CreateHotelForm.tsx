@@ -26,6 +26,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { createHotel } from "@/app/actions/partner/hotels/create";
+import { PermissionGate } from "@/components/shared/auth/PermissionGate";
+import { djangoPerm } from "@/lib/auth/django-perm";
 
 const hotelSchema = z.object({
   name: z.string().min(1, "Le nom est obligatoire"),
@@ -343,20 +345,22 @@ export function CreateHotelForm({ userId, hotelGroups, onSuccess }: CreateHotelF
         )}
 
         <div className="flex justify-end gap-2 pt-4">
-          <Button
-            type="submit"
-            className="bg-partner-primary-600 hover:bg-partner-primary-700 text-white"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Création...
-              </>
-            ) : (
-              "Créer l'hôtel"
-            )}
-          </Button>
+          <PermissionGate permissions={[djangoPerm("hotels", "hotel", "add")]}>
+            <Button
+              type="submit"
+              className="bg-partner-primary-600 hover:bg-partner-primary-700 text-white"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Création...
+                </>
+              ) : (
+                "Créer l'hôtel"
+              )}
+            </Button>
+          </PermissionGate>
         </div>
       </form>
     </Form>

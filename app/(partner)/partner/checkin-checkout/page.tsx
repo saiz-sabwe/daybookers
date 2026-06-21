@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DoorOpen } from "lucide-react";
 import { getServerApiToken } from "@/lib/api/server-auth";
 import { redirect } from "next/navigation";
+import { PartnerPageGuard } from "@/components/shared/auth/PartnerPageGuard";
 
 export default async function CheckInOutPage() {
   const token = await getServerApiToken();
@@ -19,6 +20,7 @@ export default async function CheckInOutPage() {
   ]);
 
   return (
+    <PartnerPageGuard>
     <div className="space-y-6">
       <DashboardPageHeader
         theme="partner"
@@ -44,5 +46,6 @@ export default async function CheckInOutPage() {
         </TabsContent>
       </Tabs>
     </div>
+    </PartnerPageGuard>
   );
 }

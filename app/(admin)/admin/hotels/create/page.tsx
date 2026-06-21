@@ -20,6 +20,9 @@ import { useClientAuth } from "@/hooks/use-client-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Plus } from "lucide-react";
 import { HotelStatus } from "@/types";
+import { AdminPageGuard } from "@/components/shared/auth/AdminPageGuard";
+import { PermissionGate } from "@/components/shared/auth/PermissionGate";
+import { djangoPerm } from "@/lib/auth/django-perm";
 
 export default function AdminCreateHotelPage() {
   const { isAuthenticated } = useClientAuth();
@@ -72,6 +75,7 @@ export default function AdminCreateHotelPage() {
   };
 
   return (
+    <AdminPageGuard>
     <div>
       <DashboardPageHeader
         theme="sadmin"
@@ -211,25 +215,28 @@ export default function AdminCreateHotelPage() {
               >
                 Annuler
               </Button>
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="bg-admin-primary-500 hover:bg-admin-primary-600 text-white"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Création...
-                  </>
-                ) : (
-                  "Créer l'hôtel"
-                )}
-              </Button>
+              <PermissionGate permissions={[djangoPerm("hotels", "hotel", "add")]}>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="bg-admin-primary-500 hover:bg-admin-primary-600 text-white"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Création...
+                    </>
+                  ) : (
+                    "Créer l'hôtel"
+                  )}
+                </Button>
+              </PermissionGate>
             </div>
           </form>
         </CardContent>
       </Card>
     </div>
+    </AdminPageGuard>
   );
 }
 

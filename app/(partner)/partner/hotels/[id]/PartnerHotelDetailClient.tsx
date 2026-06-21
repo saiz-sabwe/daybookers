@@ -8,6 +8,7 @@ import { RoomTypesList } from "./RoomTypesList";
 import { useClientAuth } from "@/hooks/use-client-auth";
 import { useEffect, useState } from "react";
 import { getRoomTypesByHotel } from "@/app/actions/partner/room-types/get";
+import { RequirePagePermission } from "@/components/shared/auth/RequirePagePermission";
 import { Building2 } from "lucide-react";
 
 interface PartnerHotelDetailClientProps {
@@ -56,6 +57,7 @@ export function PartnerHotelDetailClient({
   }
 
   return (
+    <RequirePagePermission redirectTo="/partner/hotels">
     <div>
       <DashboardPageHeader
         theme="partner"
@@ -110,5 +112,6 @@ export function PartnerHotelDetailClient({
         </div>
       </div>
     </div>
+    </RequirePagePermission>
   );
 }

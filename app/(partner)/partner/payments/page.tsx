@@ -1,5 +1,6 @@
 import { getServerApiToken } from "@/lib/api/server-auth";
 import { redirect } from "next/navigation";
+import { PartnerPageGuard } from "@/components/shared/auth/PartnerPageGuard";
 import { getPaymentsByUserId } from "@/app/actions/partner/payments/get";
 import { PaymentsList } from "@/components/partner/payments/PaymentsList";
 import { DashboardPageHeader } from "@/components/shared/dashboard/DashboardPageHeader";
@@ -15,6 +16,7 @@ export default async function PaymentsPage() {
   const payments = await getPaymentsByUserId("");
 
   return (
+    <PartnerPageGuard>
     <div>
       <DashboardPageHeader
         theme="partner"
@@ -25,5 +27,6 @@ export default async function PaymentsPage() {
 
       <PaymentsList payments={payments} />
     </div>
+    </PartnerPageGuard>
   );
 }

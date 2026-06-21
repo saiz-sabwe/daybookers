@@ -12,6 +12,8 @@ import { isFavorite } from "@/app/actions/favorites/get";
 import { useClientAuth } from "@/hooks/use-client-auth";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { PermissionGate } from "@/components/shared/auth/PermissionGate";
+import { djangoPerm } from "@/lib/auth/django-perm";
 
 interface HotelDetailsClientProps {
   hotel: Hotel;
@@ -98,20 +100,30 @@ export function HotelDetailsClient({ hotel }: HotelDetailsClientProps) {
     <div className="relative">
       <HotelGallery images={hotel.images} />
       <div className="absolute top-4 right-4 z-10">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="bg-white/90 hover:bg-white backdrop-blur-sm"
-          onClick={handleToggleFavorite}
-          disabled={isLoading || isToggling}
-        >
-          <Heart
-            className={cn(
-              "w-5 h-5",
-              isFavoriteState ? "fill-red-500 text-red-500" : "text-gray-700"
-            )}
-          />
-        </Button>
+        {isAuthenticated && (
+          <PermissionGate
+            permissions={[
+              isFavoriteState
+                ? djangoPerm("hotels", "favorite", "delete")
+                : djangoPerm("hotels", "favorite", "add"),
+            ]}
+          >
+            <Button
+              variant="ghost"
+              size="icon"
+              className="bg-white/90 hover:bg-white backdrop-blur-sm"
+              onClick={handleToggleFavorite}
+              disabled={isLoading || isToggling}
+            >
+              <Heart
+                className={cn(
+                  "w-5 h-5",
+                  isFavoriteState ? "fill-red-500 text-red-500" : "text-gray-700"
+                )}
+              />
+            </Button>
+          </PermissionGate>
+        )}
       </div>
     </div>
   );

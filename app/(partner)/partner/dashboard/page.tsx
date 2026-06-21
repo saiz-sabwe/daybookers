@@ -13,6 +13,7 @@ import { Hotel } from "@/types";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Calendar, DollarSign, TrendingUp, Star, LayoutDashboard } from "lucide-react";
+import { RequirePagePermission } from "@/components/shared/auth/RequirePagePermission";
 
 export default function PartnerDashboard() {
   const { isAuthenticated, isAuthPending } = useClientAuth();
@@ -108,13 +109,16 @@ export default function PartnerDashboard() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-partner-primary-500"></div>
-      </div>
+      <RequirePagePermission redirectTo="/partner/dashboard">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-partner-primary-500"></div>
+        </div>
+      </RequirePagePermission>
     );
   }
 
   return (
+    <RequirePagePermission redirectTo="/partner/dashboard">
     <div>
       <DashboardPageHeader
         theme="partner"
@@ -286,5 +290,6 @@ export default function PartnerDashboard() {
         </Card>
       </div>
     </div>
+    </RequirePagePermission>
   );
 }

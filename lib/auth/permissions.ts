@@ -1,15 +1,12 @@
-import {
-  DashboardScope,
-  PARTNER_DASHBOARD_PERMISSIONS,
-  Permission,
-  SADMIN_DASHBOARD_PERMISSIONS,
-} from "@/types/auth";
+import type { ApiOrganization } from "@/lib/api/user-profile";
+import { DashboardScope, Permission } from "@/types/auth";
 
-/**
- * Phase 1: enforcement disabled — all permission checks pass.
- * Phase 2: set to true when the official permission list is wired from /me.
- */
-export const PERMISSIONS_ENFORCEMENT_ENABLED = false;
+export const PERMISSIONS_ENFORCEMENT_ENABLED = true;
+
+export interface DashboardAccessContext {
+  organizations?: ApiOrganization[];
+  permissionCatalog?: Permission[];
+}
 
 export function isPermissionsEnforced(_permissions: Permission[]): boolean {
   return PERMISSIONS_ENFORCEMENT_ENABLED;
@@ -32,6 +29,9 @@ export function hasAnyPermission(
   if (!isPermissionsEnforced(permissions)) {
     return true;
   }
+  if (required.length === 0) {
+    return true;
+  }
   return required.some((p) => permissions.includes(p));
 }
 
@@ -45,17 +45,27 @@ export function hasAllPermissions(
   return required.every((p) => permissions.includes(p));
 }
 
-const DASHBOARD_ACCESS_PERMISSIONS: Record<
-  Exclude<DashboardScope, "client">,
-  Permission[]
-> = {
-  partner: PARTNER_DASHBOARD_PERMISSIONS,
-  sadmin: SADMIN_DASHBOARD_PERMISSIONS,
-};
+export function isPartnerStaff(
+  organizations: ApiOrganization[] | undefined,
+): boolean {
+  return (organizations?.length ?? 0) > 0;
+}
+
+export function isGlobalAdmin(
+  userPermissions: Permission[],
+  catalog: Permission[],
+): boolean {
+  if (catalog.length === 0) {
+    return false;
+  }
+  const userSet = new Set(userPermissions);
+  return catalog.every((permission) => userSet.has(permission));
+}
 
 export function canAccessDashboard(
   permissions: Permission[],
   scope: DashboardScope,
+  context?: DashboardAccessContext,
 ): boolean {
   if (scope === "client") {
     return true;
@@ -65,8 +75,15 @@ export function canAccessDashboard(
     return true;
   }
 
-  const required = DASHBOARD_ACCESS_PERMISSIONS[scope];
-  return hasAnyPermission(permissions, required);
+  if (scope === "partner") {
+    return isPartnerStaff(context?.organizations);
+  }
+
+  if (scope === "sadmin") {
+    return isGlobalAdmin(permissions, context?.permissionCatalog ?? []);
+  }
+
+  return false;
 }
 
 export function parsePermissions(raw: unknown): Permission[] {

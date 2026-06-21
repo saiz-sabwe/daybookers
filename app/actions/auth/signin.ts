@@ -2,11 +2,13 @@
 
 import { getApiBaseUrl } from "@/lib/api/config";
 import { setServerApiToken } from "@/lib/api/server-auth";
+import { parsePermissions } from "@/lib/auth/permissions";
 import {
   ApiUserProfile,
   mapApiUserProfile,
   StoredUserProfile,
 } from "@/lib/api/user-profile";
+import { Permission } from "@/types/auth";
 
 export interface SigninInput {
   email: string;
@@ -17,6 +19,7 @@ export interface SigninResult {
   success: boolean;
   token?: string;
   profile?: StoredUserProfile;
+  permissionCatalog?: Permission[];
   error?: string;
 }
 
@@ -56,12 +59,27 @@ function parseSigninProfile(payload: unknown): StoredUserProfile | null {
     return null;
   }
 
-  const profile = (payload as { profile?: unknown }).profile;
+  const data = payload as { user?: unknown; profile?: unknown };
+  const profile = data.user ?? data.profile;
   if (!profile || typeof profile !== "object") {
     return null;
   }
 
   return mapApiUserProfile(profile as ApiUserProfile);
+}
+
+function parseSigninPermissionCatalog(payload: unknown): Permission[] {
+  if (!payload || typeof payload !== "object") {
+    return [];
+  }
+
+  const data = payload as { param?: unknown };
+  if (!data.param || typeof data.param !== "object") {
+    return [];
+  }
+
+  const param = data.param as { permissions?: unknown };
+  return parsePermissions(param.permissions);
 }
 
 export async function signin(input: SigninInput): Promise<SigninResult> {
@@ -94,11 +112,12 @@ export async function signin(input: SigninInput): Promise<SigninResult> {
         : null;
 
     const profile = parseSigninProfile(payload);
+    const permissionCatalog = parseSigninPermissionCatalog(payload);
 
     if (!token || !profile) {
       return {
         success: false,
-        error: "Réponse de connexion invalide (token ou profil manquant).",
+        error: "Réponse de connexion invalide (token ou utilisateur manquant).",
       };
     }
 
@@ -108,6 +127,7 @@ export async function signin(input: SigninInput): Promise<SigninResult> {
       success: true,
       token,
       profile,
+      permissionCatalog,
     };
   } catch (error) {
     console.error("Erreur signin Django:", error);

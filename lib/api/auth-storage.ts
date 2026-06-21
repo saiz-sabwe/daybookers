@@ -1,6 +1,11 @@
 "use client";
 
-import { API_TOKEN_KEY, API_USER_EMAIL_KEY, API_USER_PROFILE_KEY } from "@/lib/api/constants";
+import {
+  API_PERMISSION_CATALOG_KEY,
+  API_TOKEN_KEY,
+  API_USER_EMAIL_KEY,
+  API_USER_PROFILE_KEY,
+} from "@/lib/api/constants";
 import {
   mapApiUserProfile,
   StoredUserProfile,
@@ -47,9 +52,30 @@ export function getStoredUserProfile(): StoredUserProfile | null {
   }
 }
 
+export function getStoredPermissionCatalog(): Permission[] {
+  if (typeof window === "undefined") {
+    return [];
+  }
+
+  const raw = localStorage.getItem(API_PERMISSION_CATALOG_KEY);
+  if (!raw) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed)
+      ? parsed.filter((item): item is Permission => typeof item === "string")
+      : [];
+  } catch {
+    return [];
+  }
+}
+
 export function storeApiSession(
   token: string,
   profile: StoredUserProfile,
+  permissionCatalog: Permission[] = [],
 ): void {
   localStorage.setItem(API_TOKEN_KEY, token);
   localStorage.setItem(
@@ -57,6 +83,10 @@ export function storeApiSession(
     profile.email ?? "",
   );
   localStorage.setItem(API_USER_PROFILE_KEY, JSON.stringify(profile));
+  localStorage.setItem(
+    API_PERMISSION_CATALOG_KEY,
+    JSON.stringify(permissionCatalog),
+  );
 }
 
 export function storeUserProfile(profile: StoredUserProfile): void {
@@ -70,6 +100,7 @@ export function clearApiSession(): void {
   localStorage.removeItem(API_TOKEN_KEY);
   localStorage.removeItem(API_USER_EMAIL_KEY);
   localStorage.removeItem(API_USER_PROFILE_KEY);
+  localStorage.removeItem(API_PERMISSION_CATALOG_KEY);
 }
 
 export function hasApiSession(): boolean {

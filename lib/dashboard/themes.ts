@@ -1,4 +1,4 @@
-import { DashboardScope } from "@/types/auth";
+export type DashboardScope = "client" | "partner" | "sadmin";
 
 export type DashboardTheme = DashboardScope;
 

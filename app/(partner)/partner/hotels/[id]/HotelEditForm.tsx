@@ -19,6 +19,8 @@ import { updateHotel } from "@/app/actions/partner/hotels/update";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { Hotel } from "@/types";
+import { PermissionGate } from "@/components/shared/auth/PermissionGate";
+import { djangoPerm } from "@/lib/auth/django-perm";
 
 const hotelSchema = z.object({
   name: z.string().min(1, "Le nom est obligatoire"),
@@ -195,6 +197,7 @@ export function HotelEditForm({ hotel, userId, onSuccess }: HotelEditFormProps) 
           )}
         />
 
+        <PermissionGate permissions={[djangoPerm("hotels", "hotel", "change")]}>
         <div className="flex justify-end">
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? (
@@ -207,6 +210,7 @@ export function HotelEditForm({ hotel, userId, onSuccess }: HotelEditFormProps) 
             )}
           </Button>
         </div>
+        </PermissionGate>
       </form>
     </Form>
   );

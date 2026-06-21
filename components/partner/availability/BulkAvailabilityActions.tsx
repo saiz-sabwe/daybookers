@@ -25,6 +25,8 @@ import { format } from "date-fns";
 import { bulkUpdateAvailability } from "@/app/actions/partner/availability/bulk";
 import { getTimeSlots } from "@/app/actions/time-slots/get";
 import { useToast } from "@/hooks/use-toast";
+import { PermissionGate } from "@/components/shared/auth/PermissionGate";
+import { djangoPerm } from "@/lib/auth/django-perm";
 import type { TimeSlot } from "@/app/actions/time-slots/get";
 
 interface BulkAvailabilityActionsProps {
@@ -148,14 +150,16 @@ export function BulkAvailabilityActions({
 
   return (
     <>
-      <Button
-        onClick={() => setIsOpen(true)}
-        disabled={!hotelId || !roomTypeId}
-        className="bg-client-primary-500 hover:bg-client-primary-600 text-white"
-      >
-        <CalendarIcon className="w-4 h-4 mr-2" />
-        Actions en masse
-      </Button>
+      <PermissionGate permissions={[djangoPerm("hotels", "availability", "change")]}>
+        <Button
+          onClick={() => setIsOpen(true)}
+          disabled={!hotelId || !roomTypeId}
+          className="bg-client-primary-500 hover:bg-client-primary-600 text-white"
+        >
+          <CalendarIcon className="w-4 h-4 mr-2" />
+          Actions en masse
+        </Button>
+      </PermissionGate>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-[600px]">
@@ -233,20 +237,22 @@ export function BulkAvailabilityActions({
               <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isSubmitting}>
                 Annuler
               </Button>
-              <Button
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="bg-client-primary-500 hover:bg-client-primary-600 text-white"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Mise à jour...
-                  </>
-                ) : (
-                  "Appliquer"
-                )}
-              </Button>
+              <PermissionGate permissions={[djangoPerm("hotels", "availability", "change")]}>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className="bg-client-primary-500 hover:bg-client-primary-600 text-white"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Mise à jour...
+                    </>
+                  ) : (
+                    "Appliquer"
+                  )}
+                </Button>
+              </PermissionGate>
             </div>
           </div>
         </DialogContent>

@@ -84,7 +84,11 @@ export default function LoginPageClient() {
         return;
       }
 
-      storeApiSession(result.token, result.profile);
+      storeApiSession(
+        result.token,
+        result.profile,
+        result.permissionCatalog ?? [],
+      );
 
       toast({
         title: "Connexion réussie",

@@ -19,6 +19,7 @@ import { getAllUsers } from "@/app/actions/admin/users/get";
 import { useClientAuth } from "@/hooks/use-client-auth";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { AdminPageGuard } from "@/components/shared/auth/AdminPageGuard";
 
 export default function AdminUsersPage() {
   const { isAuthenticated, isAuthPending } = useClientAuth();
@@ -55,6 +56,7 @@ export default function AdminUsersPage() {
   }, [isAuthenticated, isAuthPending, page, search]);
 
   return (
+    <AdminPageGuard>
     <div>
       <DashboardPageHeader
         theme="sadmin"
@@ -147,6 +149,7 @@ export default function AdminUsersPage() {
         </CardContent>
       </Card>
     </div>
+    </AdminPageGuard>
   );
 }
 

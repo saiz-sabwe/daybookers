@@ -13,6 +13,8 @@ import { createAvailability } from "@/app/actions/partner/availability/create";
 import { getTimeSlots } from "@/app/actions/time-slots/get";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { PermissionGate } from "@/components/shared/auth/PermissionGate";
+import { djangoPerm } from "@/lib/auth/django-perm";
 import type { AvailabilityData } from "@/app/actions/partner/availability/get";
 import type { TimeSlot } from "@/app/actions/time-slots/get";
 
@@ -356,24 +358,26 @@ export function AvailabilityCalendar({
                         }
                         return null;
                       })()}
-                      <Button
-                        onClick={() => toggleAvailability(selectedDate)}
-                        disabled={isUpdating}
-                        className="w-full bg-client-primary-500 hover:bg-client-primary-600 text-white"
-                        size="sm"
-                      >
-                        {isUpdating ? (
-                          <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Mise à jour...
-                          </>
-                        ) : (
-                          (() => {
-                            const av = getAvailabilityForDate(selectedDate);
-                            return av?.available ? "Bloquer cette date" : "Débloquer cette date";
-                          })()
-                        )}
-                      </Button>
+                      <PermissionGate permissions={[djangoPerm("hotels", "availability", "change")]}>
+                        <Button
+                          onClick={() => toggleAvailability(selectedDate)}
+                          disabled={isUpdating}
+                          className="w-full bg-client-primary-500 hover:bg-client-primary-600 text-white"
+                          size="sm"
+                        >
+                          {isUpdating ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Mise à jour...
+                            </>
+                          ) : (
+                            (() => {
+                              const av = getAvailabilityForDate(selectedDate);
+                              return av?.available ? "Bloquer cette date" : "Débloquer cette date";
+                            })()
+                          )}
+                        </Button>
+                      </PermissionGate>
                     </div>
                   </CardContent>
                 </Card>

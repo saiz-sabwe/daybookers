@@ -19,6 +19,8 @@ import { performCheckIn, performCheckOut } from "@/app/actions/partner/bookings/
 import { useToast } from "@/hooks/use-toast";
 import { useClientAuth } from "@/hooks/use-client-auth";
 import { useRouter } from "next/navigation";
+import { PermissionGate } from "@/components/shared/auth/PermissionGate";
+import { djangoPerm } from "@/lib/auth/django-perm";
 
 interface CheckInOutListProps {
   bookings: CheckInOutBooking[];
@@ -244,38 +246,42 @@ export function CheckInOutList({ bookings, type }: CheckInOutListProps) {
                     Voir détails
                   </Button>
                   {type === "checkin" && booking.status === "CONFIRMED" && (
-                    <Button
-                      size="sm"
-                      className="flex-1 bg-green-600 hover:bg-green-700"
-                      onClick={() => handleCheckIn(booking.id)}
-                      disabled={isProcessing}
-                    >
-                      {isProcessing ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Traitement...
-                        </>
-                      ) : (
-                        "Effectuer le check-in"
-                      )}
-                    </Button>
+                    <PermissionGate permissions={[djangoPerm("hotels", "booking", "change")]}>
+                      <Button
+                        size="sm"
+                        className="flex-1 bg-green-600 hover:bg-green-700"
+                        onClick={() => handleCheckIn(booking.id)}
+                        disabled={isProcessing}
+                      >
+                        {isProcessing ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Traitement...
+                          </>
+                        ) : (
+                          "Effectuer le check-in"
+                        )}
+                      </Button>
+                    </PermissionGate>
                   )}
                   {type === "checkout" && booking.status === "COMPLETED" && (
-                    <Button
-                      size="sm"
-                      className="flex-1 bg-blue-600 hover:bg-blue-700"
-                      onClick={() => handleCheckOut(booking.id)}
-                      disabled={isProcessing}
-                    >
-                      {isProcessing ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Traitement...
-                        </>
-                      ) : (
-                        "Effectuer le check-out"
-                      )}
-                    </Button>
+                    <PermissionGate permissions={[djangoPerm("hotels", "booking", "change")]}>
+                      <Button
+                        size="sm"
+                        className="flex-1 bg-blue-600 hover:bg-blue-700"
+                        onClick={() => handleCheckOut(booking.id)}
+                        disabled={isProcessing}
+                      >
+                        {isProcessing ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Traitement...
+                          </>
+                        ) : (
+                          "Effectuer le check-out"
+                        )}
+                      </Button>
+                    </PermissionGate>
                   )}
                 </div>
               </div>
@@ -390,42 +396,46 @@ export function CheckInOutList({ bookings, type }: CheckInOutListProps) {
                   Fermer
                 </Button>
                 {type === "checkin" && selectedBooking.status === "CONFIRMED" && (
-                  <Button
-                    className="flex-1 bg-green-600 hover:bg-green-700"
-                    onClick={() => {
-                      setIsDialogOpen(false);
-                      handleCheckIn(selectedBooking.id);
-                    }}
-                    disabled={isProcessing}
-                  >
-                    {isProcessing ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Traitement...
-                      </>
-                    ) : (
-                      "Effectuer le check-in"
-                    )}
-                  </Button>
+                  <PermissionGate permissions={[djangoPerm("hotels", "booking", "change")]}>
+                    <Button
+                      className="flex-1 bg-green-600 hover:bg-green-700"
+                      onClick={() => {
+                        setIsDialogOpen(false);
+                        handleCheckIn(selectedBooking.id);
+                      }}
+                      disabled={isProcessing}
+                    >
+                      {isProcessing ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Traitement...
+                        </>
+                      ) : (
+                        "Effectuer le check-in"
+                      )}
+                    </Button>
+                  </PermissionGate>
                 )}
                 {type === "checkout" && selectedBooking.status === "COMPLETED" && (
-                  <Button
-                    className="flex-1 bg-blue-600 hover:bg-blue-700"
-                    onClick={() => {
-                      setIsDialogOpen(false);
-                      handleCheckOut(selectedBooking.id);
-                    }}
-                    disabled={isProcessing}
-                  >
-                    {isProcessing ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Traitement...
-                      </>
-                    ) : (
-                      "Effectuer le check-out"
-                    )}
-                  </Button>
+                  <PermissionGate permissions={[djangoPerm("hotels", "booking", "change")]}>
+                    <Button
+                      className="flex-1 bg-blue-600 hover:bg-blue-700"
+                      onClick={() => {
+                        setIsDialogOpen(false);
+                        handleCheckOut(selectedBooking.id);
+                      }}
+                      disabled={isProcessing}
+                    >
+                      {isProcessing ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Traitement...
+                        </>
+                      ) : (
+                        "Effectuer le check-out"
+                      )}
+                    </Button>
+                  </PermissionGate>
                 )}
               </div>
             </div>

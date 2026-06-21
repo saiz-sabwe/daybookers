@@ -2,12 +2,9 @@
 
 import { ReactNode, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import {
-  canAccessDashboard,
-  hasAnyPermission,
-  isPermissionsEnforced,
-} from "@/lib/auth/permissions";
+import { hasAnyPermission } from "@/lib/auth/permissions";
 import { useClientAuth } from "@/hooks/use-client-auth";
+import { usePermissions } from "@/hooks/use-permissions";
 import { DashboardScope, Permission } from "@/types/auth";
 
 interface ProtectedRouteProps {
@@ -24,16 +21,16 @@ export function ProtectedRoute({
   redirectTo = "/login",
 }: ProtectedRouteProps) {
   const router = useRouter();
-  const { isAuthenticated, isAuthPending, permissions } = useClientAuth();
+  const { isAuthenticated, isAuthPending } = useClientAuth();
+  const { permissions, canAccessDashboard, isEnforced } = usePermissions();
 
-  const enforced = isPermissionsEnforced(permissions);
-  const hasDashboardAccess = canAccessDashboard(permissions, dashboard);
+  const hasDashboardAccess = canAccessDashboard(dashboard);
   const hasRequiredPermissions =
     !requiredPermissions?.length ||
     hasAnyPermission(permissions, requiredPermissions);
   const isAllowed =
     isAuthenticated &&
-    (!enforced || (hasDashboardAccess && hasRequiredPermissions));
+    (!isEnforced || (hasDashboardAccess && hasRequiredPermissions));
 
   useEffect(() => {
     if (isAuthPending) {

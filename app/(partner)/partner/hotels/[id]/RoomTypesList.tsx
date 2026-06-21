@@ -8,6 +8,8 @@ import { RoomTypeForm } from "./RoomTypeForm";
 import { getRoomTypesByHotel } from "@/app/actions/partner/room-types/get";
 import { deleteRoomType } from "@/app/actions/partner/room-types/delete";
 import { useToast } from "@/hooks/use-toast";
+import { PermissionGate } from "@/components/shared/auth/PermissionGate";
+import { djangoPerm } from "@/lib/auth/django-perm";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -107,6 +109,7 @@ export function RoomTypesList({ hotelId, userId, initialRoomTypes }: RoomTypesLi
       <>
       <div className="text-center py-8">
         <p className="text-gray-500 mb-4">Aucun type de chambre configuré</p>
+        <PermissionGate permissions={[djangoPerm("hotels", "roomtype", "add")]}>
            <Button 
              className="bg-client-primary-500 hover:bg-client-primary-600 text-white"
              onClick={() => setIsCreateModalOpen(true)}
@@ -114,6 +117,7 @@ export function RoomTypesList({ hotelId, userId, initialRoomTypes }: RoomTypesLi
           <Plus className="w-4 h-4 mr-2" />
           Ajouter un type de chambre
         </Button>
+        </PermissionGate>
       </div>
         <RoomTypeForm
           open={isCreateModalOpen}
@@ -157,6 +161,7 @@ export function RoomTypesList({ hotelId, userId, initialRoomTypes }: RoomTypesLi
               </div>
               
               <div className="flex gap-2">
+                <PermissionGate permissions={[djangoPerm("hotels", "roomtype", "change")]}>
                 <Button
                   size="sm"
                   variant="outline"
@@ -166,6 +171,8 @@ export function RoomTypesList({ hotelId, userId, initialRoomTypes }: RoomTypesLi
                   <Edit className="w-4 h-4 mr-1" />
                   Modifier
                 </Button>
+                </PermissionGate>
+                <PermissionGate permissions={[djangoPerm("hotels", "roomtype", "delete")]}>
                 <Button
                   size="sm"
                   variant="outline"
@@ -175,12 +182,14 @@ export function RoomTypesList({ hotelId, userId, initialRoomTypes }: RoomTypesLi
                   <Trash2 className="w-4 h-4 mr-1" />
                   Supprimer
                 </Button>
+                </PermissionGate>
               </div>
             </div>
           </CardContent>
         </Card>
       ))}
       
+      <PermissionGate permissions={[djangoPerm("hotels", "roomtype", "add")]}>
       <Button 
         className="w-full bg-partner-primary-600 hover:bg-partner-primary-700 text-white"
         onClick={() => setIsCreateModalOpen(true)}
@@ -188,6 +197,7 @@ export function RoomTypesList({ hotelId, userId, initialRoomTypes }: RoomTypesLi
         <Plus className="w-4 h-4 mr-2" />
         Ajouter un type de chambre
       </Button>
+      </PermissionGate>
     </div>
 
       {/* Modal de création */}

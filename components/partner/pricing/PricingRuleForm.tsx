@@ -41,6 +41,8 @@ import { CalendarIcon } from "lucide-react";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import type { PricingRuleData } from "@/app/actions/partner/pricing-rules/get";
+import { PermissionGate } from "@/components/shared/auth/PermissionGate";
+import { djangoPerm } from "@/lib/auth/django-perm";
 
 const pricingRuleSchema = z.object({
   name: z.string().min(1, "Le nom est obligatoire"),
@@ -547,20 +549,28 @@ export function PricingRuleForm({
               >
                 Annuler
               </Button>
-              <Button
-                type="submit"
-                className="bg-client-primary-500 hover:bg-client-primary-600 text-white"
-                disabled={isSubmitting}
+              <PermissionGate
+                permissions={[
+                  isEditing
+                    ? djangoPerm("hotels", "pricingrule", "change")
+                    : djangoPerm("hotels", "pricingrule", "add"),
+                ]}
               >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {isEditing ? "Modification..." : "Création..."}
-                  </>
-                ) : (
-                  isEditing ? "Modifier" : "Créer"
-                )}
-              </Button>
+                <Button
+                  type="submit"
+                  className="bg-client-primary-500 hover:bg-client-primary-600 text-white"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {isEditing ? "Modification..." : "Création..."}
+                    </>
+                  ) : (
+                    isEditing ? "Modifier" : "Créer"
+                  )}
+                </Button>
+              </PermissionGate>
             </div>
           </form>
         </Form>

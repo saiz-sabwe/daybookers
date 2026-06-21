@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAdminStats } from "@/app/actions/admin/stats/get";
 import { useClientAuth } from "@/hooks/use-client-auth";
 import { Building2, Users, Calendar, DollarSign, AlertCircle, LayoutDashboard } from "lucide-react";
+import { AdminPageGuard } from "@/components/shared/auth/AdminPageGuard";
 
 export default function AdminDashboardPage() {
   const { isAuthenticated, isAuthPending } = useClientAuth();
@@ -44,6 +45,7 @@ export default function AdminDashboardPage() {
   }
 
   return (
+    <AdminPageGuard>
     <div>
       <DashboardPageHeader
         theme="sadmin"
@@ -142,6 +144,7 @@ export default function AdminDashboardPage() {
         </Card>
       </div>
     </div>
+    </AdminPageGuard>
   );
 }
 

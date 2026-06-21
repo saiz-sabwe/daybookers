@@ -1,3 +1,4 @@
+import { djangoPerm } from "@/lib/auth/django-perm";
 import { Permission } from "@/types/auth";
 import { LucideIcon } from "lucide-react";
 import {
@@ -37,19 +38,19 @@ export const CLIENT_NAV_ITEMS: NavItemWithPermissions[] = [
     href: "/dashboard",
     label: "Mes réservations",
     icon: Calendar,
-    requiredPermissions: [],
+    requiredPermissions: [djangoPerm("hotels", "booking")],
   },
   {
     href: "/dashboard?tab=favorites",
     label: "Mes favoris",
     icon: Heart,
-    requiredPermissions: [],
+    requiredPermissions: [djangoPerm("hotels", "favorite")],
   },
   {
     href: "/dashboard?tab=profile",
     label: "Mon profil",
     icon: User,
-    requiredPermissions: [],
+    requiredPermissions: [djangoPerm("profils", "profile")],
   },
 ];
 
@@ -58,73 +59,73 @@ export const PARTNER_NAV_ITEMS: NavItemWithPermissions[] = [
     href: "/partner/dashboard",
     label: "Tableau de bord",
     icon: LayoutDashboard,
-    requiredPermissions: ["partner.dashboard.view"],
+    requiredPermissions: [djangoPerm("hotels", "hotel")],
   },
   {
     href: "/partner/hotels",
     label: "Mes hôtels",
     icon: Building2,
-    requiredPermissions: ["partner.hotels.view"],
+    requiredPermissions: [djangoPerm("hotels", "hotel")],
   },
   {
     href: "/partner/hotel-groups",
     label: "Groupes d'hôtels",
     icon: FolderTree,
-    requiredPermissions: ["partner.hotel_groups.view"],
+    requiredPermissions: [djangoPerm("profils", "organization")],
   },
   {
     href: "/partner/checkin-checkout",
     label: "Check-in / Check-out",
     icon: ClipboardCheck,
-    requiredPermissions: ["partner.checkin.manage"],
+    requiredPermissions: [djangoPerm("hotels", "booking")],
   },
   {
     href: "/partner/complaints",
     label: "Plaintes",
     icon: AlertTriangle,
-    requiredPermissions: ["partner.complaints.view"],
+    requiredPermissions: [djangoPerm("hotels", "complaint")],
   },
   {
     href: "/partner/availability",
     label: "Disponibilités",
     icon: Calendar,
-    requiredPermissions: ["partner.availability.manage"],
+    requiredPermissions: [djangoPerm("hotels", "availability")],
   },
   {
     href: "/partner/pricing",
     label: "Tarification",
     icon: DollarSign,
-    requiredPermissions: ["partner.pricing.manage"],
+    requiredPermissions: [djangoPerm("hotels", "pricingrule")],
   },
   {
     href: "/partner/bookings",
     label: "Réservations",
     icon: FileText,
-    requiredPermissions: ["partner.bookings.view"],
+    requiredPermissions: [djangoPerm("hotels", "booking")],
   },
   {
     href: "/partner/payments",
     label: "Paiements",
     icon: CreditCard,
-    requiredPermissions: ["partner.payments.view"],
+    requiredPermissions: [djangoPerm("hotels", "booking")],
   },
   {
     href: "/partner/earnings",
     label: "Revenus",
     icon: BarChart3,
-    requiredPermissions: ["partner.earnings.view"],
+    requiredPermissions: [djangoPerm("hotels", "booking")],
   },
   {
     href: "/partner/reviews",
     label: "Avis clients",
     icon: Star,
-    requiredPermissions: ["partner.reviews.view"],
+    requiredPermissions: [djangoPerm("hotels", "review")],
   },
   {
     href: "/partner/settings",
     label: "Paramètres",
     icon: Settings,
-    requiredPermissions: ["partner.settings.view"],
+    requiredPermissions: [djangoPerm("profils", "profile")],
   },
 ];
 
@@ -133,31 +134,31 @@ export const SADMIN_NAV_ITEMS: NavItemWithPermissions[] = [
     href: "/admin/dashboard",
     label: "Tableau de bord",
     icon: LayoutDashboard,
-    requiredPermissions: ["sadmin.dashboard.view"],
+    requiredPermissions: [djangoPerm("hotels", "hotel")],
   },
   {
     href: "/admin/hotels",
     label: "Hôtels",
     icon: Building2,
-    requiredPermissions: ["sadmin.hotels.view"],
+    requiredPermissions: [djangoPerm("hotels", "hotel")],
   },
   {
     href: "/admin/users",
     label: "Utilisateurs",
     icon: Users,
-    requiredPermissions: ["sadmin.users.view"],
+    requiredPermissions: [djangoPerm("profils", "profile")],
   },
   {
     href: "/admin/commissions",
     label: "Commissions",
     icon: DollarSign,
-    requiredPermissions: ["sadmin.commissions.view"],
+    requiredPermissions: [djangoPerm("profils", "organization")],
   },
   {
     href: "/admin/settings",
     label: "Paramètres",
     icon: Settings,
-    requiredPermissions: ["sadmin.settings.view"],
+    requiredPermissions: [djangoPerm("profils", "profile")],
   },
 ];
 
@@ -165,5 +166,5 @@ export function filterNavByPermissions(
   items: NavItemWithPermissions[],
   canAny: (permissions: Permission[]) => boolean,
 ): NavItemWithPermissions[] {
-  return items.filter((item) => canAny(item.requiredPermissions));
+  return items.filter((item) => canAny(item.requiredPermissions ?? []));
 }
