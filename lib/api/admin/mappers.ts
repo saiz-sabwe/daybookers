@@ -11,11 +11,21 @@ export function mapAdminUser(profile: DjangoAdminProfileRecord) {
     .join(" ")
     .trim();
 
+  const roles: string[] = [];
+  if (profile.is_superuser) {
+    roles.push("Super admin");
+  } else if (profile.is_staff) {
+    roles.push("Staff");
+  }
+  if (profile.has_organization) {
+    roles.push("Partenaire");
+  }
+
   return {
     id: String(profile.id),
     name: name || profile.pseudo || profile.email || "Utilisateur",
     email: profile.email ?? "",
-    roles: [] as string[],
+    roles,
     createdAt: new Date(profile.create),
     emailVerified: Boolean(profile.email),
   };
@@ -30,6 +40,30 @@ export function mapAdminHotel(hotel: DjangoHotelRecord) {
     stars: hotel.stars,
     createdAt: new Date((hotel as DjangoHotelRecord & { create?: string }).create ?? Date.now()),
     cityId: hotel.city,
+  };
+}
+
+export function mapAdminHotelDetail(hotel: DjangoHotelRecord) {
+  return {
+    id: hotel.uuid,
+    name: hotel.name,
+    slug: hotel.slug,
+    address: hotel.address,
+    cityId: hotel.city,
+    cityName: hotel.city_name,
+    countryName: hotel.country_name,
+    status: hotel.status,
+    stars: hotel.stars,
+    description: hotel.description ?? "",
+    phone: hotel.phone ?? undefined,
+    email: hotel.email ?? undefined,
+    website: hotel.website ?? undefined,
+    organizationId: hotel.organization,
+    latitude: hotel.latitude ?? undefined,
+    longitude: hotel.longitude ?? undefined,
+    minPrice: hotel.min_price ?? undefined,
+    images: hotel.images ?? [],
+    createdAt: new Date((hotel as DjangoHotelRecord & { create?: string }).create ?? Date.now()),
   };
 }
 

@@ -52,6 +52,15 @@ export default function AdminUsersPage() {
   };
 
   useEffect(() => {
+    if (isAuthPending) {
+      return;
+    }
+
+    if (!isAuthenticated) {
+      setIsLoading(false);
+      return;
+    }
+
     fetchUsers();
   }, [isAuthenticated, isAuthPending, page, search]);
 

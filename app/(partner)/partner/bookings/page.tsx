@@ -238,7 +238,7 @@ export default function PartnerBookingsPage() {
                           </PermissionGate>
                         )}
                         <Button size="sm" variant="outline" asChild>
-                          <Link href={`/booking/confirm/${booking.id}`}>
+                          <Link href={`/partner/bookings/${booking.id}`}>
                             <Eye className="w-4 h-4 mr-1" />
                             Détails
                           </Link>

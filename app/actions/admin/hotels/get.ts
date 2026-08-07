@@ -3,12 +3,13 @@
 import {
   filterHotelsBySearch,
   mapAdminHotel,
+  mapAdminHotelDetail,
 } from "@/lib/api/admin/mappers";
 import {
   fetchPartnerPage,
   requirePartnerToken,
 } from "@/lib/api/partner/fetch";
-import { DjangoHotelRecord } from "@/lib/api/django-client";
+import { djangoFetch, DjangoHotelRecord } from "@/lib/api/django-client";
 
 export interface GetAllHotelsParams {
   status?: string;
@@ -25,6 +26,21 @@ export interface HotelListItem {
   stars: number;
   createdAt: Date;
   cityId: string | null;
+}
+
+export interface AdminHotelDetail extends HotelListItem {
+  slug: string;
+  cityName?: string;
+  countryName?: string;
+  description: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+  organizationId?: string | null;
+  latitude?: number;
+  longitude?: number;
+  minPrice?: number;
+  images: string[];
 }
 
 export async function getAllHotels(
@@ -69,5 +85,25 @@ export async function getAllHotels(
   } catch (error) {
     console.error("Error fetching admin hotels:", error);
     return { hotels: [], total: 0, totalPages: 0 };
+  }
+}
+
+export async function getAdminHotelById(
+  hotelId: string,
+): Promise<AdminHotelDetail | null> {
+  try {
+    const token = await requirePartnerToken();
+    if (!token) {
+      return null;
+    }
+
+    const record = await djangoFetch<DjangoHotelRecord>(
+      `/api/hotels/hotels/${hotelId}/`,
+      token,
+    );
+    return mapAdminHotelDetail(record);
+  } catch (error) {
+    console.error("Error fetching admin hotel:", error);
+    return null;
   }
 }

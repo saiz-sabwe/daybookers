@@ -223,7 +223,7 @@ export interface DjangoOrganizationRecord {
 }
 
 export interface DjangoAdminProfileRecord {
-  id: number;
+  id: string;
   first_name: string | null;
   last_name: string | null;
   pseudo: string | null;

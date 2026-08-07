@@ -1,14 +1,8 @@
 "use server";
 
-import {
-  mapAdminUser,
-} from "@/lib/api/admin/mappers";
-import {
-  fetchPartnerPage,
-  requirePartnerToken,
-} from "@/lib/api/partner/fetch";
-import { DjangoAdminProfileRecord } from "@/lib/api/django-client";
-
+import { mapAdminUser } from "@/lib/api/admin/mappers";
+import { loadAllProfiles } from "@/lib/api/admin/data";
+import { requirePartnerToken } from "@/lib/api/partner/fetch";
 export interface GetAllUsersParams {
   role?: string;
   search?: string;
@@ -42,18 +36,22 @@ export async function getAllUsers(
     const pageSize = params.pageSize ?? 10;
     const page = params.page ?? 1;
 
-    const { results, total, totalPages } = await fetchPartnerPage<DjangoAdminProfileRecord>(
-      token,
-      "/api/accounts/profiles/",
-      {
-        admin_scope: true,
-        ...(params.search ? { search: params.search } : {}),
-        page,
-        pageSize,
-      },
-    );
+    const records = await loadAllProfiles(token);
+    const searchTerm = params.search?.trim().toLowerCase();
 
-    let users = results.map(mapAdminUser);
+    let allUsers = records.map(mapAdminUser);
+    if (searchTerm) {
+      allUsers = allUsers.filter(
+        (user) =>
+          user.name.toLowerCase().includes(searchTerm) ||
+          user.email.toLowerCase().includes(searchTerm),
+      );
+    }
+
+    const total = allUsers.length;
+    const totalPages = Math.ceil(total / pageSize) || 0;
+    const start = (page - 1) * pageSize;
+    const users = allUsers.slice(start, start + pageSize);
 
     return { users, total, totalPages };
   } catch (error) {

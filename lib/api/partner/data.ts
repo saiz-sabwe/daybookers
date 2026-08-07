@@ -3,6 +3,7 @@
 import { getTimeSlots, TimeSlot } from "@/app/actions/time-slots/get";
 import { Hotel } from "@/types";
 import {
+  djangoFetch,
   DjangoBookingRecord,
   DjangoComplaintRecord,
   DjangoHotelRecord,
@@ -21,36 +22,13 @@ import type { PartnerComplaint } from "@/app/actions/partner/complaints/get";
 import type { PartnerReview } from "@/lib/api/partner/mappers";
 
 export async function loadPartnerHotels(token: string): Promise<Hotel[]> {
-  const profile = await import("@/lib/api/partner/context").then((m) =>
-    m.getPartnerProfile(),
-  );
-  const orgIds = profile?.organizations.map((org) => org.uuid) ?? [];
-
-  if (orgIds.length === 0) {
-    return [];
-  }
-
-  const hotelsByOrg = await Promise.all(
-    orgIds.map((organization) =>
-      fetchPartnerAll<DjangoHotelRecord>(token, "/api/hotels/hotels/", {
-        organization,
-      }),
-    ),
+  const records = await fetchPartnerAll<DjangoHotelRecord>(
+    token,
+    "/api/hotels/hotels/",
+    { organization_scope: true },
   );
 
-  const seen = new Set<string>();
-  const hotels: Hotel[] = [];
-  for (const list of hotelsByOrg) {
-    for (const record of list) {
-      if (seen.has(record.uuid)) {
-        continue;
-      }
-      seen.add(record.uuid);
-      hotels.push(mapPartnerHotel(record));
-    }
-  }
-
-  return hotels;
+  return records.map(mapPartnerHotel);
 }
 
 async function buildTimeSlotMap(): Promise<Map<string, TimeSlot>> {
@@ -75,6 +53,26 @@ export async function loadPartnerBookings(
   return records.map((record) =>
     mapPartnerBooking(record, hotelMap, timeSlotMap),
   );
+}
+
+export async function loadPartnerBookingById(
+  token: string,
+  bookingId: string,
+): Promise<PartnerBooking | null> {
+  try {
+    const record = await djangoFetch<DjangoBookingRecord>(
+      `/api/hotels/bookings/${bookingId}/?organization_scope=true`,
+      token,
+    );
+    const [hotels, timeSlotMap] = await Promise.all([
+      loadPartnerHotels(token),
+      buildTimeSlotMap(),
+    ]);
+    const hotelMap = buildHotelNameMap(hotels);
+    return mapPartnerBooking(record, hotelMap, timeSlotMap);
+  } catch {
+    return null;
+  }
 }
 
 export async function loadPartnerReviews(

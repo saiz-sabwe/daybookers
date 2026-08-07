@@ -17,6 +17,9 @@ import {
   User,
 } from "lucide-react";
 import { useClientAuth } from "@/hooks/use-client-auth";
+import { usePermissions } from "@/hooks/use-permissions";
+import { isGlobalAdmin, isPartnerStaff } from "@/lib/auth/permissions";
+import { resolveHomeDashboard } from "@/lib/auth/resolve-home-dashboard";
 import { clientSignOut } from "@/lib/api/client-sign-out";
 import {
   DropdownMenu,
@@ -34,7 +37,15 @@ const publicLinks = [
 ];
 
 export function Header() {
-  const { isAuthenticated, isAuthPending, userEmail, userName } = useClientAuth();
+  const {
+    isAuthenticated,
+    isAuthPending,
+    userEmail,
+    userName,
+    userProfile,
+    permissionCatalog,
+  } = useClientAuth();
+  const { permissions } = usePermissions();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -43,6 +54,14 @@ export function Header() {
   }, []);
 
   const showAuthenticated = mounted && !isAuthPending && isAuthenticated;
+  const homeDashboard = resolveHomeDashboard(
+    userProfile,
+    permissions,
+    permissionCatalog,
+  );
+  const isPartner = isPartnerStaff(userProfile?.organizations, userProfile?.hotels);
+  const isAdmin = isGlobalAdmin(permissions, permissionCatalog);
+  const showClientDashboardLinks = showAuthenticated && !isPartner && !isAdmin;
 
   const authPlaceholder = (
     <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse" />
@@ -116,24 +135,35 @@ export function Header() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard" className="flex items-center gap-2 cursor-pointer">
-                    <LayoutDashboard className="h-4 w-4" />
-                    Mon tableau de bord
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard?tab=favorites" className="flex items-center gap-2 cursor-pointer">
-                    <Heart className="h-4 w-4" />
-                    Mes favoris
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard?tab=profile" className="flex items-center gap-2 cursor-pointer">
-                    <User className="h-4 w-4" />
-                    Mon profil
-                  </Link>
-                </DropdownMenuItem>
+                {showClientDashboardLinks ? (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href="/dashboard" className="flex items-center gap-2 cursor-pointer">
+                        <LayoutDashboard className="h-4 w-4" />
+                        Mon tableau de bord
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/dashboard?tab=favorites" className="flex items-center gap-2 cursor-pointer">
+                        <Heart className="h-4 w-4" />
+                        Mes favoris
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/dashboard?tab=profile" className="flex items-center gap-2 cursor-pointer">
+                        <User className="h-4 w-4" />
+                        Mon profil
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <DropdownMenuItem asChild>
+                    <Link href={homeDashboard} className="flex items-center gap-2 cursor-pointer">
+                      <LayoutDashboard className="h-4 w-4" />
+                      Mon tableau de bord
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleSignOut}
@@ -186,24 +216,35 @@ export function Header() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard" className="flex items-center gap-2 cursor-pointer">
-                    <LayoutDashboard className="h-4 w-4" />
-                    Mon tableau de bord
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard?tab=favorites" className="flex items-center gap-2 cursor-pointer">
-                    <Heart className="h-4 w-4" />
-                    Mes favoris
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard?tab=profile" className="flex items-center gap-2 cursor-pointer">
-                    <User className="h-4 w-4" />
-                    Mon profil
-                  </Link>
-                </DropdownMenuItem>
+                {showClientDashboardLinks ? (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href="/dashboard" className="flex items-center gap-2 cursor-pointer">
+                        <LayoutDashboard className="h-4 w-4" />
+                        Mon tableau de bord
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/dashboard?tab=favorites" className="flex items-center gap-2 cursor-pointer">
+                        <Heart className="h-4 w-4" />
+                        Mes favoris
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/dashboard?tab=profile" className="flex items-center gap-2 cursor-pointer">
+                        <User className="h-4 w-4" />
+                        Mon profil
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <DropdownMenuItem asChild>
+                    <Link href={homeDashboard} className="flex items-center gap-2 cursor-pointer">
+                      <LayoutDashboard className="h-4 w-4" />
+                      Mon tableau de bord
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleSignOut}

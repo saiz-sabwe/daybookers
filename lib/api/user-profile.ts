@@ -6,6 +6,11 @@ export interface ApiOrganization {
   name: string;
 }
 
+export interface ApiHotel {
+  uuid: string;
+  name: string;
+}
+
 export interface ApiUserProfile {
   id: string;
   first_name: string | null;
@@ -15,6 +20,7 @@ export interface ApiUserProfile {
   phone?: string | null;
   permissions?: string[];
   organizations?: ApiOrganization[];
+  hotels?: ApiHotel[];
 }
 
 export interface StoredUserProfile {
@@ -26,6 +32,7 @@ export interface StoredUserProfile {
   phone: string | null;
   permissions: Permission[];
   organizations: ApiOrganization[];
+  hotels: ApiHotel[];
 }
 
 export function mapApiUserProfile(
@@ -46,6 +53,21 @@ export function mapApiUserProfile(
         }))
     : [];
 
+  const hotels = Array.isArray(profile.hotels)
+    ? profile.hotels
+        .filter(
+          (hotel): hotel is ApiHotel =>
+            Boolean(hotel) &&
+            typeof hotel === "object" &&
+            typeof (hotel as ApiHotel).uuid === "string" &&
+            typeof (hotel as ApiHotel).name === "string",
+        )
+        .map((hotel) => ({
+          uuid: hotel.uuid,
+          name: hotel.name,
+        }))
+    : [];
+
   return {
     id: String(profile.id ?? ""),
     firstName:
@@ -58,6 +80,7 @@ export function mapApiUserProfile(
       "permissions" in profile ? profile.permissions : undefined,
     ),
     organizations,
+    hotels,
   };
 }
 

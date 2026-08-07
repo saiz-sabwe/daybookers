@@ -33,6 +33,9 @@ export function HotelRoomTypeSelector({
       try {
         const hotelsData = await getPartnerHotels(userId);
         setHotels(hotelsData);
+        if (hotelsData.length === 1) {
+          setSelectedHotelId(hotelsData[0].id);
+        }
       } catch (error) {
         console.error("Erreur lors de la récupération des hôtels:", error);
       } finally {

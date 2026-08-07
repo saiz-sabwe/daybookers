@@ -11,6 +11,23 @@ export type PartnerQueryParams = Record<
   string | number | boolean | undefined | null
 >;
 
+export function unwrapListPayload<T>(payload: unknown): T[] {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  if (
+    payload &&
+    typeof payload === "object" &&
+    "results" in payload &&
+    Array.isArray((payload as DjangoPaginatedResponse<T>).results)
+  ) {
+    return (payload as DjangoPaginatedResponse<T>).results;
+  }
+
+  return [];
+}
+
 function buildQuery(path: string, params?: PartnerQueryParams): string {
   if (!params) {
     return path;
@@ -70,12 +87,16 @@ export async function fetchPartnerAll<T>(
       DjangoPaginatedResponse<T> | T[]
     >(nextPath, token);
 
+    const pageResults = unwrapListPayload<T>(payload);
     if (Array.isArray(payload)) {
-      return payload;
+      return pageResults;
     }
 
-    results.push(...payload.results);
-    nextPath = resolveNextPath(payload.next);
+    results.push(...pageResults);
+    nextPath =
+      payload && typeof payload === "object" && "next" in payload
+        ? resolveNextPath((payload as DjangoPaginatedResponse<T>).next)
+        : null;
   }
 
   return results;
@@ -100,10 +121,16 @@ export async function fetchPartnerPage<T>(
     token,
   );
 
+  const results = unwrapListPayload<T>(payload);
+  const total =
+    payload && typeof payload === "object" && "count" in payload
+      ? Number((payload as DjangoPaginatedResponse<T>).count)
+      : results.length;
+
   return {
-    results: payload.results,
-    total: payload.count,
-    totalPages: Math.ceil(payload.count / pageSize) || 0,
+    results,
+    total,
+    totalPages: Math.ceil(total / pageSize) || 0,
   };
 }
 

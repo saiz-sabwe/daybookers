@@ -226,9 +226,10 @@ export default function PartnerDashboard() {
             <div className="space-y-4">
               {recentBookings.length > 0 ? (
                 recentBookings.map((booking) => (
-                  <div
+                  <Link
                     key={booking.id}
-                    className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
+                    href={`/partner/bookings/${booking.id}`}
+                    className="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                   >
                     <div>
                       <p className="font-medium text-gray-900">
@@ -265,7 +266,7 @@ export default function PartnerDashboard() {
                               : "Terminé"}
                       </span>
                     </div>
-                  </div>
+                  </Link>
                 ))
               ) : (
                 <p className="text-gray-500 text-center py-4">Aucune réservation récente</p>

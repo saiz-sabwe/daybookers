@@ -18,9 +18,10 @@ export function usePermissions() {
   const dashboardContext = useMemo(
     () => ({
       organizations: userProfile?.organizations,
+      hotels: userProfile?.hotels,
       permissionCatalog,
     }),
-    [userProfile?.organizations, permissionCatalog],
+    [userProfile?.organizations, userProfile?.hotels, permissionCatalog],
   );
 
   return useMemo(

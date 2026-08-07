@@ -1,10 +1,12 @@
-import type { ApiOrganization } from "@/lib/api/user-profile";
+import type { ApiHotel, ApiOrganization } from "@/lib/api/user-profile";
+import { djangoPerm } from "@/lib/auth/django-perm";
 import { DashboardScope, Permission } from "@/types/auth";
 
 export const PERMISSIONS_ENFORCEMENT_ENABLED = true;
 
 export interface DashboardAccessContext {
   organizations?: ApiOrganization[];
+  hotels?: ApiHotel[];
   permissionCatalog?: Permission[];
 }
 
@@ -47,8 +49,24 @@ export function hasAllPermissions(
 
 export function isPartnerStaff(
   organizations: ApiOrganization[] | undefined,
+  hotels: ApiHotel[] | undefined = undefined,
 ): boolean {
-  return (organizations?.length ?? 0) > 0;
+  return (organizations?.length ?? 0) > 0 || (hotels?.length ?? 0) > 0;
+}
+
+export function isGroupManager(permissions: Permission[]): boolean {
+  return hasPermission(permissions, djangoPerm("profils", "organization"));
+}
+
+export function isGroupManagerScope(context?: DashboardAccessContext): boolean {
+  return (context?.organizations?.length ?? 0) > 0;
+}
+
+export function isHotelStaffScope(context?: DashboardAccessContext): boolean {
+  return (
+    (context?.hotels?.length ?? 0) > 0 &&
+    (context?.organizations?.length ?? 0) === 0
+  );
 }
 
 export function isGlobalAdmin(
@@ -68,6 +86,15 @@ export function canAccessDashboard(
   context?: DashboardAccessContext,
 ): boolean {
   if (scope === "client") {
+    if (!isPermissionsEnforced(permissions)) {
+      return true;
+    }
+    if (isGlobalAdmin(permissions, context?.permissionCatalog ?? [])) {
+      return false;
+    }
+    if (isPartnerStaff(context?.organizations, context?.hotels)) {
+      return false;
+    }
     return true;
   }
 
@@ -76,7 +103,7 @@ export function canAccessDashboard(
   }
 
   if (scope === "partner") {
-    return isPartnerStaff(context?.organizations);
+    return isPartnerStaff(context?.organizations, context?.hotels);
   }
 
   if (scope === "sadmin") {

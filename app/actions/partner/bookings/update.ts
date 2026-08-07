@@ -18,7 +18,7 @@ async function updateBookingStatus(
 
     await partnerMutate(
       token,
-      `/api/hotels/bookings/${bookingId}/`,
+      `/api/hotels/bookings/${bookingId}/?organization_scope=true`,
       "PATCH",
       { status },
     );

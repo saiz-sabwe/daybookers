@@ -4,13 +4,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { filterNavByPermissions, PARTNER_NAV_ITEMS } from "@/lib/auth/route-permissions";
+import { useClientAuth } from "@/hooks/use-client-auth";
 import { usePermissions } from "@/hooks/use-permissions";
 
 export function PartnerSidebar() {
   const pathname = usePathname();
   const { canAny } = usePermissions();
+  const { userProfile } = useClientAuth();
 
-  const visibleItems = filterNavByPermissions(PARTNER_NAV_ITEMS, canAny);
+  const visibleItems = filterNavByPermissions(PARTNER_NAV_ITEMS, canAny, {
+    organizations: userProfile?.organizations,
+    hotels: userProfile?.hotels,
+  });
 
   return (
     <aside className="hidden md:block w-64 bg-white border-r border-gray-200 min-h-screen fixed left-0 top-16 overflow-y-auto">

@@ -6,6 +6,7 @@ import {
   SADMIN_NAV_ITEMS,
 } from "@/lib/auth/route-permissions";
 import { Permission } from "@/types/auth";
+import { isGroupManagerScope } from "@/lib/auth/permissions";
 
 interface RoutePattern {
   pattern: RegExp;
@@ -39,6 +40,14 @@ const PREFIX_ROUTE_PERMISSIONS: RoutePattern[] = [
     pattern: /^\/partner\/hotels\/[^/]+$/,
     permissions: [djangoPerm("hotels", "hotel")],
   },
+  {
+    pattern: /^\/partner\/bookings\/[^/]+$/,
+    permissions: [djangoPerm("hotels", "booking")],
+  },
+  {
+    pattern: /^\/admin\/hotels\/[0-9a-f-]{36}$/i,
+    permissions: [djangoPerm("hotels", "hotel")],
+  },
 ];
 
 const CLIENT_TAB_PERMISSIONS: Record<string, Permission[]> = {
@@ -58,6 +67,22 @@ export function getClientTabPermissions(tab: string | null): Permission[] | null
     return [djangoPerm("hotels", "booking")];
   }
   return CLIENT_TAB_PERMISSIONS[tab] ?? null;
+}
+
+const GROUP_MANAGER_ONLY_ROUTES = new Set([
+  "/partner/hotels",
+  "/partner/hotel-groups",
+]);
+
+export function isPartnerRouteAllowedForScope(
+  pathname: string,
+  context?: { organizations?: { uuid: string }[]; hotels?: { uuid: string }[] },
+): boolean {
+  const normalized = normalizePathname(pathname);
+  if (GROUP_MANAGER_ONLY_ROUTES.has(normalized)) {
+    return isGroupManagerScope(context);
+  }
+  return true;
 }
 
 export function getPagePermissions(

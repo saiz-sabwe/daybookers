@@ -1,6 +1,9 @@
 "use server";
 
-import { loadPartnerBookings } from "@/lib/api/partner/data";
+import {
+  loadPartnerBookingById,
+  loadPartnerBookings,
+} from "@/lib/api/partner/data";
 import { requirePartnerToken } from "@/lib/api/partner/fetch";
 
 export interface PartnerBooking {
@@ -44,5 +47,20 @@ export async function getPartnerBookings(
   } catch (error) {
     console.error("Error fetching partner bookings:", error);
     return [];
+  }
+}
+
+export async function getPartnerBookingById(
+  bookingId: string,
+): Promise<PartnerBooking | null> {
+  try {
+    const token = await requirePartnerToken();
+    if (!token) {
+      return null;
+    }
+    return await loadPartnerBookingById(token, bookingId);
+  } catch (error) {
+    console.error("Error fetching partner booking:", error);
+    return null;
   }
 }

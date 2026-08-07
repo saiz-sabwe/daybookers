@@ -1,8 +1,10 @@
 "use client";
 
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { PageLoader } from "@/components/shared/PageLoader";
 import { hasAnyPermission } from "@/lib/auth/permissions";
+import { resolveHomeDashboard } from "@/lib/auth/resolve-home-dashboard";
 import { useClientAuth } from "@/hooks/use-client-auth";
 import { usePermissions } from "@/hooks/use-permissions";
 import { DashboardScope, Permission } from "@/types/auth";
@@ -21,7 +23,8 @@ export function ProtectedRoute({
   redirectTo = "/login",
 }: ProtectedRouteProps) {
   const router = useRouter();
-  const { isAuthenticated, isAuthPending } = useClientAuth();
+  const { isAuthenticated, isAuthPending, userProfile, permissionCatalog } =
+    useClientAuth();
   const { permissions, canAccessDashboard, isEnforced } = usePermissions();
 
   const hasDashboardAccess = canAccessDashboard(dashboard);
@@ -31,27 +34,39 @@ export function ProtectedRoute({
   const isAllowed =
     isAuthenticated &&
     (!isEnforced || (hasDashboardAccess && hasRequiredPermissions));
+  const isGateOpen = !isAuthPending && isAllowed;
+
+  const deniedRedirect = useMemo(() => {
+    if (!isAuthenticated) {
+      return redirectTo;
+    }
+    return resolveHomeDashboard(
+      userProfile,
+      permissions,
+      permissionCatalog,
+    );
+  }, [
+    isAuthenticated,
+    redirectTo,
+    userProfile,
+    permissions,
+    permissionCatalog,
+  ]);
 
   useEffect(() => {
-    if (isAuthPending) {
+    if (isAuthPending || isAllowed) {
       return;
     }
 
-    if (!isAuthenticated || !isAllowed) {
-      router.push(redirectTo);
-    }
-  }, [isAuthenticated, isAuthPending, isAllowed, router, redirectTo]);
+    router.replace(deniedRedirect);
+  }, [isAuthPending, isAllowed, router, deniedRedirect]);
 
-  if (isAuthPending) {
+  if (!isGateOpen) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-client-primary-500"></div>
-      </div>
+      <PageLoader
+        message={isAuthPending ? "Chargement..." : "Vérification des accès..."}
+      />
     );
-  }
-
-  if (!isAllowed) {
-    return null;
   }
 
   return <>{children}</>;

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useClientAuth } from "@/hooks/use-client-auth";
 import { usePermissions } from "@/hooks/use-permissions";
 import { clientSignOut } from "@/lib/api/client-sign-out";
+import { isGroupManagerScope } from "@/lib/auth/permissions";
 import { DashboardTheme, getDashboardTheme } from "@/lib/dashboard/themes";
 import { Permission } from "@/types/auth";
 
@@ -16,6 +17,7 @@ export interface DashboardNavItem {
   label: string;
   icon: LucideIcon;
   requiredPermissions?: Permission[];
+  groupManagerOnly?: boolean;
 }
 
 interface DashboardSidebarProps {
@@ -105,17 +107,30 @@ export function DashboardSidebar({
 }: DashboardSidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { isAuthenticated, userEmail, userName } = useClientAuth();
+  const { isAuthenticated, userEmail, userName, userProfile } = useClientAuth();
   const { canAny, canAccessDashboard } = usePermissions();
   const config = getDashboardTheme(theme);
   const styles = SIDEBAR_THEMES[theme];
+  const partnerScope = {
+    organizations: userProfile?.organizations,
+    hotels: userProfile?.hotels,
+  };
+  const isGroupManager = isGroupManagerScope(partnerScope);
+  const spaceLabel =
+    theme === "partner" && !isGroupManager
+      ? "Espace hôtel"
+      : config.spaceLabel;
 
   const visibleItems = filterByPermissions
-    ? items.filter(
-        (item) =>
+    ? items.filter((item) => {
+        if (item.groupManagerOnly && !isGroupManager) {
+          return false;
+        }
+        return (
           !item.requiredPermissions?.length ||
-          canAny(item.requiredPermissions),
-      )
+          canAny(item.requiredPermissions)
+        );
+      })
     : items;
 
   const showClientLink =
@@ -189,7 +204,7 @@ export function DashboardSidebar({
             </div>
             <div className="relative mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-sm">
               <Sparkles className="h-3 w-3" />
-              {config.spaceLabel}
+              {spaceLabel}
             </div>
           </div>
         )}
