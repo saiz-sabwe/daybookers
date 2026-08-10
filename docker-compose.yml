@@ -1,45 +1,21 @@
 services:
-  app:
+  frontend:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: daybooker-app
+      args:
+        NEXT_PUBLIC_API_URL: http://109.199.110.106:7575
+    container_name: daybooker-frontend
     restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://host.docker.internal:8000}
-      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://109.199.110.106:7575
+      NODE_ENV: production
       NEXT_TELEMETRY_DISABLED: 1
-    volumes:
-      - .:/app
-      - /app/node_modules
-      - /app/.next
     networks:
-      - daybooker-network
-    command: pnpm run dev
-
-  caddy:
-    image: caddy:2
-    depends_on:
-      - app
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-      - caddy_config:/config
-    restart: always
-    networks:
-      - daybooker-network
-
-volumes:
-  caddy_data:
-    driver: local
-  caddy_config:
-    driver: local
+      - web_daybooker
 
 networks:
-  daybooker-network:
-    driver: bridge
+  web_daybooker:
+    external: true
