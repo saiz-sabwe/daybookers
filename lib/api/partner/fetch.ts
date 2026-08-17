@@ -67,7 +67,7 @@ export async function fetchPartnerAll<T>(
   let nextPath: string | null = buildQuery(path, params);
 
   while (nextPath) {
-    const payload = await djangoFetch<unknown>(nextPath, token);
+    const payload: unknown = await djangoFetch<unknown>(nextPath, token);
 
     const pageResults = unwrapListPayload<T>(payload);
     if (Array.isArray(payload)) {
