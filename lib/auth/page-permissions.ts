@@ -6,7 +6,10 @@ import {
   SADMIN_NAV_ITEMS,
 } from "@/lib/auth/route-permissions";
 import { Permission } from "@/types/auth";
-import { isGroupManagerScope } from "@/lib/auth/permissions";
+import {
+  DashboardAccessContext,
+  isGroupManagerScope,
+} from "@/lib/auth/permissions";
 
 interface RoutePattern {
   pattern: RegExp;
@@ -76,7 +79,7 @@ const GROUP_MANAGER_ONLY_ROUTES = new Set([
 
 export function isPartnerRouteAllowedForScope(
   pathname: string,
-  context?: { organizations?: { uuid: string }[]; hotels?: { uuid: string }[] },
+  context?: DashboardAccessContext,
 ): boolean {
   const normalized = normalizePathname(pathname);
   if (GROUP_MANAGER_ONLY_ROUTES.has(normalized)) {
