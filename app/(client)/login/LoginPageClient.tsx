@@ -21,8 +21,6 @@ import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { signin } from "@/app/actions/auth/signin";
 import { storeApiSession } from "@/lib/api/auth-storage";
-import { mapApiUserProfile } from "@/lib/api/user-profile";
-import { parsePermissions } from "@/lib/auth/permissions";
 import { resolveHomeDashboard } from "@/lib/auth/resolve-home-dashboard";
 import { useGlobalLoading } from "@/components/shared/GlobalLoadingProvider";
 
@@ -93,8 +91,8 @@ export default function LoginPageClient() {
         result.permissionCatalog ?? [],
       );
 
-      const profile = mapApiUserProfile(result.profile);
-      const permissions = parsePermissions(result.profile.permissions);
+      const profile = result.profile;
+      const permissions = profile.permissions;
       const homeDashboard = resolveHomeDashboard(
         profile,
         permissions,

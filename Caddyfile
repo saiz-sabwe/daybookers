@@ -1,3 +1,0 @@
-daybooker.online, www.daybooker.online {
-    reverse_proxy app:3000
-}
