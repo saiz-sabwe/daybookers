@@ -4,7 +4,7 @@ import {
   djangoFetch,
   DjangoApiError,
   DjangoFavoriteRecord,
-  DjangoPaginatedResponse,
+  unwrapListPayload,
 } from "@/lib/api/django-client";
 import { getServerApiToken } from "@/lib/api/server-auth";
 import { toUserMessage } from "@/lib/api/user-friendly-error";
@@ -13,11 +13,9 @@ async function findFavoriteUuid(
   token: string,
   hotelId: string,
 ): Promise<string | null> {
-  const payload = await djangoFetch<
-    DjangoPaginatedResponse<DjangoFavoriteRecord> | DjangoFavoriteRecord[]
-  >("/api/hotels/favorites/", token);
+  const payload = await djangoFetch<unknown>("/api/hotels/favorites/", token);
 
-  const records = Array.isArray(payload) ? payload : payload.results;
+  const records = unwrapListPayload<DjangoFavoriteRecord>(payload);
   const match = records.find((f) => f.hotel === hotelId);
   return match?.uuid ?? null;
 }

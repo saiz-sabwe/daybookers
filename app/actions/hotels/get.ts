@@ -5,7 +5,7 @@ import {
   djangoFetch,
   djangoFetchPublic,
   DjangoHotelRecord,
-  DjangoPaginatedResponse,
+  unwrapListPayload,
 } from "@/lib/api/django-client";
 import { getServerApiToken } from "@/lib/api/server-auth";
 import { resolveHotelImages } from "@/lib/images/hotel-image";
@@ -55,14 +55,10 @@ async function getHotelsFromDjango(
     ? `/api/hotels/hotels/?${query.toString()}`
     : "/api/hotels/hotels/";
   const payload = token
-    ? await djangoFetch<
-        DjangoPaginatedResponse<DjangoHotelRecord> | DjangoHotelRecord[]
-      >(path, token)
-    : await djangoFetchPublic<
-        DjangoPaginatedResponse<DjangoHotelRecord> | DjangoHotelRecord[]
-      >(path);
+    ? await djangoFetch<unknown>(path, token)
+    : await djangoFetchPublic<unknown>(path);
 
-  const records = Array.isArray(payload) ? payload : payload.results;
+  const records = unwrapListPayload<DjangoHotelRecord>(payload);
   let hotels = records.map(mapDjangoHotel);
 
   if (params?.searchTerm) {

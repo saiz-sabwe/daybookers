@@ -3,8 +3,8 @@
 import {
   djangoFetch,
   djangoFetchPublic,
-  DjangoPaginatedResponse,
   DjangoRoomTypeRecord,
+  unwrapListPayload,
 } from "@/lib/api/django-client";
 import { getServerApiToken } from "@/lib/api/server-auth";
 import { resolveHotelImages } from "@/lib/images/hotel-image";
@@ -71,14 +71,10 @@ async function fetchRoomTypesFromDjango(
 ): Promise<DjangoRoomTypeRecord[]> {
   const path = `/api/hotels/rooms/?hotel=${encodeURIComponent(hotelId)}`;
   const payload = token
-    ? await djangoFetch<
-        DjangoPaginatedResponse<DjangoRoomTypeRecord> | DjangoRoomTypeRecord[]
-      >(path, token)
-    : await djangoFetchPublic<
-        DjangoPaginatedResponse<DjangoRoomTypeRecord> | DjangoRoomTypeRecord[]
-      >(path);
+    ? await djangoFetch<unknown>(path, token)
+    : await djangoFetchPublic<unknown>(path);
 
-  const records = Array.isArray(payload) ? payload : payload.results;
+  const records = unwrapListPayload<DjangoRoomTypeRecord>(payload);
   return [...records].sort(
     (a, b) => Number(a.base_price) - Number(b.base_price),
   );

@@ -3,18 +3,16 @@
 import {
   djangoFetch,
   DjangoFavoriteRecord,
-  DjangoPaginatedResponse,
+  unwrapListPayload,
 } from "@/lib/api/django-client";
 import { getServerApiToken } from "@/lib/api/server-auth";
 import { getHotels } from "@/app/actions/hotels/get";
 import { Hotel } from "@/types";
 
 async function listFavorites(token: string): Promise<DjangoFavoriteRecord[]> {
-  const payload = await djangoFetch<
-    DjangoPaginatedResponse<DjangoFavoriteRecord> | DjangoFavoriteRecord[]
-  >("/api/hotels/favorites/", token);
+  const payload = await djangoFetch<unknown>("/api/hotels/favorites/", token);
 
-  return Array.isArray(payload) ? payload : payload.results;
+  return unwrapListPayload<DjangoFavoriteRecord>(payload);
 }
 
 export async function getFavorites(): Promise<Hotel[]> {

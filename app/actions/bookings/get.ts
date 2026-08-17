@@ -4,18 +4,16 @@ import {
   djangoFetch,
   DjangoApiError,
   DjangoBookingRecord,
-  DjangoPaginatedResponse,
+  unwrapListPayload,
 } from "@/lib/api/django-client";
 import { getServerApiToken } from "@/lib/api/server-auth";
 import { getTimeSlots, TimeSlot } from "@/app/actions/time-slots/get";
 import { Booking } from "@/types";
 
 async function fetchBookings(token: string): Promise<DjangoBookingRecord[]> {
-  const payload = await djangoFetch<
-    DjangoPaginatedResponse<DjangoBookingRecord> | DjangoBookingRecord[]
-  >("/api/hotels/bookings/", token);
+  const payload = await djangoFetch<unknown>("/api/hotels/bookings/", token);
 
-  return Array.isArray(payload) ? payload : payload.results;
+  return unwrapListPayload<DjangoBookingRecord>(payload);
 }
 
 async function buildTimeSlotMap(): Promise<Map<string, TimeSlot>> {

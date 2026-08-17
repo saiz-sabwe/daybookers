@@ -82,6 +82,23 @@ export interface DjangoPaginatedResponse<T> {
   results: T[];
 }
 
+export function unwrapListPayload<T>(payload: unknown): T[] {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  if (
+    payload &&
+    typeof payload === "object" &&
+    "results" in payload &&
+    Array.isArray((payload as DjangoPaginatedResponse<T>).results)
+  ) {
+    return (payload as DjangoPaginatedResponse<T>).results;
+  }
+
+  return [];
+}
+
 export interface DjangoTimeSlotRecord {
   uuid: string;
   name: string;

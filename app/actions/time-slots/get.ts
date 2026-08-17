@@ -3,8 +3,8 @@
 import {
   djangoFetch,
   djangoFetchPublic,
-  DjangoPaginatedResponse,
   DjangoTimeSlotRecord,
+  unwrapListPayload,
 } from "@/lib/api/django-client";
 import { getServerApiToken } from "@/lib/api/server-auth";
 
@@ -50,14 +50,10 @@ function sortTimeSlots(slots: TimeSlot[]): TimeSlot[] {
 async function fetchTimeSlotsFromDjango(token?: string): Promise<TimeSlot[]> {
   const path = "/api/hotels/time-slots/";
   const payload = token
-    ? await djangoFetch<
-        DjangoPaginatedResponse<DjangoTimeSlotRecord> | DjangoTimeSlotRecord[]
-      >(path, token)
-    : await djangoFetchPublic<
-        DjangoPaginatedResponse<DjangoTimeSlotRecord> | DjangoTimeSlotRecord[]
-      >(path);
+    ? await djangoFetch<unknown>(path, token)
+    : await djangoFetchPublic<unknown>(path);
 
-  const records = Array.isArray(payload) ? payload : payload.results;
+  const records = unwrapListPayload<DjangoTimeSlotRecord>(payload);
   return sortTimeSlots(records.map(mapDjangoTimeSlot));
 }
 

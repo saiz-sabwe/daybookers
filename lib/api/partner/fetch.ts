@@ -3,6 +3,7 @@ import {
   djangoFetch,
   DjangoApiError,
   DjangoPaginatedResponse,
+  unwrapListPayload,
 } from "@/lib/api/django-client";
 import { getServerApiToken } from "@/lib/api/server-auth";
 
@@ -10,23 +11,6 @@ export type PartnerQueryParams = Record<
   string,
   string | number | boolean | undefined | null
 >;
-
-export function unwrapListPayload<T>(payload: unknown): T[] {
-  if (Array.isArray(payload)) {
-    return payload;
-  }
-
-  if (
-    payload &&
-    typeof payload === "object" &&
-    "results" in payload &&
-    Array.isArray((payload as DjangoPaginatedResponse<T>).results)
-  ) {
-    return (payload as DjangoPaginatedResponse<T>).results;
-  }
-
-  return [];
-}
 
 function buildQuery(path: string, params?: PartnerQueryParams): string {
   if (!params) {
@@ -83,9 +67,7 @@ export async function fetchPartnerAll<T>(
   let nextPath: string | null = buildQuery(path, params);
 
   while (nextPath) {
-    const payload = await djangoFetch<
-      DjangoPaginatedResponse<T> | T[]
-    >(nextPath, token);
+    const payload = await djangoFetch<unknown>(nextPath, token);
 
     const pageResults = unwrapListPayload<T>(payload);
     if (Array.isArray(payload)) {
