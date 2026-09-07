@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { resolveHotelImages } from "@/lib/images/hotel-image";
 import type { AdminHotelDetail } from "@/app/actions/admin/hotels/get";
+import { AdminHotelEditDialog } from "./AdminHotelEditDialog";
 
 function getStatusBadgeVariant(status: string) {
   switch (status) {
@@ -59,12 +60,15 @@ export function AdminHotelDetailClient({ hotel }: AdminHotelDetailClientProps) {
           title={hotel.name}
           description="Détail de l'hôtel"
         >
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/admin/hotels">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Retour à la liste
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <AdminHotelEditDialog hotel={hotel} />
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/admin/hotels">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Retour à la liste
+              </Link>
+            </Button>
+          </div>
         </DashboardPageHeader>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

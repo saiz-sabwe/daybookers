@@ -20,6 +20,9 @@ import { useClientAuth } from "@/hooks/use-client-auth";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { AdminPageGuard } from "@/components/shared/auth/AdminPageGuard";
+import { AdminUserCreateDialog } from "./AdminUserCreateDialog";
+import { AdminUserDetailDialog } from "./AdminUserDetailDialog";
+import { AdminUserEditDialog } from "./AdminUserEditDialog";
 
 export default function AdminUsersPage() {
   const { isAuthenticated, isAuthPending } = useClientAuth();
@@ -72,7 +75,9 @@ export default function AdminUsersPage() {
         icon={Users}
         title="Gestion des Utilisateurs"
         description="Liste de tous les utilisateurs de la plateforme"
-      />
+      >
+        <AdminUserCreateDialog onSuccess={fetchUsers} />
+      </DashboardPageHeader>
 
       <Card>
         <CardHeader>
@@ -108,6 +113,7 @@ export default function AdminUsersPage() {
                       <TableHead>Email</TableHead>
                       <TableHead>Email vérifié</TableHead>
                       <TableHead>Inscrit le</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -122,6 +128,19 @@ export default function AdminUsersPage() {
                         </TableCell>
                         <TableCell>
                           {format(new Date(user.createdAt), "dd/MM/yyyy", { locale: fr })}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <AdminUserDetailDialog
+                              userId={user.id}
+                              userName={user.name}
+                            />
+                            <AdminUserEditDialog
+                              userId={user.id}
+                              userName={user.name}
+                              onSuccess={fetchUsers}
+                            />
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
