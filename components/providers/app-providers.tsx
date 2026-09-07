@@ -2,6 +2,7 @@
 
 import { Suspense } from "react";
 import { AppAlertProvider } from "@/components/shared/AppAlertProvider";
+import { AccessDeniedAlertBridge } from "@/components/shared/auth/AccessDeniedAlertBridge";
 import { GlobalLoadingProvider } from "@/components/shared/GlobalLoadingProvider";
 import { NavigationLoadingBridge } from "@/components/shared/NavigationLoadingBridge";
 
@@ -12,6 +13,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
         <Suspense fallback={null}>
           <NavigationLoadingBridge />
         </Suspense>
+        <AccessDeniedAlertBridge />
         {children}
       </AppAlertProvider>
     </GlobalLoadingProvider>

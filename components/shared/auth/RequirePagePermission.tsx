@@ -1,8 +1,9 @@
 "use client";
 
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { PageLoader } from "@/components/shared/PageLoader";
+import { useToast } from "@/hooks/use-toast";
 import { useClientAuth } from "@/hooks/use-client-auth";
 import { usePermissions } from "@/hooks/use-permissions";
 import { getPagePermissions } from "@/lib/auth/page-permissions";
@@ -22,6 +23,8 @@ export function RequirePagePermission({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { toast } = useToast();
+  const notifiedRef = useRef(false);
   const { isAuthPending } = useClientAuth();
   const { canAny, isEnforced } = usePermissions();
 
@@ -40,11 +43,41 @@ export function RequirePagePermission({
     if (isAuthPending || isAllowed) {
       return;
     }
+
+    if (!notifiedRef.current) {
+      notifiedRef.current = true;
+      console.warn("[DayBooker] Accès refusé", {
+        path: currentPath,
+        requiredPermissions: required,
+      });
+      toast({
+        title: "Erreur de permission",
+        description: "Vous n'avez pas l'autorisation d'accéder à cette page.",
+        variant: "destructive",
+        duration: 5000,
+      });
+    }
+
     router.replace(resolvedRedirect);
-  }, [isAuthPending, isAllowed, router, resolvedRedirect]);
+  }, [
+    isAuthPending,
+    isAllowed,
+    router,
+    resolvedRedirect,
+    toast,
+    required,
+  ]);
 
   if (!isGateOpen) {
-    return <PageLoader message="Vérification des accès..." />;
+    return (
+      <PageLoader
+        message={
+          isAuthPending
+            ? "Vérification des accès..."
+            : "Accès refusé — redirection..."
+        }
+      />
+    );
   }
 
   return <>{children}</>;
