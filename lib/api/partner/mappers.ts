@@ -37,6 +37,7 @@ export function mapPartnerHotel(hotel: DjangoHotelRecord): Hotel {
     longitude: hotel.longitude ?? undefined,
     partnerId: hotel.organization ?? undefined,
     groupId: hotel.organization ?? undefined,
+    status: (hotel.status as Hotel["status"]) ?? "DRAFT",
     phone: hotel.phone ?? undefined,
     email: hotel.email ?? undefined,
     website: hotel.website ?? undefined,

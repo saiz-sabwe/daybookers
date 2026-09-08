@@ -96,7 +96,10 @@ export function CreateHotelForm({ userId, hotelGroups, onSuccess }: CreateHotelF
       const result = await createHotel(userId, {
         ...data,
         email: data.email || undefined,
-        groupId: data.groupId || undefined,
+        groupId:
+          !data.groupId || data.groupId === "__none__"
+            ? undefined
+            : data.groupId,
       });
 
       if (result.success) {
@@ -323,14 +326,17 @@ export function CreateHotelForm({ userId, hotelGroups, onSuccess }: CreateHotelF
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Groupe d'hôtels (optionnel)</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value || "__none__"}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Aucun groupe" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">Aucun groupe</SelectItem>
+                    <SelectItem value="__none__">Aucun groupe</SelectItem>
                     {hotelGroups.map((group) => (
                       <SelectItem key={group.id} value={group.id}>
                         {group.name}

@@ -7,6 +7,7 @@ import { RequirePagePermission } from "@/components/shared/auth/RequirePagePermi
 import { useToast } from "@/hooks/use-toast";
 import { useClientAuth } from "@/hooks/use-client-auth";
 import { isPartnerRouteAllowedForScope } from "@/lib/auth/page-permissions";
+import { usePermissions } from "@/hooks/use-permissions";
 
 export function PartnerPageGuard({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -14,10 +15,12 @@ export function PartnerPageGuard({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const notifiedRef = useRef(false);
   const { userProfile, isAuthPending } = useClientAuth();
+  const { permissions } = usePermissions();
 
   const scopeAllowed = isPartnerRouteAllowedForScope(pathname, {
     organizations: userProfile?.organizations,
     hotels: userProfile?.hotels,
+    userPermissions: permissions,
   });
 
   useEffect(() => {

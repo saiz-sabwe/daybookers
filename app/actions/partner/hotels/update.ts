@@ -15,6 +15,7 @@ export interface UpdateHotelData {
   website?: string;
   stars?: number;
   images?: string[];
+  status?: "DRAFT" | "ACTIVE" | "INACTIVE" | "SUSPENDED";
 }
 
 export async function updateHotel(
@@ -39,6 +40,7 @@ export async function updateHotel(
       ...(data.website !== undefined ? { website: data.website } : {}),
       ...(data.stars !== undefined ? { stars: data.stars } : {}),
       ...(data.images !== undefined ? { images: data.images } : {}),
+      ...(data.status !== undefined ? { status: data.status } : {}),
     });
 
     return { success: true };

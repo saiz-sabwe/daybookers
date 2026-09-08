@@ -7,12 +7,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DashboardPageHeader } from "@/components/shared/dashboard/DashboardPageHeader";
 import { getPartnerHotels } from "@/app/actions/partner/hotels/get";
+import { updateHotel } from "@/app/actions/partner/hotels/update";
 import { getHotelGroupsByManager } from "@/app/actions/partner/hotel-groups/get";
 import { Hotel } from "@/types";
 import { Plus, Building2, Edit, Eye } from "lucide-react";
 import Image from "next/image";
 import { useClientAuth } from "@/hooks/use-client-auth";
 import { usePermissions } from "@/hooks/use-permissions";
+import { useToast } from "@/hooks/use-toast";
 import { CreateHotelDialog } from "@/components/partner/hotels/CreateHotelDialog";
 import { PermissionGate } from "@/components/shared/auth/PermissionGate";
 import { RequirePagePermission } from "@/components/shared/auth/RequirePagePermission";
@@ -24,6 +26,7 @@ export default function PartnerHotelsPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const { isAuthenticated, isAuthPending } = useClientAuth();
   const { can } = usePermissions();
+  const { toast } = useToast();
   const canAddHotels = can(djangoPerm("hotels", "hotel", "add"));
 
   useEffect(() => {
@@ -38,6 +41,27 @@ export default function PartnerHotelsPage() {
   const handleCreateSuccess = () => {
     if (isAuthenticated) {
       getPartnerHotels("").then(setPartnerHotels);
+    }
+  };
+
+  const handleToggleVisibility = async (hotel: Hotel) => {
+    const nextStatus = hotel.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+    const result = await updateHotel(hotel.id, { status: nextStatus }, "");
+    if (result.success) {
+      toast({
+        title: nextStatus === "ACTIVE" ? "Hôtel activé" : "Hôtel masqué",
+      });
+      setPartnerHotels((prev) =>
+        prev.map((item) =>
+          item.id === hotel.id ? { ...item, status: nextStatus } : item,
+        ),
+      );
+    } else {
+      toast({
+        title: "Erreur",
+        description: result.error || "Impossible de modifier le statut",
+        variant: "destructive",
+      });
     }
   };
 
@@ -64,19 +88,34 @@ export default function PartnerHotelsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {partnerHotels.map((hotel) => (
             <Card key={hotel.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-              {hotel.images && hotel.images[0] && (
-                <div className="relative w-full h-48">
+              <div className="relative w-full h-48 bg-gray-100">
+                {hotel.images?.[0] ? (
                   <Image
                     src={hotel.images[0]}
                     alt={hotel.name}
                     fill
                     className="object-cover"
+                    unoptimized={hotel.images[0].includes("/media/")}
                   />
-                  <Badge className="absolute top-2 right-2 bg-green-500">
-                    Actif
-                  </Badge>
-                </div>
-              )}
+                ) : null}
+                <Badge
+                  className={
+                    hotel.status === "ACTIVE"
+                      ? "absolute top-2 right-2 bg-green-500"
+                      : hotel.status === "DRAFT"
+                        ? "absolute top-2 right-2 bg-amber-500"
+                        : "absolute top-2 right-2 bg-gray-500"
+                  }
+                >
+                  {hotel.status === "ACTIVE"
+                    ? "Actif"
+                    : hotel.status === "DRAFT"
+                      ? "Brouillon"
+                      : hotel.status === "SUSPENDED"
+                        ? "Suspendu"
+                        : "Masqué"}
+                </Badge>
+              </div>
               <CardHeader>
                 <CardTitle className="text-lg">{hotel.name}</CardTitle>
               </CardHeader>
@@ -89,6 +128,16 @@ export default function PartnerHotelsPage() {
                     </span>
                   </div>
                   <div className="flex gap-2">
+                    <PermissionGate permissions={[djangoPerm("hotels", "hotel", "change")]}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => handleToggleVisibility(hotel)}
+                      >
+                        {hotel.status === "ACTIVE" ? "Masquer" : "Activer"}
+                      </Button>
+                    </PermissionGate>
                     <PermissionGate permissions={[djangoPerm("hotels", "hotel", "change")]}>
                       <Button variant="outline" size="sm" asChild className="flex-1">
                         <Link href={`/partner/hotels/${hotel.id}`}>

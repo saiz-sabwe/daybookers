@@ -14,9 +14,13 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Calendar, DollarSign, TrendingUp, Star, LayoutDashboard } from "lucide-react";
 import { RequirePagePermission } from "@/components/shared/auth/RequirePagePermission";
+import { usePermissions } from "@/hooks/use-permissions";
+import { isPartnerManagerScope } from "@/lib/auth/permissions";
 
 export default function PartnerDashboard() {
   const { isAuthenticated, isAuthPending } = useClientAuth();
+  const { permissions } = usePermissions();
+  const isManager = isPartnerManagerScope({ userPermissions: permissions });
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const [bookings, setBookings] = useState<PartnerBooking[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
@@ -153,30 +157,32 @@ export default function PartnerDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border border-gray-100 shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Chiffre d'affaires
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="text-3xl font-bold text-green-600">
-                ${totalRevenue.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}
+        {isManager && (
+          <Card className="rounded-2xl border border-gray-100 shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">
+                Chiffre d'affaires
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div className="text-3xl font-bold text-green-600">
+                  ${totalRevenue.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}
+                </div>
+                <DollarSign className="w-8 h-8 text-green-400" />
               </div>
-              <DollarSign className="w-8 h-8 text-green-400" />
-            </div>
-            <p
-              className={`text-xs font-medium flex items-center mt-2 ${
-                revenueGrowth >= 0 ? "text-green-600" : "text-red-500"
-              }`}
-            >
-              {revenueGrowth >= 0 ? "+" : ""}
-              {revenueGrowth.toFixed(0)}%{" "}
-              <span className="text-gray-400 ml-1">vs hier</span>
-            </p>
-          </CardContent>
-        </Card>
+              <p
+                className={`text-xs font-medium flex items-center mt-2 ${
+                  revenueGrowth >= 0 ? "text-green-600" : "text-red-500"
+                }`}
+              >
+                {revenueGrowth >= 0 ? "+" : ""}
+                {revenueGrowth.toFixed(0)}%{" "}
+                <span className="text-gray-400 ml-1">vs hier</span>
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         <Card className="rounded-2xl border border-gray-100 shadow-sm">
           <CardHeader className="pb-2">

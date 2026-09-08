@@ -11,9 +11,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Check, X } from "lucide-react";
+import { Building2, Eye, EyeOff } from "lucide-react";
 import { getPartnerHotels } from "@/app/actions/partner/hotels/get";
-import { associateHotelToGroup } from "@/app/actions/partner/hotel-groups/associate-hotel";
+import { updateHotel } from "@/app/actions/partner/hotels/update";
 import { Hotel } from "@/types";
 import { PermissionGate } from "@/components/shared/auth/PermissionGate";
 import { djangoPerm } from "@/lib/auth/django-perm";
@@ -36,18 +36,20 @@ export function GroupHotelsManager({
   const { toast } = useToast();
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [pendingId, setPendingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
       loadHotels();
     }
-  }, [open, userId]);
+  }, [open, userId, groupId]);
 
   const loadHotels = async () => {
     setIsLoading(true);
     try {
       const data = await getPartnerHotels(userId);
-      setHotels(data);
+      // Uniquement les hôtels déjà attribués à CE groupe par le super admin
+      setHotels(data.filter((hotel) => hotel.groupId === groupId));
     } catch (error) {
       console.error("Error loading hotels:", error);
     } finally {
@@ -55,18 +57,18 @@ export function GroupHotelsManager({
     }
   };
 
-  const handleToggleHotel = async (hotelId: string, currentGroupId: string | null) => {
+  const handleToggleVisibility = async (hotel: Hotel) => {
+    const nextStatus = hotel.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+    setPendingId(hotel.id);
     try {
-      const newGroupId = currentGroupId === groupId ? null : groupId;
-      const result = await associateHotelToGroup(userId, hotelId, newGroupId);
-
+      const result = await updateHotel(hotel.id, { status: nextStatus }, userId);
       if (result.success) {
         toast({
-          title: newGroupId ? "Hôtel ajouté au groupe" : "Hôtel retiré du groupe",
-          description: newGroupId
-            ? "L'hôtel a été ajouté au groupe avec succès"
-            : "L'hôtel a été retiré du groupe avec succès",
-          variant: "default",
+          title: nextStatus === "ACTIVE" ? "Hôtel activé" : "Hôtel masqué",
+          description:
+            nextStatus === "ACTIVE"
+              ? "L'hôtel est visible pour les clients"
+              : "L'hôtel n'apparaît plus dans le catalogue clients",
         });
         loadHotels();
         onUpdate();
@@ -77,12 +79,14 @@ export function GroupHotelsManager({
           variant: "destructive",
         });
       }
-    } catch (error) {
+    } catch {
       toast({
         title: "Erreur",
         description: "Une erreur est survenue",
         variant: "destructive",
       });
+    } finally {
+      setPendingId(null);
     }
   };
 
@@ -90,9 +94,10 @@ export function GroupHotelsManager({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Gérer les hôtels du groupe</DialogTitle>
+          <DialogTitle>Hôtels du groupe</DialogTitle>
           <DialogDescription>
-            Associez ou dissociez des hôtels à ce groupe
+            Activez ou masquez les hôtels déjà attribués à ce groupe. Seul un
+            super admin peut rattacher de nouveaux hôtels.
           </DialogDescription>
         </DialogHeader>
 
@@ -100,12 +105,12 @@ export function GroupHotelsManager({
           <div className="py-8 text-center text-gray-500">Chargement...</div>
         ) : hotels.length === 0 ? (
           <div className="py-8 text-center text-gray-500">
-            Aucun hôtel disponible
+            Aucun hôtel attribué à ce groupe pour le moment
           </div>
         ) : (
           <div className="space-y-2">
             {hotels.map((hotel) => {
-              const isInGroup = hotel.groupId === groupId;
+              const isActive = hotel.status === "ACTIVE";
               return (
                 <div
                   key={hotel.id}
@@ -114,32 +119,48 @@ export function GroupHotelsManager({
                   <div className="flex items-center gap-3">
                     <Building2 className="w-5 h-5 text-gray-400" />
                     <div>
-                      <h4 className="font-medium text-gray-900">{hotel.name}</h4>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-medium text-gray-900">
+                          {hotel.name}
+                        </h4>
+                        <Badge variant={isActive ? "default" : "secondary"}>
+                          {hotel.status === "ACTIVE"
+                            ? "Actif"
+                            : hotel.status === "DRAFT"
+                              ? "Brouillon"
+                              : hotel.status === "SUSPENDED"
+                                ? "Suspendu"
+                                : "Masqué"}
+                        </Badge>
+                      </div>
                       <p className="text-sm text-gray-500">
                         {hotel.city}, {hotel.country}
                       </p>
                     </div>
                   </div>
-                  <PermissionGate permissions={[djangoPerm("profils", "organization", "change")]}>
+                  <PermissionGate
+                    permissions={[djangoPerm("hotels", "hotel", "change")]}
+                  >
                     <Button
                       size="sm"
-                      variant={isInGroup ? "default" : "outline"}
-                      onClick={() => handleToggleHotel(hotel.id, hotel.groupId ?? null)}
+                      variant={isActive ? "outline" : "default"}
+                      disabled={pendingId === hotel.id}
+                      onClick={() => handleToggleVisibility(hotel)}
                       className={
-                        isInGroup
-                          ? "bg-green-600 hover:bg-green-700 text-white"
+                        !isActive
+                          ? "bg-partner-primary-600 hover:bg-partner-primary-700 text-white"
                           : ""
                       }
                     >
-                      {isInGroup ? (
+                      {isActive ? (
                         <>
-                          <Check className="w-4 h-4 mr-1" />
-                          Dans le groupe
+                          <EyeOff className="w-4 h-4 mr-1" />
+                          Masquer
                         </>
                       ) : (
                         <>
-                          <X className="w-4 h-4 mr-1" />
-                          Ajouter
+                          <Eye className="w-4 h-4 mr-1" />
+                          Activer
                         </>
                       )}
                     </Button>
@@ -159,4 +180,3 @@ export function GroupHotelsManager({
     </Dialog>
   );
 }
-

@@ -8,12 +8,13 @@ import { PartnerPageGuard } from "@/components/shared/auth/PartnerPageGuard";
 import { ProtectedRoute } from "@/components/shared/auth/ProtectedRoute";
 
 const partnerNavItems = PARTNER_NAV_ITEMS.map(
-  ({ href, label, icon, requiredPermissions, groupManagerOnly }) => ({
+  ({ href, label, icon, requiredPermissions, groupManagerOnly, managerOnly }) => ({
     href,
     label,
     icon,
     requiredPermissions,
     groupManagerOnly,
+    managerOnly,
   }),
 );
 

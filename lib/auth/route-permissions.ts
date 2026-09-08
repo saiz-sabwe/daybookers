@@ -2,6 +2,7 @@ import { djangoPerm } from "@/lib/auth/django-perm";
 import {
   DashboardAccessContext,
   isGroupManagerScope,
+  isPartnerManagerScope,
 } from "@/lib/auth/permissions";
 import { Permission } from "@/types/auth";
 import { LucideIcon } from "lucide-react";
@@ -31,6 +32,8 @@ export interface NavItemWithPermissions {
   requiredPermissions?: Permission[];
   /** Visible uniquement pour les group managers (ProfileOrganization). */
   groupManagerOnly?: boolean;
+  /** Visible uniquement pour les managers d'hôtel / de groupe (pas réceptionniste). */
+  managerOnly?: boolean;
 }
 
 export const CLIENT_NAV_ITEMS: NavItemWithPermissions[] = [
@@ -72,7 +75,7 @@ export const PARTNER_NAV_ITEMS: NavItemWithPermissions[] = [
     label: "Mes hôtels",
     icon: Building2,
     requiredPermissions: [djangoPerm("hotels", "hotel")],
-    groupManagerOnly: true,
+    managerOnly: true,
   },
   {
     href: "/partner/hotel-groups",
@@ -121,12 +124,14 @@ export const PARTNER_NAV_ITEMS: NavItemWithPermissions[] = [
     label: "Paiements",
     icon: CreditCard,
     requiredPermissions: [djangoPerm("hotels", "booking")],
+    managerOnly: true,
   },
   {
     href: "/partner/earnings",
     label: "Revenus",
     icon: BarChart3,
     requiredPermissions: [djangoPerm("hotels", "booking")],
+    managerOnly: true,
   },
   {
     href: "/partner/reviews",
@@ -181,8 +186,12 @@ export function filterNavByPermissions(
   context?: DashboardAccessContext,
 ): NavItemWithPermissions[] {
   const isGroupManager = isGroupManagerScope(context);
+  const isManager = isPartnerManagerScope(context);
   return items.filter((item) => {
     if (item.groupManagerOnly && !isGroupManager) {
+      return false;
+    }
+    if (item.managerOnly && !isManager) {
       return false;
     }
     return !item.requiredPermissions?.length || canAny(item.requiredPermissions);

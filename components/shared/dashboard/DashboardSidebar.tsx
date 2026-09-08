@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useClientAuth } from "@/hooks/use-client-auth";
 import { usePermissions } from "@/hooks/use-permissions";
 import { clientSignOut } from "@/lib/api/client-sign-out";
-import { isGroupManagerScope } from "@/lib/auth/permissions";
+import { isGroupManagerScope, isPartnerManagerScope } from "@/lib/auth/permissions";
 import { DashboardTheme, getDashboardTheme } from "@/lib/dashboard/themes";
 import { Permission } from "@/types/auth";
 
@@ -18,6 +18,7 @@ export interface DashboardNavItem {
   icon: LucideIcon;
   requiredPermissions?: Permission[];
   groupManagerOnly?: boolean;
+  managerOnly?: boolean;
 }
 
 interface DashboardSidebarProps {
@@ -108,14 +109,16 @@ export function DashboardSidebar({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { isAuthenticated, userEmail, userName, userProfile } = useClientAuth();
-  const { canAny, canAccessDashboard } = usePermissions();
+  const { canAny, canAccessDashboard, permissions } = usePermissions();
   const config = getDashboardTheme(theme);
   const styles = SIDEBAR_THEMES[theme];
   const partnerScope = {
     organizations: userProfile?.organizations,
     hotels: userProfile?.hotels,
+    userPermissions: permissions,
   };
   const isGroupManager = isGroupManagerScope(partnerScope);
+  const isManager = isPartnerManagerScope(partnerScope);
   const spaceLabel =
     theme === "partner" && !isGroupManager
       ? "Espace hôtel"
@@ -124,6 +127,9 @@ export function DashboardSidebar({
   const visibleItems = filterByPermissions
     ? items.filter((item) => {
         if (item.groupManagerOnly && !isGroupManager) {
+          return false;
+        }
+        if (item.managerOnly && !isManager) {
           return false;
         }
         return (

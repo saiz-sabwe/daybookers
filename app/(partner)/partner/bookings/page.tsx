@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getPartnerBookings, PartnerBooking } from "@/app/actions/partner/bookings/get";
 import { confirmBooking, cancelBookingByPartner } from "@/app/actions/partner/bookings/update";
-import { Hotel } from "@/types";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useClientAuth } from "@/hooks/use-client-auth";
@@ -51,14 +50,18 @@ export default function PartnerBookingsPage() {
     try {
       const result = await confirmBooking(bookingId, "");
       if (result.success) {
+        setBookings((prev) =>
+          prev.map((booking) =>
+            booking.id === bookingId
+              ? { ...booking, status: "CONFIRMED" }
+              : booking,
+          ),
+        );
         toast({
           title: "Réservation confirmée",
           description: "La réservation a été confirmée avec succès",
           variant: "default",
         });
-        // Recharger les réservations
-        const updatedBookings = await getPartnerBookings("");
-        setBookings(updatedBookings);
       } else {
         toast({
           title: "Erreur",
@@ -85,14 +88,18 @@ export default function PartnerBookingsPage() {
     try {
       const result = await cancelBookingByPartner(bookingId, "");
       if (result.success) {
+        setBookings((prev) =>
+          prev.map((booking) =>
+            booking.id === bookingId
+              ? { ...booking, status: "CANCELLED" }
+              : booking,
+          ),
+        );
         toast({
           title: "Réservation annulée",
           description: "La réservation a été annulée avec succès",
           variant: "default",
         });
-        // Recharger les réservations
-        const updatedBookings = await getPartnerBookings("");
-        setBookings(updatedBookings);
       } else {
         toast({
           title: "Erreur",
@@ -144,10 +151,10 @@ export default function PartnerBookingsPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tous les statuts</SelectItem>
-            <SelectItem value="pending">En attente</SelectItem>
-            <SelectItem value="confirmed">Confirmé</SelectItem>
-            <SelectItem value="cancelled">Annulé</SelectItem>
-            <SelectItem value="completed">Terminé</SelectItem>
+            <SelectItem value="PENDING">En attente</SelectItem>
+            <SelectItem value="CONFIRMED">Confirmé</SelectItem>
+            <SelectItem value="CANCELLED">Annulé</SelectItem>
+            <SelectItem value="COMPLETED">Terminé</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -223,7 +230,7 @@ export default function PartnerBookingsPage() {
                             </Button>
                           </PermissionGate>
                         )}
-                        {(booking.status === "PENDING" || booking.status === "CONFIRMED") && (
+                        {booking.status === "PENDING" && (
                           <PermissionGate permissions={[djangoPerm("hotels", "booking", "change")]}>
                             <Button
                               size="sm"

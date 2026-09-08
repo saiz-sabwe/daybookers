@@ -9,12 +9,13 @@ import { usePermissions } from "@/hooks/use-permissions";
 
 export function PartnerSidebar() {
   const pathname = usePathname();
-  const { canAny } = usePermissions();
+  const { canAny, permissions } = usePermissions();
   const { userProfile } = useClientAuth();
 
   const visibleItems = filterNavByPermissions(PARTNER_NAV_ITEMS, canAny, {
     organizations: userProfile?.organizations,
     hotels: userProfile?.hotels,
+    userPermissions: permissions,
   });
 
   return (

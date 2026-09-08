@@ -17,6 +17,7 @@ export interface Hotel {
   longitude?: number;
   partnerId?: string;
   groupId?: string;
+  status?: "DRAFT" | "ACTIVE" | "INACTIVE" | "SUSPENDED";
   phone?: string;
   email?: string;
   website?: string;

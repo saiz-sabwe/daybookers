@@ -9,6 +9,7 @@ import { Permission } from "@/types/auth";
 import {
   DashboardAccessContext,
   isGroupManagerScope,
+  isPartnerManagerScope,
 } from "@/lib/auth/permissions";
 
 interface RoutePattern {
@@ -34,6 +35,7 @@ const EXACT_ROUTE_PERMISSIONS = new Map<string, Permission[]>([
   ...navItemsToExactMap(SADMIN_NAV_ITEMS),
   ...navItemsToExactMap(CLIENT_NAV_ITEMS),
   ["/admin/hotels/create", [djangoPerm("hotels", "hotel", "add")]],
+  ["/partner/hotel-groups/dashboard", [djangoPerm("profils", "organization")]],
   ["/booking", [djangoPerm("hotels", "booking", "add")]],
   ["/reviews", [djangoPerm("hotels", "review", "add")]],
 ]);
@@ -73,8 +75,15 @@ export function getClientTabPermissions(tab: string | null): Permission[] | null
 }
 
 const GROUP_MANAGER_ONLY_ROUTES = new Set([
-  "/partner/hotels",
   "/partner/hotel-groups",
+  "/partner/hotel-groups/dashboard",
+]);
+
+/** Routes réservées aux managers d'hôtel / de groupe (pas réceptionniste). */
+const MANAGER_SCOPE_ROUTES = new Set([
+  "/partner/hotels",
+  "/partner/payments",
+  "/partner/earnings",
 ]);
 
 export function isPartnerRouteAllowedForScope(
@@ -84,6 +93,12 @@ export function isPartnerRouteAllowedForScope(
   const normalized = normalizePathname(pathname);
   if (GROUP_MANAGER_ONLY_ROUTES.has(normalized)) {
     return isGroupManagerScope(context);
+  }
+  if (
+    MANAGER_SCOPE_ROUTES.has(normalized) ||
+    normalized.startsWith("/partner/hotels/")
+  ) {
+    return isPartnerManagerScope(context);
   }
   return true;
 }

@@ -8,6 +8,8 @@ export interface DashboardAccessContext {
   organizations?: ApiOrganization[];
   hotels?: ApiHotel[];
   permissionCatalog?: Permission[];
+  /** Permissions Django de l'utilisateur connecté (ex: "hotels.add_roomtype"). */
+  userPermissions?: Permission[];
 }
 
 export function isPermissionsEnforced(_permissions: Permission[]): boolean {
@@ -58,7 +60,35 @@ export function isGroupManager(permissions: Permission[]): boolean {
   return hasPermission(permissions, djangoPerm("profils", "organization"));
 }
 
+/**
+ * Scope "manager de groupe" : seul le rôle GroupManager (et l'admin) possède
+ * la permission profils.view_organization. Repli sur le nombre
+ * d'organisations si les permissions ne sont pas fournies.
+ */
 export function isGroupManagerScope(context?: DashboardAccessContext): boolean {
+  if (context?.userPermissions) {
+    return hasPermission(
+      context.userPermissions,
+      djangoPerm("profils", "organization"),
+    );
+  }
+  return (context?.organizations?.length ?? 0) > 0;
+}
+
+/**
+ * Scope "manager" (HotelManager OU GroupManager) : peut gérer des chambres
+ * (hotels.add_roomtype) ou des enseignes (profils.view_organization).
+ * Le réceptionniste n'a aucune de ces permissions.
+ */
+export function isPartnerManagerScope(
+  context?: DashboardAccessContext,
+): boolean {
+  if (context?.userPermissions) {
+    return hasAnyPermission(context.userPermissions, [
+      djangoPerm("hotels", "roomtype", "add"),
+      djangoPerm("profils", "organization"),
+    ]);
+  }
   return (context?.organizations?.length ?? 0) > 0;
 }
 

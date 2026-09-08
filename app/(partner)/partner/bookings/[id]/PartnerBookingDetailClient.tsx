@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { ArrowLeft, CheckCircle2, XCircle } from "lucide-react";
@@ -14,10 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { djangoPerm } from "@/lib/auth/django-perm";
-import {
-  PartnerBooking,
-  getPartnerBookingById,
-} from "@/app/actions/partner/bookings/get";
+import { PartnerBooking } from "@/app/actions/partner/bookings/get";
 import {
   confirmBooking,
   cancelBookingByPartner,
@@ -56,17 +52,9 @@ interface PartnerBookingDetailClientProps {
 export function PartnerBookingDetailClient({
   booking: initialBooking,
 }: PartnerBookingDetailClientProps) {
-  const router = useRouter();
   const { toast } = useToast();
   const [booking, setBooking] = useState(initialBooking);
   const [isProcessing, setIsProcessing] = useState(false);
-
-  const refreshBooking = async () => {
-    const updated = await getPartnerBookingById(booking.id);
-    if (updated) {
-      setBooking(updated);
-    }
-  };
 
   const handleConfirm = async () => {
     setIsProcessing(true);
@@ -74,9 +62,8 @@ export function PartnerBookingDetailClient({
     setIsProcessing(false);
 
     if (result.success) {
+      setBooking((prev) => ({ ...prev, status: "CONFIRMED" }));
       toast({ title: "Réservation confirmée" });
-      await refreshBooking();
-      router.refresh();
     } else {
       toast({
         title: "Erreur",
@@ -92,9 +79,8 @@ export function PartnerBookingDetailClient({
     setIsProcessing(false);
 
     if (result.success) {
+      setBooking((prev) => ({ ...prev, status: "CANCELLED" }));
       toast({ title: "Réservation annulée" });
-      await refreshBooking();
-      router.refresh();
     } else {
       toast({
         title: "Erreur",
@@ -184,8 +170,7 @@ export function PartnerBookingDetailClient({
                   </Button>
                 </PermissionGate>
               )}
-              {(booking.status === "PENDING" ||
-                booking.status === "CONFIRMED") && (
+              {booking.status === "PENDING" && (
                 <PermissionGate
                   permissions={[djangoPerm("hotels", "booking", "change")]}
                 >
