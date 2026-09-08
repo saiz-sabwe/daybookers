@@ -13,6 +13,7 @@ export interface UpdateAdminUserData {
   email?: string;
   phone?: string;
   address?: string;
+  role?: string;
 }
 
 export async function updateAdminUser(
@@ -34,6 +35,7 @@ export async function updateAdminUser(
         ...(data.email !== undefined ? { email: data.email } : {}),
         ...(data.phone !== undefined ? { phone: data.phone } : {}),
         ...(data.address !== undefined ? { address: data.address } : {}),
+        ...(data.role ? { role: data.role } : {}),
       }),
     });
 

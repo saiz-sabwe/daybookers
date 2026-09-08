@@ -81,6 +81,12 @@ export const PARTNER_NAV_ITEMS: NavItemWithPermissions[] = [
     requiredPermissions: [djangoPerm("profils", "organization")],
   },
   {
+    href: "/partner/team",
+    label: "Équipe",
+    icon: Users,
+    requiredPermissions: [djangoPerm("profils", "profileorganization")],
+  },
+  {
     href: "/partner/checkin-checkout",
     label: "Check-in / Check-out",
     icon: ClipboardCheck,

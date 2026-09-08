@@ -29,6 +29,7 @@ import { updateHotel } from "@/app/actions/partner/hotels/update";
 import type { AdminHotelDetail } from "@/app/actions/admin/hotels/get";
 import { useToast } from "@/hooks/use-toast";
 import { PermissionGate } from "@/components/shared/auth/PermissionGate";
+import { ImageUploadField } from "@/components/shared/forms/ImageUploadField";
 import { djangoPerm } from "@/lib/auth/django-perm";
 
 const hotelSchema = z.object({
@@ -39,6 +40,7 @@ const hotelSchema = z.object({
   email: z.string().email("Email invalide").optional().or(z.literal("")),
   website: z.string().url("URL invalide").optional().or(z.literal("")),
   stars: z.number().min(0).max(5).optional(),
+  images: z.array(z.string()),
 });
 
 type HotelFormValues = z.infer<typeof hotelSchema>;
@@ -63,6 +65,7 @@ export function AdminHotelEditDialog({ hotel }: AdminHotelEditDialogProps) {
       email: hotel.email || "",
       website: hotel.website || "",
       stars: hotel.stars,
+      images: hotel.images ?? [],
     },
   });
 
@@ -220,6 +223,24 @@ export function AdminHotelEditDialog({ hotel }: AdminHotelEditDialogProps) {
                         onChange={(e) =>
                           field.onChange(parseInt(e.target.value) || 0)
                         }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="images"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Photos de l'hôtel</FormLabel>
+                    <FormControl>
+                      <ImageUploadField
+                        value={field.value}
+                        onChange={field.onChange}
+                        disabled={isSubmitting}
                       />
                     </FormControl>
                     <FormMessage />

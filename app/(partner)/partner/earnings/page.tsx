@@ -4,6 +4,10 @@ import { useState, useEffect } from "react";
 import { DashboardPageHeader } from "@/components/shared/dashboard/DashboardPageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getPartnerEarnings } from "@/app/actions/partner/earnings/get";
+import {
+  getMyCommissionRates,
+  type OrganizationCommissionRate,
+} from "@/app/actions/partner/earnings/commission-rates";
 import { useClientAuth } from "@/hooks/use-client-auth";
 import { TransactionsTable } from "@/components/partner/earnings/TransactionsTable";
 import {
@@ -17,7 +21,7 @@ import { DollarSign } from "lucide-react";
 import { RequirePagePermission } from "@/components/shared/auth/RequirePagePermission";
 
 export default function PartnerEarningsPage() {
-  const { isAuthenticated, isAuthPending } = useClientAuth();
+  const { isAuthenticated, isAuthPending, userProfile } = useClientAuth();
   const [earnings, setEarnings] = useState({
     totalRevenue: 0,
     commission: 0,
@@ -25,6 +29,9 @@ export default function PartnerEarningsPage() {
     bookingsCount: 0,
     period: "all",
   });
+  const [commissionRates, setCommissionRates] = useState<
+    OrganizationCommissionRate[]
+  >([]);
   const [period, setPeriod] = useState<"today" | "week" | "month" | "year" | "all">("all");
   const [isLoading, setIsLoading] = useState(true);
 
@@ -39,6 +46,16 @@ export default function PartnerEarningsPage() {
       setIsLoading(false);
     });
   }, [isAuthenticated, isAuthPending, period]);
+
+  useEffect(() => {
+    if (isAuthPending || !isAuthenticated) {
+      return;
+    }
+    const organizations = userProfile?.organizations ?? [];
+    if (organizations.length) {
+      getMyCommissionRates(organizations).then(setCommissionRates);
+    }
+  }, [isAuthenticated, isAuthPending, userProfile?.organizations]);
 
   const handlePeriodChange = (value: string) => {
     setPeriod(value as "today" | "week" | "month" | "year" | "all");
@@ -114,6 +131,33 @@ export default function PartnerEarningsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {commissionRates.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-sm">
+              Taux de commission DayBooker
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-4">
+              {commissionRates.map((org) => (
+                <div
+                  key={org.uuid}
+                  className="flex items-center justify-between gap-4 rounded-lg border px-4 py-2"
+                >
+                  <span className="text-sm text-gray-600">{org.name}</span>
+                  <span className="text-lg font-bold text-partner-primary-600">
+                    {org.commissionRate != null
+                      ? `${org.commissionRate} %`
+                      : "Non défini"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

@@ -23,6 +23,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { getAdminUserById } from "@/app/actions/admin/users/get";
 import { updateAdminUser } from "@/app/actions/admin/users/update";
 import { useToast } from "@/hooks/use-toast";
@@ -36,9 +43,18 @@ const userSchema = z.object({
   email: z.string().email("Email invalide").optional().or(z.literal("")),
   phone: z.string().optional(),
   address: z.string().optional(),
+  role: z.string().optional(),
 });
 
 type UserFormValues = z.infer<typeof userSchema>;
+
+const ROLE_OPTIONS = [
+  { value: "Client", label: "Client" },
+  { value: "Receptionist", label: "Réceptionniste" },
+  { value: "HotelManager", label: "Manager d'hôtel" },
+  { value: "GroupManager", label: "Manager de groupe" },
+  { value: "Admin", label: "Super admin" },
+] as const;
 
 interface AdminUserEditDialogProps {
   userId: string;
@@ -65,6 +81,7 @@ export function AdminUserEditDialog({
       email: "",
       phone: "",
       address: "",
+      role: "",
     },
   });
 
@@ -81,6 +98,7 @@ export function AdminUserEditDialog({
             email: detail.email,
             phone: detail.phone,
             address: detail.address,
+            role: detail.role,
           });
         }
       })
@@ -225,6 +243,34 @@ export function AdminUserEditDialog({
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Rôle</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value || undefined}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Choisir un rôle" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {ROLE_OPTIONS.map((role) => (
+                            <SelectItem key={role.value} value={role.value}>
+                              {role.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}

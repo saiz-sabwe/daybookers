@@ -17,6 +17,7 @@ export interface UserListItem {
   name: string;
   email: string;
   roles: string[];
+  role: string;
   createdAt: Date;
   emailVerified: boolean;
 }
@@ -81,6 +82,7 @@ export interface AdminUserDetail {
   isSuperuser: boolean;
   isActive: boolean;
   hasOrganization: boolean;
+  role: string;
   organizations: AdminUserOrganization[];
   createdAt: string | null;
 }
@@ -99,6 +101,7 @@ interface DjangoAdminProfileDetailRecord {
   is_superuser?: boolean;
   is_active?: boolean;
   has_organization?: boolean;
+  role?: string | null;
   organizations?: AdminUserOrganization[];
   create?: string | null;
 }
@@ -131,6 +134,7 @@ export async function getAdminUserById(
       isSuperuser: Boolean(record.is_superuser),
       isActive: record.is_active ?? true,
       hasOrganization: Boolean(record.has_organization),
+      role: record.role ?? "",
       organizations: record.organizations ?? [],
       createdAt: record.create ?? null,
     };

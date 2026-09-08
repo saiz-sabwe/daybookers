@@ -20,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { Hotel } from "@/types";
 import { PermissionGate } from "@/components/shared/auth/PermissionGate";
+import { ImageUploadField } from "@/components/shared/forms/ImageUploadField";
 import { djangoPerm } from "@/lib/auth/django-perm";
 
 const hotelSchema = z.object({
@@ -30,6 +31,7 @@ const hotelSchema = z.object({
   email: z.string().email("Email invalide").optional().or(z.literal("")),
   website: z.string().url("URL invalide").optional().or(z.literal("")),
   stars: z.number().min(0).max(5).optional(),
+  images: z.array(z.string()),
 });
 
 type HotelFormValues = z.infer<typeof hotelSchema>;
@@ -54,6 +56,7 @@ export function HotelEditForm({ hotel, userId, onSuccess }: HotelEditFormProps) 
       email: hotel.email || "",
       website: hotel.website || "",
       stars: hotel.stars,
+      images: hotel.images ?? [],
     },
   });
 
@@ -190,6 +193,24 @@ export function HotelEditForm({ hotel, userId, onSuccess }: HotelEditFormProps) 
                   max={5}
                   {...field}
                   onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="images"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Photos de l'hôtel</FormLabel>
+              <FormControl>
+                <ImageUploadField
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={isSubmitting}
                 />
               </FormControl>
               <FormMessage />

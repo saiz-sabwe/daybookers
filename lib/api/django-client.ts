@@ -250,5 +250,6 @@ export interface DjangoAdminProfileRecord {
   is_staff: boolean;
   is_superuser: boolean;
   has_organization: boolean;
+  role?: string | null;
   create: string;
 }

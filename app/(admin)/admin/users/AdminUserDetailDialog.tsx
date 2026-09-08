@@ -21,6 +21,14 @@ import { fr } from "date-fns/locale";
 import { PermissionGate } from "@/components/shared/auth/PermissionGate";
 import { djangoPerm } from "@/lib/auth/django-perm";
 
+const ROLE_LABELS: Record<string, string> = {
+  Admin: "Super admin",
+  GroupManager: "Manager de groupe",
+  HotelManager: "Manager d'hôtel",
+  Receptionist: "Réceptionniste",
+  Client: "Client",
+};
+
 interface AdminUserDetailDialogProps {
   userId: string;
   userName: string;
@@ -77,6 +85,11 @@ export function AdminUserDetailDialog({
           ) : (
             <div className="space-y-4">
               <div className="flex flex-wrap gap-2">
+                {detail.role && (
+                  <Badge variant="default">
+                    {ROLE_LABELS[detail.role] ?? detail.role}
+                  </Badge>
+                )}
                 {detail.isSuperuser && <Badge>Super admin</Badge>}
                 {detail.isStaff && !detail.isSuperuser && (
                   <Badge variant="secondary">Staff</Badge>

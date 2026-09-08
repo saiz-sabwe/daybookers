@@ -26,6 +26,7 @@ export function mapAdminUser(profile: DjangoAdminProfileRecord) {
     name: name || profile.pseudo || profile.email || "Utilisateur",
     email: profile.email ?? "",
     roles,
+    role: profile.role ?? "",
     createdAt: new Date(profile.create),
     emailVerified: Boolean(profile.email),
   };

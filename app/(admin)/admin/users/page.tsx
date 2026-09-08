@@ -24,6 +24,14 @@ import { AdminUserCreateDialog } from "./AdminUserCreateDialog";
 import { AdminUserDetailDialog } from "./AdminUserDetailDialog";
 import { AdminUserEditDialog } from "./AdminUserEditDialog";
 
+const ROLE_LABELS: Record<string, string> = {
+  Admin: "Super admin",
+  GroupManager: "Manager de groupe",
+  HotelManager: "Manager d'hôtel",
+  Receptionist: "Réceptionniste",
+  Client: "Client",
+};
+
 export default function AdminUsersPage() {
   const { isAuthenticated, isAuthPending } = useClientAuth();
   const [users, setUsers] = useState<any[]>([]);
@@ -111,6 +119,7 @@ export default function AdminUsersPage() {
                     <TableRow>
                       <TableHead>Nom</TableHead>
                       <TableHead>Email</TableHead>
+                      <TableHead>Rôle</TableHead>
                       <TableHead>Email vérifié</TableHead>
                       <TableHead>Inscrit le</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
@@ -121,6 +130,11 @@ export default function AdminUsersPage() {
                       <TableRow key={user.id}>
                         <TableCell className="font-medium">{user.name}</TableCell>
                         <TableCell>{user.email}</TableCell>
+                        <TableCell>
+                          <Badge variant={user.role === "Admin" ? "destructive" : "outline"}>
+                            {ROLE_LABELS[user.role] ?? user.role ?? "—"}
+                          </Badge>
+                        </TableCell>
                         <TableCell>
                           <Badge variant={user.emailVerified ? "default" : "secondary"}>
                             {user.emailVerified ? "Oui" : "Non"}

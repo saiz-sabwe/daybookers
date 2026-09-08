@@ -14,6 +14,7 @@ export interface UpdateHotelData {
   email?: string;
   website?: string;
   stars?: number;
+  images?: string[];
 }
 
 export async function updateHotel(
@@ -37,6 +38,7 @@ export async function updateHotel(
       ...(data.email !== undefined ? { email: data.email } : {}),
       ...(data.website !== undefined ? { website: data.website } : {}),
       ...(data.stars !== undefined ? { stars: data.stars } : {}),
+      ...(data.images !== undefined ? { images: data.images } : {}),
     });
 
     return { success: true };

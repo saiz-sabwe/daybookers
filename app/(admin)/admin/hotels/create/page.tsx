@@ -22,6 +22,7 @@ import { Loader2, Plus } from "lucide-react";
 import { HotelStatus } from "@/types";
 import { AdminPageGuard } from "@/components/shared/auth/AdminPageGuard";
 import { PermissionGate } from "@/components/shared/auth/PermissionGate";
+import { ImageUploadField } from "@/components/shared/forms/ImageUploadField";
 import { djangoPerm } from "@/lib/auth/django-perm";
 
 export default function AdminCreateHotelPage() {
@@ -188,22 +189,12 @@ export default function AdminCreateHotelPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="images">Images (URLs, une par ligne)</Label>
-              <Textarea
-                id="images"
-                rows={3}
-                placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg"
-                onChange={(e) => {
-                  const urls = e.target.value
-                    .split("\n")
-                    .map((url) => url.trim())
-                    .filter((url) => url.length > 0);
-                  setFormData({ ...formData, images: urls });
-                }}
+              <Label>Photos de l'hôtel</Label>
+              <ImageUploadField
+                value={formData.images}
+                onChange={(urls) => setFormData({ ...formData, images: urls })}
+                disabled={isSubmitting}
               />
-              <p className="text-xs text-gray-500">
-                Entrez une URL par ligne. Les URLs doivent commencer par http:// ou https://
-              </p>
             </div>
 
             <div className="flex justify-end gap-2">

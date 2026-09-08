@@ -27,6 +27,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { createHotel } from "@/app/actions/partner/hotels/create";
 import { PermissionGate } from "@/components/shared/auth/PermissionGate";
+import { ImageUploadField } from "@/components/shared/forms/ImageUploadField";
 import { djangoPerm } from "@/lib/auth/django-perm";
 
 const hotelSchema = z.object({
@@ -43,6 +44,7 @@ const hotelSchema = z.object({
   website: z.string().optional(),
   stars: z.number().min(1).max(5),
   groupId: z.string().optional(),
+  images: z.array(z.string()),
 });
 
 type HotelFormValues = z.infer<typeof hotelSchema>;
@@ -84,6 +86,7 @@ export function CreateHotelForm({ userId, hotelGroups, onSuccess }: CreateHotelF
       website: "",
       stars: 3,
       groupId: "",
+      images: [],
     },
   });
 
@@ -343,6 +346,27 @@ export function CreateHotelForm({ userId, hotelGroups, onSuccess }: CreateHotelF
             )}
           />
         )}
+
+        <FormField
+          control={form.control}
+          name="images"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Photos de l'hôtel</FormLabel>
+              <FormControl>
+                <ImageUploadField
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={isSubmitting}
+                />
+              </FormControl>
+              <FormDescription className="text-xs">
+                Téléchargez des photos depuis votre appareil ou collez une URL.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <div className="flex justify-end gap-2 pt-4">
           <PermissionGate permissions={[djangoPerm("hotels", "hotel", "add")]}>
